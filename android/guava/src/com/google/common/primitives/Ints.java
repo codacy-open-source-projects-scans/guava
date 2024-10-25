@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -262,6 +264,9 @@ public final class Ints extends IntsMethodsForWeb {
    * unchanged. If {@code value} is less than {@code min}, {@code min} is returned, and if {@code
    * value} is greater than {@code max}, {@code max} is returned.
    *
+   * <p><b>Java 21+ users:</b> Use {@code Math.clamp} instead. Note that that method is capable of
+   * constraining a {@code long} input to an {@code int} range.
+   *
    * @param value the {@code int} value to constrain
    * @param min the lower bound (inclusive) of the range to constrain {@code value} to
    * @param max the upper bound (inclusive) of the range to constrain {@code value} to
@@ -270,7 +275,7 @@ public final class Ints extends IntsMethodsForWeb {
    */
   public static int constrainToRange(int value, int min, int max) {
     checkArgument(min <= max, "min (%s) must be less than or equal to max (%s)", min, max);
-    return Math.min(Math.max(value, min), max);
+    return min(max(value, min), max);
   }
 
   /**
@@ -449,7 +454,7 @@ public final class Ints extends IntsMethodsForWeb {
 
     @Override
     public int compare(int[] left, int[] right) {
-      int minLength = Math.min(left.length, right.length);
+      int minLength = min(left.length, right.length);
       for (int i = 0; i < minLength; i++) {
         int result = Integer.compare(left[i], right[i]);
         if (result != 0) {
