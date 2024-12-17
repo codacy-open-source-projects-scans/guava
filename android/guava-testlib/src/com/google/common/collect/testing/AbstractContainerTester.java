@@ -16,14 +16,16 @@
 
 package com.google.common.collect.testing;
 
+import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
+import static com.google.common.collect.testing.Helpers.copyToList;
 import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Ignore;
@@ -37,7 +39,8 @@ import org.junit.Ignore;
  * @author George van den Driessche
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 @ElementTypesAreNonnullByDefault
 public abstract class AbstractContainerTester<C, E extends @Nullable Object>
@@ -112,7 +115,7 @@ public abstract class AbstractContainerTester<C, E extends @Nullable Object>
    * examining whether the features include KNOWN_ORDER?
    */
   protected void expectContents(Collection<E> expected) {
-    Helpers.assertEqualIgnoringOrder(expected, actualContents());
+    assertEqualIgnoringOrder(expected, actualContents());
   }
 
   protected void expectUnchanged() {
@@ -139,7 +142,7 @@ public abstract class AbstractContainerTester<C, E extends @Nullable Object>
    * @param elements expected additional contents of {@link #container}
    */
   protected final void expectAdded(E... elements) {
-    List<E> expected = Helpers.copyToList(getSampleElements());
+    List<E> expected = copyToList(getSampleElements());
     expected.addAll(asList(elements));
     expectContents(expected);
   }
@@ -149,7 +152,7 @@ public abstract class AbstractContainerTester<C, E extends @Nullable Object>
   }
 
   protected final void expectAdded(int index, Collection<E> elements) {
-    List<E> expected = Helpers.copyToList(getSampleElements());
+    List<E> expected = copyToList(getSampleElements());
     expected.addAll(index, elements);
     expectContents(expected);
   }
@@ -222,7 +225,7 @@ public abstract class AbstractContainerTester<C, E extends @Nullable Object>
     for (E e : getSubjectGenerator().order(new ArrayList<E>(getSampleElements()))) {
       list.add(e);
     }
-    return Collections.unmodifiableList(list);
+    return unmodifiableList(list);
   }
 
   /**

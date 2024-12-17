@@ -17,12 +17,12 @@
 package com.google.common.collect.testing.google;
 
 import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
+import static com.google.common.collect.testing.Helpers.mapEntry;
 import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.testing.AbstractContainerTester;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.SampleElements;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
@@ -37,7 +37,8 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 @ElementTypesAreNonnullByDefault
 public abstract class AbstractMultimapTester<
@@ -57,7 +58,7 @@ public abstract class AbstractMultimapTester<
     Entry<K, V>[] array = createSamplesArray();
     int nullKeyLocation = getNullLocation();
     Entry<K, V> oldEntry = array[nullKeyLocation];
-    array[nullKeyLocation] = Helpers.mapEntry(null, oldEntry.getValue());
+    array[nullKeyLocation] = mapEntry(null, oldEntry.getValue());
     return array;
   }
 
@@ -68,7 +69,7 @@ public abstract class AbstractMultimapTester<
     Entry<K, V>[] array = createSamplesArray();
     int nullValueLocation = getNullLocation();
     Entry<K, V> oldEntry = array[nullValueLocation];
-    array[nullValueLocation] = Helpers.mapEntry(oldEntry.getKey(), null);
+    array[nullValueLocation] = mapEntry(oldEntry.getKey(), null);
     return array;
   }
 
@@ -79,7 +80,7 @@ public abstract class AbstractMultimapTester<
   protected Entry<K, V>[] createArrayWithNullKeyAndValue() {
     Entry<K, V>[] array = createSamplesArray();
     int nullValueLocation = getNullLocation();
-    array[nullValueLocation] = Helpers.mapEntry(null, null);
+    array[nullValueLocation] = mapEntry(null, null);
     return array;
   }
 

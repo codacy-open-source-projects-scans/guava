@@ -20,6 +20,7 @@ import static com.google.common.collect.Maps.immutableEntry;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Collections.singletonMap;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -243,7 +244,7 @@ public class ImmutableBiMapTest extends TestCase {
 
     IllegalArgumentException expected =
         assertThrows(IllegalArgumentException.class, () -> builder.build());
-    assertThat(expected.getMessage()).contains("one");
+    assertThat(expected).hasMessageThat().contains("one");
   }
 
   public void testOf() {
@@ -453,7 +454,7 @@ public class ImmutableBiMapTest extends TestCase {
   public void testOfWithDuplicateKey() {
     IllegalArgumentException expected =
         assertThrows(IllegalArgumentException.class, () -> ImmutableBiMap.of("one", 1, "one", 1));
-    assertThat(expected.getMessage()).contains("one");
+    assertThat(expected).hasMessageThat().contains("one");
   }
 
   public void testOfEntries() {
@@ -485,8 +486,7 @@ public class ImmutableBiMapTest extends TestCase {
   }
 
   public void testCopyOfSingletonMap() {
-    ImmutableBiMap<String, Integer> copy =
-        ImmutableBiMap.copyOf(Collections.singletonMap("one", 1));
+    ImmutableBiMap<String, Integer> copy = ImmutableBiMap.copyOf(singletonMap("one", 1));
     assertMapEquals(copy, "one", 1);
     assertSame(copy, ImmutableBiMap.copyOf(copy));
   }
@@ -542,7 +542,7 @@ public class ImmutableBiMapTest extends TestCase {
 
     IllegalArgumentException expected =
         assertThrows(IllegalArgumentException.class, () -> ImmutableBiMap.copyOf(map));
-    assertThat(expected.getMessage()).containsMatch("1|2");
+    assertThat(expected).hasMessageThat().containsMatch("1|2");
   }
 
   // TODO(b/172823566): Use mainline testToImmutableBiMap once CollectorTester is usable to java7.

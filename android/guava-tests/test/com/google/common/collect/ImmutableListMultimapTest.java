@@ -21,6 +21,8 @@ import static com.google.common.collect.testing.features.CollectionFeature.KNOWN
 import static com.google.common.collect.testing.features.CollectionFeature.SERIALIZABLE;
 import static com.google.common.collect.testing.features.MapFeature.ALLOWS_ANY_NULL_QUERIES;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -171,8 +173,8 @@ public class ImmutableListMultimapTest extends TestCase {
     builder.putAll("bar", Arrays.asList(4, 5));
     builder.putAll("foo", Arrays.asList(6, 7));
     Multimap<String, Integer> multimap = builder.build();
-    assertEquals(Arrays.asList(1, 2, 3, 6, 7), multimap.get("foo"));
-    assertEquals(Arrays.asList(4, 5), multimap.get("bar"));
+    assertThat(multimap.get("foo")).containsExactly(1, 2, 3, 6, 7).inOrder();
+    assertThat(multimap.get("bar")).containsExactly(4, 5).inOrder();
     assertEquals(7, multimap.size());
   }
 
@@ -181,9 +183,9 @@ public class ImmutableListMultimapTest extends TestCase {
     builder.putAll("foo", 1, 2, 3);
     builder.putAll("bar", 4, 5);
     builder.putAll("foo", 6, 7);
-    Multimap<String, Integer> multimap = builder.build();
-    assertEquals(Arrays.asList(1, 2, 3, 6, 7), multimap.get("foo"));
-    assertEquals(Arrays.asList(4, 5), multimap.get("bar"));
+    ImmutableListMultimap<String, Integer> multimap = builder.build();
+    assertThat(multimap.get("foo")).containsExactly(1, 2, 3, 6, 7).inOrder();
+    assertThat(multimap.get("bar")).containsExactly(4, 5).inOrder();
     assertEquals(7, multimap.size());
   }
 
@@ -200,9 +202,9 @@ public class ImmutableListMultimapTest extends TestCase {
     ImmutableListMultimap.Builder<String, Integer> builder = ImmutableListMultimap.builder();
     builder.putAll(toPut);
     builder.putAll(moreToPut);
-    Multimap<String, Integer> multimap = builder.build();
-    assertEquals(Arrays.asList(1, 2, 3, 6, 7), multimap.get("foo"));
-    assertEquals(Arrays.asList(4, 5), multimap.get("bar"));
+    ImmutableListMultimap<String, Integer> multimap = builder.build();
+    assertThat(multimap.get("foo")).containsExactly(1, 2, 3, 6, 7).inOrder();
+    assertThat(multimap.get("bar")).containsExactly(4, 5).inOrder();
     assertEquals(7, multimap.size());
   }
 
@@ -243,9 +245,9 @@ public class ImmutableListMultimapTest extends TestCase {
     ImmutableListMultimap.Builder<String, Integer> builder = ImmutableListMultimap.builder();
     builder.putAll(toPut);
     builder.putAll(moreToPut);
-    Multimap<String, Integer> multimap = builder.build();
-    assertEquals(Arrays.asList(1, 2, 1, 6, 7, 2), multimap.get("foo"));
-    assertEquals(Arrays.asList(4, 5, 4), multimap.get("bar"));
+    ImmutableListMultimap<String, Integer> multimap = builder.build();
+    assertThat(multimap.get("foo")).containsExactly(1, 2, 1, 6, 7, 2).inOrder();
+    assertThat(multimap.get("bar")).containsExactly(4, 5, 4).inOrder();
     assertEquals(9, multimap.size());
   }
 
@@ -348,9 +350,8 @@ public class ImmutableListMultimapTest extends TestCase {
     input.put("foo", 1);
     input.put("bar", 2);
     input.put("foo", 3);
-    Multimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
-    assertEquals(multimap, input);
-    assertEquals(input, multimap);
+    ImmutableListMultimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
+    new EqualsTester().addEqualityGroup(input, multimap).testEquals();
   }
 
   public void testCopyOfWithDuplicates() {
@@ -359,16 +360,14 @@ public class ImmutableListMultimapTest extends TestCase {
     input.put("bar", 2);
     input.put("foo", 3);
     input.put("foo", 1);
-    Multimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
-    assertEquals(multimap, input);
-    assertEquals(input, multimap);
+    ImmutableListMultimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
+    new EqualsTester().addEqualityGroup(input, multimap).testEquals();
   }
 
   public void testCopyOfEmpty() {
     ArrayListMultimap<String, Integer> input = ArrayListMultimap.create();
-    Multimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
-    assertEquals(multimap, input);
-    assertEquals(input, multimap);
+    ImmutableListMultimap<String, Integer> multimap = ImmutableListMultimap.copyOf(input);
+    new EqualsTester().addEqualityGroup(input, multimap).testEquals();
   }
 
   public void testCopyOfImmutableListMultimap() {
@@ -407,17 +406,17 @@ public class ImmutableListMultimapTest extends TestCase {
   }
 
   public void testEmptyMultimapReads() {
-    Multimap<String, Integer> multimap = ImmutableListMultimap.of();
+    ImmutableListMultimap<String, Integer> multimap = ImmutableListMultimap.of();
     assertFalse(multimap.containsKey("foo"));
     assertFalse(multimap.containsValue(1));
     assertFalse(multimap.containsEntry("foo", 1));
     assertTrue(multimap.entries().isEmpty());
     assertTrue(multimap.equals(ArrayListMultimap.create()));
-    assertEquals(Collections.emptyList(), multimap.get("foo"));
+    assertEquals(emptyList(), multimap.get("foo"));
     assertEquals(0, multimap.hashCode());
     assertTrue(multimap.isEmpty());
     assertEquals(HashMultiset.create(), multimap.keys());
-    assertEquals(Collections.emptySet(), multimap.keySet());
+    assertEquals(emptySet(), multimap.keySet());
     assertEquals(0, multimap.size());
     assertTrue(multimap.values().isEmpty());
     assertEquals("{}", multimap.toString());

@@ -16,9 +16,10 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.copyToList;
+
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.testing.AbstractCollectionTester;
-import com.google.common.collect.testing.Helpers;
 import java.util.Collection;
 import java.util.List;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -31,7 +32,8 @@ import org.junit.Ignore;
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class AbstractListTester<E extends @Nullable Object> extends AbstractCollectionTester<E> {
   /*
@@ -52,7 +54,7 @@ public class AbstractListTester<E extends @Nullable Object> extends AbstractColl
    */
   @Override
   protected void expectContents(Collection<E> expectedCollection) {
-    List<E> expectedList = Helpers.copyToList(expectedCollection);
+    List<E> expectedList = copyToList(expectedCollection);
     // Avoid expectEquals() here to delay reason manufacture until necessary.
     if (getList().size() != expectedList.size()) {
       fail("size mismatch: " + reportContext(expectedList));

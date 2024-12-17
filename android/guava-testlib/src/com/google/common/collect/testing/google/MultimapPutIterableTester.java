@@ -22,6 +22,7 @@ import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_
 import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_VALUES;
 import static com.google.common.collect.testing.features.MapFeature.SUPPORTS_PUT;
 import static com.google.common.collect.testing.google.ReflectionFreeAssertThrows.assertThrows;
+import static java.util.Collections.singletonList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.ImmutableSet;
@@ -41,7 +42,8 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MultimapPutIterableTester<K, V> extends AbstractMultimapTester<K, V, Multimap<K, V>> {
   @CollectionSize.Require(absent = ZERO)
@@ -154,8 +156,7 @@ public class MultimapPutIterableTester<K, V> extends AbstractMultimapTester<K, V
 
   @MapFeature.Require(value = SUPPORTS_PUT, absent = ALLOWS_NULL_KEYS)
   public void testPutAllNullForbidden() {
-    assertThrows(
-        NullPointerException.class, () -> multimap().putAll(null, Collections.singletonList(v3())));
+    assertThrows(NullPointerException.class, () -> multimap().putAll(null, singletonList(v3())));
   }
 
   @MapFeature.Require(SUPPORTS_PUT)

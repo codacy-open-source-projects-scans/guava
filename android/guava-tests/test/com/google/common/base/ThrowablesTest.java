@@ -55,11 +55,15 @@ import junit.framework.TestCase;
 @GwtCompatible(emulated = true)
 @SuppressWarnings("deprecation") // tests of numerous deprecated methods
 public class ThrowablesTest extends TestCase {
+  // We're testing that the method is in fact equivalent to throwing the exception directly.
+  @SuppressWarnings("ThrowIfUncheckedKnownUnchecked")
   public void testThrowIfUnchecked_unchecked() {
     assertThrows(
         SomeUncheckedException.class, () -> throwIfUnchecked(new SomeUncheckedException()));
   }
 
+  // We're testing that the method is in fact equivalent to throwing the exception directly.
+  @SuppressWarnings("ThrowIfUncheckedKnownUnchecked")
   public void testThrowIfUnchecked_error() {
     assertThrows(SomeError.class, () -> throwIfUnchecked(new SomeError()));
   }
@@ -71,6 +75,8 @@ public class ThrowablesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // propagateIfPossible
+  // We're testing that the method is in fact equivalent to throwing the exception directly.
+  @SuppressWarnings("ThrowIfUncheckedKnownUnchecked")
   public void testPropagateIfPossible_noneDeclared_unchecked() {
     assertThrows(
         SomeUncheckedException.class, () -> propagateIfPossible(new SomeUncheckedException()));
@@ -151,12 +157,16 @@ public class ThrowablesTest extends TestCase {
         SomeOtherCheckedException.class);
   }
 
+  // I guess it's technically a bug that ThrowIfUncheckedKnownUnchecked fires here.
+  @SuppressWarnings("ThrowIfUncheckedKnownUnchecked")
   public void testThrowIfUnchecked_null() {
     assertThrows(NullPointerException.class, () -> throwIfUnchecked(null));
   }
 
   @J2ktIncompatible
   @GwtIncompatible // propagateIfPossible
+  // I guess it's technically a bug that ThrowIfUncheckedKnownUnchecked fires here.
+  @SuppressWarnings("ThrowIfUncheckedKnownUnchecked")
   public void testPropageIfPossible_null() {
     propagateIfPossible(null);
   }
@@ -367,25 +377,6 @@ public class ThrowablesTest extends TestCase {
 
     e.setStackTrace(new StackTraceElement[0]);
     assertThat(lazyStackTrace(e)).containsExactly((Object[]) originalStackTrace).inOrder();
-  }
-
-  @J2ktIncompatible
-  @GwtIncompatible // lazyStackTrace
-  private void doTestLazyStackTraceFallback() {
-    assertFalse(lazyStackTraceIsLazy());
-
-    Exception e = new Exception();
-
-    assertThat(lazyStackTrace(e)).containsExactly((Object[]) e.getStackTrace()).inOrder();
-
-    try {
-      lazyStackTrace(e).set(0, null);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
-
-    e.setStackTrace(new StackTraceElement[0]);
-    assertThat(lazyStackTrace(e)).isEmpty();
   }
 
   @J2ktIncompatible

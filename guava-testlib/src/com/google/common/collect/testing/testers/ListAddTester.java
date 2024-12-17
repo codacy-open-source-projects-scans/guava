@@ -16,6 +16,8 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.copyToList;
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionFeature.ALLOWS_NULL_VALUES;
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_ADD;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
@@ -24,7 +26,6 @@ import static com.google.common.collect.testing.testers.ReflectionFreeAssertThro
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import java.lang.reflect.Method;
@@ -38,7 +39,8 @@ import org.junit.Ignore;
  * @author Chris Povirk
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class ListAddTester<E> extends AbstractListTester<E> {
   @CollectionFeature.Require(SUPPORTS_ADD)
@@ -65,7 +67,7 @@ public class ListAddTester<E> extends AbstractListTester<E> {
     collection = getSubjectGenerator().create(array);
     assertTrue("add(nullPresent) should return true", getList().add(null));
 
-    List<E> expected = Helpers.copyToList(array);
+    List<E> expected = copyToList(array);
     expected.add(null);
     expectContents(expected);
   }
@@ -77,6 +79,6 @@ public class ListAddTester<E> extends AbstractListTester<E> {
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getAddSupportedNullPresentMethod() {
-    return Helpers.getMethod(ListAddTester.class, "testAdd_supportedNullPresent");
+    return getMethod(ListAddTester.class, "testAdd_supportedNullPresent");
   }
 }

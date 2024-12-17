@@ -17,20 +17,20 @@
 package com.google.common.collect.testing.google;
 
 import static com.google.common.collect.testing.Helpers.assertEmpty;
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_ADD;
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_REMOVE;
 import static com.google.common.collect.testing.features.CollectionSize.SEVERAL;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.junit.Ignore;
@@ -41,7 +41,8 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MultisetElementSetTester<E> extends AbstractMultisetTester<E> {
   @CollectionFeature.Require(SUPPORTS_ADD)
@@ -57,7 +58,7 @@ public class MultisetElementSetTester<E> extends AbstractMultisetTester<E> {
   public void testElementSetReflectsRemove() {
     Set<E> elementSet = getMultiset().elementSet();
     assertTrue(elementSet.contains(e0()));
-    getMultiset().removeAll(Collections.singleton(e0()));
+    getMultiset().removeAll(singleton(e0()));
     assertFalse(elementSet.contains(e0()));
   }
 
@@ -105,7 +106,7 @@ public class MultisetElementSetTester<E> extends AbstractMultisetTester<E> {
   @GwtIncompatible // reflection
   public static List<Method> getElementSetDuplicateInitializingMethods() {
     return asList(
-        Helpers.getMethod(
+        getMethod(
             MultisetElementSetTester.class, "testElementSetRemoveDuplicatePropagatesToMultiset"));
   }
 }

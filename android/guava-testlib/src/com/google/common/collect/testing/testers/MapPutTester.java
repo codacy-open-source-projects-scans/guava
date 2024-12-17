@@ -16,6 +16,7 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_KEYS;
 import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_VALUES;
@@ -27,7 +28,6 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.testing.AbstractMapTester;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.collect.testing.features.MapFeature;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -45,7 +45,8 @@ import org.junit.Ignore;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MapPutTester<K, V> extends AbstractMapTester<K, V> {
   private Entry<K, V> nullKeyEntry;
@@ -239,6 +240,6 @@ public class MapPutTester<K, V> extends AbstractMapTester<K, V> {
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getPutNullKeyUnsupportedMethod() {
-    return Helpers.getMethod(MapPutTester.class, "testPut_nullKeyUnsupported");
+    return getMethod(MapPutTester.class, "testPut_nullKeyUnsupported");
   }
 }

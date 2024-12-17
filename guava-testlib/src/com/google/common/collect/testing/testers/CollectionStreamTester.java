@@ -16,12 +16,12 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
 import static com.google.common.collect.testing.features.CollectionFeature.KNOWN_ORDER;
 import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.testing.AbstractCollectionTester;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.features.CollectionFeature;
 import org.junit.Ignore;
 
@@ -32,7 +32,8 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class CollectionStreamTester<E> extends AbstractCollectionTester<E> {
   /*
@@ -42,7 +43,7 @@ public class CollectionStreamTester<E> extends AbstractCollectionTester<E> {
 
   @CollectionFeature.Require(absent = KNOWN_ORDER)
   public void testStreamToArrayUnknownOrder() {
-    Helpers.assertEqualIgnoringOrder(getSampleElements(), asList(collection.stream().toArray()));
+    assertEqualIgnoringOrder(getSampleElements(), asList(collection.stream().toArray()));
   }
 
   @CollectionFeature.Require(KNOWN_ORDER)

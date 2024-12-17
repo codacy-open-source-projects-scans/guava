@@ -356,13 +356,8 @@ public class DoubleMathTest extends TestCase {
       for (RoundingMode mode : asList(HALF_EVEN, HALF_UP, HALF_DOWN)) {
         double x = Math.scalb(Math.sqrt(2) + 0.001, exp);
         double y = Math.scalb(Math.sqrt(2) - 0.001, exp);
-        if (exp < 0) {
-          assertEquals(exp + 1, DoubleMath.log2(x, mode));
-          assertEquals(exp, DoubleMath.log2(y, mode));
-        } else {
-          assertEquals(exp + 1, DoubleMath.log2(x, mode));
-          assertEquals(exp, DoubleMath.log2(y, mode));
-        }
+        assertEquals(exp + 1, DoubleMath.log2(x, mode));
+        assertEquals(exp, DoubleMath.log2(y, mode));
       }
     }
   }
@@ -452,6 +447,7 @@ public class DoubleMathTest extends TestCase {
   }
 
   @GwtIncompatible // StrictMath
+  @SuppressWarnings("strictfp") // Guava still supports Java 8
   private strictfp double trueLog2(double d) {
     double trueLog2 = StrictMath.log(d) / StrictMath.log(2);
     // increment until it's >= the true value

@@ -16,10 +16,12 @@
 
 package com.google.common.collect.testing.google;
 
+import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
+import static com.google.common.collect.testing.Helpers.mapEntry;
+
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.testing.AbstractMapTester;
-import com.google.common.collect.testing.Helpers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +31,8 @@ import org.junit.Ignore;
 
 /** Skeleton for a tester of a {@code BiMap}. */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 @ElementTypesAreNonnullByDefault
 public abstract class AbstractBiMapTester<K extends @Nullable Object, V extends @Nullable Object>
@@ -42,7 +45,7 @@ public abstract class AbstractBiMapTester<K extends @Nullable Object, V extends 
 
   static <K extends @Nullable Object, V extends @Nullable Object> Entry<V, K> reverseEntry(
       Entry<K, V> entry) {
-    return Helpers.mapEntry(entry.getValue(), entry.getKey());
+    return mapEntry(entry.getValue(), entry.getKey());
   }
 
   @Override
@@ -52,7 +55,7 @@ public abstract class AbstractBiMapTester<K extends @Nullable Object, V extends 
     for (Entry<K, V> entry : expected) {
       reversedEntries.add(reverseEntry(entry));
     }
-    Helpers.assertEqualIgnoringOrder(getMap().inverse().entrySet(), reversedEntries);
+    assertEqualIgnoringOrder(getMap().inverse().entrySet(), reversedEntries);
 
     for (Entry<K, V> entry : expected) {
       assertEquals(

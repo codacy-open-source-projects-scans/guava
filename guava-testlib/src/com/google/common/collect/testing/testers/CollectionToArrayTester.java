@@ -16,6 +16,8 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionFeature.KNOWN_ORDER;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static com.google.common.collect.testing.testers.ReflectionFreeAssertThrows.assertThrows;
@@ -25,7 +27,6 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.testing.AbstractCollectionTester;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.WrongType;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
@@ -43,7 +44,8 @@ import org.junit.Ignore;
  * @author Chris Povirk
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class CollectionToArrayTester<E> extends AbstractCollectionTester<E> {
   public void testToArray_noArgs() {
@@ -185,7 +187,7 @@ public class CollectionToArrayTester<E> extends AbstractCollectionTester<E> {
   }
 
   private void expectArrayContentsAnyOrder(Object[] expected, Object[] actual) {
-    Helpers.assertEqualIgnoringOrder(asList(expected), asList(actual));
+    assertEqualIgnoringOrder(asList(expected), asList(actual));
   }
 
   private void expectArrayContentsInOrder(List<E> expected, Object[] actual) {
@@ -201,6 +203,6 @@ public class CollectionToArrayTester<E> extends AbstractCollectionTester<E> {
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getToArrayIsPlainObjectArrayMethod() {
-    return Helpers.getMethod(CollectionToArrayTester.class, "testToArray_isPlainObjectArray");
+    return getMethod(CollectionToArrayTester.class, "testToArray_isPlainObjectArray");
   }
 }

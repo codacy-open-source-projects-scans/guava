@@ -16,6 +16,7 @@
 
 package com.google.common.collect.testing.google;
 
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionFeature.ALLOWS_NULL_QUERIES;
 import static com.google.common.collect.testing.features.CollectionFeature.ALLOWS_NULL_VALUES;
 import static com.google.common.collect.testing.features.CollectionSize.SEVERAL;
@@ -26,7 +27,6 @@ import static java.util.Arrays.asList;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.WrongType;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
@@ -40,7 +40,8 @@ import org.junit.Ignore;
  * @author Jared Levy
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MultisetCountTester<E> extends AbstractMultisetTester<E> {
 
@@ -88,6 +89,6 @@ public class MultisetCountTester<E> extends AbstractMultisetTester<E> {
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static List<Method> getCountDuplicateInitializingMethods() {
-    return asList(Helpers.getMethod(MultisetCountTester.class, "testCount_3"));
+    return asList(getMethod(MultisetCountTester.class, "testCount_3"));
   }
 }

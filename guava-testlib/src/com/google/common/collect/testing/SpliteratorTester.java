@@ -47,7 +47,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Tester for {@code Spliterator} implementations.
  *
- * @since 21.0
+ * @since 21.0 (but only since 33.4.0 in the Android flavor)
  */
 @GwtCompatible
 @ElementTypesAreNonnullByDefault
@@ -253,7 +253,7 @@ public final class SpliteratorTester<E extends @Nullable Object> {
   }
 
   /**
-   * @since 28.1
+   * @since 28.1 (but only since 33.4.0 in the Android flavor)
    */
   public static SpliteratorTester<Integer> ofInt(Supplier<Spliterator.OfInt> spliteratorSupplier) {
     return new SpliteratorTester<>(
@@ -263,7 +263,7 @@ public final class SpliteratorTester<E extends @Nullable Object> {
   }
 
   /**
-   * @since 28.1
+   * @since 28.1 (but only since 33.4.0 in the Android flavor)
    */
   public static SpliteratorTester<Long> ofLong(Supplier<Spliterator.OfLong> spliteratorSupplier) {
     return new SpliteratorTester<>(
@@ -273,7 +273,7 @@ public final class SpliteratorTester<E extends @Nullable Object> {
   }
 
   /**
-   * @since 28.1
+   * @since 28.1 (but only since 33.4.0 in the Android flavor)
    */
   public static SpliteratorTester<Double> ofDouble(
       Supplier<Spliterator.OfDouble> spliteratorSupplier) {

@@ -16,6 +16,8 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.copyToList;
+import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.IteratorFeature.MODIFIABLE;
 import static com.google.common.collect.testing.IteratorFeature.UNMODIFIABLE;
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_REMOVE;
@@ -28,7 +30,6 @@ import static java.util.Collections.singleton;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.collect.testing.Helpers;
 import com.google.common.collect.testing.IteratorFeature;
 import com.google.common.collect.testing.ListIteratorTester;
 import com.google.common.collect.testing.features.CollectionFeature;
@@ -49,7 +50,8 @@ import org.junit.Ignore;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 @ElementTypesAreNonnullByDefault
 public class ListListIteratorTester<E extends @Nullable Object> extends AbstractListTester<E> {
@@ -74,7 +76,7 @@ public class ListListIteratorTester<E extends @Nullable Object> extends Abstract
         listListIteratorTesterNumIterations(),
         singleton(e4()),
         features,
-        Helpers.copyToList(getOrderedElements()),
+        copyToList(getOrderedElements()),
         0) {
       @Override
       protected ListIterator<E> newTargetIterator() {
@@ -112,7 +114,7 @@ public class ListListIteratorTester<E extends @Nullable Object> extends Abstract
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getListIteratorFullyModifiableMethod() {
-    return Helpers.getMethod(ListListIteratorTester.class, "testListIterator_fullyModifiable");
+    return getMethod(ListListIteratorTester.class, "testListIterator_fullyModifiable");
   }
 
   /**
@@ -122,6 +124,6 @@ public class ListListIteratorTester<E extends @Nullable Object> extends Abstract
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getListIteratorUnmodifiableMethod() {
-    return Helpers.getMethod(ListListIteratorTester.class, "testListIterator_unmodifiable");
+    return getMethod(ListListIteratorTester.class, "testListIterator_unmodifiable");
   }
 }

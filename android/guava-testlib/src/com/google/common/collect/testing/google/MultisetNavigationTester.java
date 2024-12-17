@@ -24,6 +24,9 @@ import static com.google.common.collect.testing.features.CollectionSize.SEVERAL;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static com.google.common.collect.testing.google.ReflectionFreeAssertThrows.assertThrows;
 import static java.util.Arrays.asList;
+import static java.util.Collections.nCopies;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.sort;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.BoundType;
@@ -46,7 +49,8 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
   private SortedMultiset<E> sortedMultiset;
@@ -68,7 +72,7 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
         copyToList(
             getSubjectGenerator()
                 .getSampleElements(getSubjectGenerator().getCollectionSize().getNumElements()));
-    Collections.sort(entries, sortedMultiset.comparator());
+    sort(entries, sortedMultiset.comparator());
 
     // some tests assume SEVERAL == 3
     if (entries.size() >= 1) {
@@ -84,8 +88,8 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
   // Needed to stop Eclipse whining
   private void resetWithHole() {
     List<E> container = new ArrayList<>();
-    container.addAll(Collections.nCopies(a.getCount(), a.getElement()));
-    container.addAll(Collections.nCopies(c.getCount(), c.getElement()));
+    container.addAll(nCopies(a.getCount(), a.getElement()));
+    container.addAll(nCopies(c.getCount(), c.getElement()));
     super.resetContainer(getSubjectGenerator().create(container.toArray()));
     sortedMultiset = (SortedMultiset<E>) getMultiset();
   }
@@ -248,7 +252,7 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
     }
 
     try {
-      multiset.addAll(Collections.singletonList(entry.getElement()));
+      multiset.addAll(singletonList(entry.getElement()));
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }

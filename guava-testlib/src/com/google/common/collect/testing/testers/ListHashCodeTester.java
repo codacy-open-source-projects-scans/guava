@@ -16,10 +16,11 @@
 
 package com.google.common.collect.testing.testers;
 
+import static com.google.common.collect.testing.Helpers.getMethod;
+
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.collect.testing.Helpers;
 import java.lang.reflect.Method;
 import org.junit.Ignore;
 
@@ -29,7 +30,8 @@ import org.junit.Ignore;
  * @author George van den Driessche
  */
 @GwtCompatible(emulated = true)
-@Ignore // Affects only Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
+@Ignore("test runners must not instantiate and run this directly, only via suites we build")
+// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class ListHashCodeTester<E> extends AbstractListTester<E> {
   public void testHashCode() {
@@ -50,6 +52,6 @@ public class ListHashCodeTester<E> extends AbstractListTester<E> {
   @J2ktIncompatible
   @GwtIncompatible // reflection
   public static Method getHashCodeMethod() {
-    return Helpers.getMethod(ListHashCodeTester.class, "testHashCode");
+    return getMethod(ListHashCodeTester.class, "testHashCode");
   }
 }

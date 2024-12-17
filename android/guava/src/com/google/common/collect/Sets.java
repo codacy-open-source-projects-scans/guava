@@ -19,6 +19,7 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
+import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
@@ -100,7 +101,6 @@ public final class Sets {
    * @param otherElements the rest of the elements the set should contain
    * @return an immutable set containing those elements, minus duplicates
    */
-  // http://code.google.com/p/google-web-toolkit/issues/detail?id=3028
   @GwtCompatible(serializable = true)
   public static <E extends Enum<E>> ImmutableSet<E> immutableEnumSet(
       E anElement, E... otherElements) {
@@ -117,7 +117,6 @@ public final class Sets {
    * @param elements the elements, all of the same {@code enum} type, that the set should contain
    * @return an immutable set containing those elements, minus duplicates
    */
-  // http://code.google.com/p/google-web-toolkit/issues/detail?id=3028
   @GwtCompatible(serializable = true)
   public static <E extends Enum<E>> ImmutableSet<E> immutableEnumSet(Iterable<E> elements) {
     if (elements instanceof ImmutableEnumSet) {
@@ -601,9 +600,18 @@ public final class Sets {
      * nonstandard notion of equivalence, for example if it is a {@link TreeSet} using a comparator
      * that is inconsistent with {@link Object#equals(Object)}.
      */
-    @SuppressWarnings("nullness") // Unsafe, but we can't fix it now.
     public ImmutableSet<@NonNull E> immutableCopy() {
-      return ImmutableSet.copyOf((SetView<@NonNull E>) this);
+      // Not using ImmutableSet.copyOf() to avoid iterating thrice (isEmpty, size, iterator).
+      int upperBoundSize = upperBoundSize();
+      if (upperBoundSize == 0) {
+        return ImmutableSet.of();
+      }
+      ImmutableSet.Builder<@NonNull E> builder =
+          ImmutableSet.builderWithExpectedSize(upperBoundSize);
+      for (E element : this) {
+        builder.add(checkNotNull(element));
+      }
+      return builder.build();
     }
 
     /**
@@ -711,6 +719,18 @@ public final class Sets {
      */
     @Override
     public abstract UnmodifiableIterator<E> iterator();
+
+    /**
+     * Returns the upper bound on the size of this set view.
+     *
+     * <p>This method is used to presize the underlying collection when converting to an {@link
+     * ImmutableSet}.
+     */
+    abstract int upperBoundSize();
+
+    static int upperBoundSize(Set<?> set) {
+      return set instanceof SetView ? ((SetView) set).upperBoundSize() : set.size();
+    }
   }
 
   /**
@@ -781,13 +801,8 @@ public final class Sets {
       }
 
       @Override
-      @SuppressWarnings({"nullness", "unchecked"}) // see supertype
-      public ImmutableSet<@NonNull E> immutableCopy() {
-        ImmutableSet.Builder<@NonNull E> builder =
-            new ImmutableSet.Builder<@NonNull E>()
-                .addAll((Iterable<@NonNull E>) set1)
-                .addAll((Iterable<@NonNull E>) set2);
-        return (ImmutableSet<@NonNull E>) builder.build();
+      int upperBoundSize() {
+        return upperBoundSize(set1) + upperBoundSize(set2);
       }
     };
   }
@@ -869,6 +884,11 @@ public final class Sets {
       public boolean containsAll(Collection<?> collection) {
         return set1.containsAll(collection) && set2.containsAll(collection);
       }
+
+      @Override
+      int upperBoundSize() {
+        return min(upperBoundSize(set1), upperBoundSize(set2));
+      }
     };
   }
 
@@ -926,6 +946,11 @@ public final class Sets {
       @Override
       public boolean contains(@CheckForNull Object element) {
         return set1.contains(element) && !set2.contains(element);
+      }
+
+      @Override
+      int upperBoundSize() {
+        return upperBoundSize(set1);
       }
     };
   }
@@ -996,6 +1021,11 @@ public final class Sets {
       @Override
       public boolean contains(@CheckForNull Object element) {
         return set1.contains(element) ^ set2.contains(element);
+      }
+
+      @Override
+      int upperBoundSize() {
+        return upperBoundSize(set1) + upperBoundSize(set2);
       }
     };
   }
