@@ -17,17 +17,18 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.collect.Iterables.concat;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.testing.GcFinalization;
 import com.google.common.testing.NullPointerTester;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,12 +38,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for Striped.
  *
  * @author Dimitris Andreou
  */
+@NullUnmarked
 public class StripedTest extends TestCase {
   private static List<Striped<?>> strongImplementations() {
     return ImmutableList.of(
@@ -119,9 +122,9 @@ public class StripedTest extends TestCase {
 
   public void testSizes() {
     // not bothering testing all variations, since we know they share implementations
-    assertTrue(Striped.lock(100).size() >= 100);
+    assertThat(Striped.lock(100).size()).isAtLeast(100);
     assertTrue(Striped.lock(256).size() == 256);
-    assertTrue(Striped.lazyWeakLock(100).size() >= 100);
+    assertThat(Striped.lazyWeakLock(100).size()).isAtLeast(100);
     assertTrue(Striped.lazyWeakLock(256).size() == 256);
   }
 
@@ -152,7 +155,7 @@ public class StripedTest extends TestCase {
       WeakReference<Object> weakRef = new WeakReference<>(striped.get(new Object()));
       WeakReference<Object> garbage = new WeakReference<>(new Object());
       GcFinalization.awaitClear(garbage);
-      assertNotNull(weakRef.get());
+      assertThat(weakRef.get()).isNotNull();
     }
   }
 
@@ -166,7 +169,7 @@ public class StripedTest extends TestCase {
 
   public void testBulkGetReturnsSorted() {
     for (Striped<?> striped : allImplementations()) {
-      Map<Object, Integer> indexByLock = Maps.newHashMap();
+      Map<Object, Integer> indexByLock = new HashMap<>();
       for (int i = 0; i < striped.size(); i++) {
         indexByLock.put(striped.getAt(i), i);
       }
@@ -200,7 +203,7 @@ public class StripedTest extends TestCase {
     // this gets the stripes with #getAt(index)
     for (int i = 0; i < striped.size(); i++) {
       Object object = striped.getAt(i);
-      assertNotNull(object);
+      assertThat(object).isNotNull();
       assertSame(object, striped.getAt(i)); // idempotent
       observed.add(object);
     }

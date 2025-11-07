@@ -47,7 +47,7 @@ import org.junit.Ignore;
  *
  * @author Chris Povirk
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @Ignore("test runners must not instantiate and run this directly, only via suites we build")
 // @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
@@ -70,11 +70,12 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
        * The subList() docs claim that this should be an
        * IndexOutOfBoundsException, but many JDK implementations throw
        * IllegalArgumentException:
-       * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4506427
+       * https://bugs.openjdk.org/browse/JDK-4506427
        */
     }
   }
 
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   public void testSubList_empty() {
     assertEquals("subList(0, 0) should be empty", emptyList(), getList().subList(0, 0));
   }
@@ -173,6 +174,7 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
         subList);
   }
 
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   public void testSubList_ofSubListEmpty() {
     List<E> subList = getList().subList(0, 0).subList(0, 0);
     assertEquals("subList(0, 0).subList(0, 0) should be an empty list", emptyList(), subList);
@@ -308,7 +310,7 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
    * Returns the {@link Method} instance for {@link #testSubList_originalListSetAffectsSubList()} so
    * that tests of {@link CopyOnWriteArrayList} can suppress them with {@code
    * FeatureSpecificTestSuiteBuilder.suppressing()} until <a
-   * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6570631">Sun bug 6570631</a> is fixed.
+   * href="https://bugs.openjdk.org/browse/JDK-6570631">JDK-6570631</a> is fixed.
    */
   @J2ktIncompatible
   @GwtIncompatible // reflection
@@ -321,7 +323,7 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
    * #testSubList_originalListSetAffectsSubListLargeList()} so that tests of {@link
    * CopyOnWriteArrayList} can suppress them with {@code
    * FeatureSpecificTestSuiteBuilder.suppressing()} until <a
-   * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6570631">Sun bug 6570631</a> is fixed.
+   * href="https://bugs.openjdk.org/browse/JDK-6570631">JDK-6570631</a> is fixed.
    */
   @J2ktIncompatible
   @GwtIncompatible // reflection
@@ -334,7 +336,7 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
    * #testSubList_subListRemoveAffectsOriginalLargeList()} so that tests of {@link
    * CopyOnWriteArrayList} can suppress it with {@code
    * FeatureSpecificTestSuiteBuilder.suppressing()} until <a
-   * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6570575">Sun bug 6570575</a> is fixed.
+   * href="https://bugs.openjdk.org/browse/JDK-6570575">JDK-6570575</a> is fixed.
    */
   @J2ktIncompatible
   @GwtIncompatible // reflection

@@ -20,12 +20,13 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Basic implementation of the {@link ListMultimap} interface. It's a wrapper around {@link
@@ -36,7 +37,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMapBasedMultimap<K, V> implements ListMultimap<K, V> {
   /**
@@ -51,6 +51,7 @@ abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nulla
   @Override
   abstract List<V> createCollection();
 
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   @Override
   List<V> createUnmodifiableEmptyCollection() {
     return emptyList();
@@ -90,7 +91,7 @@ abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nulla
    */
   @CanIgnoreReturnValue
   @Override
-  public List<V> removeAll(@CheckForNull Object key) {
+  public List<V> removeAll(@Nullable Object key) {
     return (List<V>) super.removeAll(key);
   }
 
@@ -138,9 +139,9 @@ abstract class AbstractListMultimap<K extends @Nullable Object, V extends @Nulla
    * in the same order. If the value orderings disagree, the multimaps will not be considered equal.
    */
   @Override
-  public boolean equals(@CheckForNull Object object) {
+  public boolean equals(@Nullable Object object) {
     return super.equals(object);
   }
 
-  private static final long serialVersionUID = 6588350623831699109L;
+  @GwtIncompatible @J2ktIncompatible   private static final long serialVersionUID = 6588350623831699109L;
 }

@@ -39,7 +39,7 @@ import org.junit.Ignore;
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @Ignore("test runners must not instantiate and run this directly, only via suites we build")
 // @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
@@ -59,7 +59,7 @@ public class BiMapInverseTester<K, V> extends AbstractBiMapTester<K, V> {
     assertSame(copy.forward, copy.backward.inverse());
   }
 
-  private static class BiMapPair<K, V> implements Serializable {
+  private static final class BiMapPair<K, V> implements Serializable {
     final BiMap<K, V> forward;
     final BiMap<V, K> backward;
 
@@ -68,7 +68,7 @@ public class BiMapInverseTester<K, V> extends AbstractBiMapTester<K, V> {
       this.backward = original.inverse();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**

@@ -20,15 +20,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Predicate;
 import com.google.errorprone.annotations.Immutable;
+import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A range (or "interval") defines the <i>boundaries</i> around a contiguous span of values of some
@@ -120,9 +123,7 @@ import javax.annotation.CheckForNull;
 @GwtCompatible
 @SuppressWarnings("rawtypes") // https://github.com/google/guava/issues/989
 @Immutable(containerOf = "C")
-@ElementTypesAreNonnullByDefault
-public final class Range<C extends Comparable> extends RangeGwtSerializationDependencies
-    implements Predicate<C>, Serializable {
+public final class Range<C extends Comparable> implements Predicate<C>, Serializable {
   @SuppressWarnings("unchecked")
   static <C extends Comparable<?>> Ordering<Range<C>> rangeLexOrdering() {
     return (Ordering<Range<C>>) RangeLexOrdering.INSTANCE;
@@ -207,7 +208,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * @since 14.0
    */
   public static <C extends Comparable<?>> Range<C> lessThan(C endpoint) {
-    return create(Cut.<C>belowAll(), Cut.belowValue(endpoint));
+    return create(Cut.belowAll(), Cut.belowValue(endpoint));
   }
 
   /**
@@ -216,7 +217,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * @since 14.0
    */
   public static <C extends Comparable<?>> Range<C> atMost(C endpoint) {
-    return create(Cut.<C>belowAll(), Cut.aboveValue(endpoint));
+    return create(Cut.belowAll(), Cut.aboveValue(endpoint));
   }
 
   /**
@@ -241,7 +242,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * @since 14.0
    */
   public static <C extends Comparable<?>> Range<C> greaterThan(C endpoint) {
-    return create(Cut.aboveValue(endpoint), Cut.<C>aboveAll());
+    return create(Cut.aboveValue(endpoint), Cut.aboveAll());
   }
 
   /**
@@ -250,7 +251,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * @since 14.0
    */
   public static <C extends Comparable<?>> Range<C> atLeast(C endpoint) {
-    return create(Cut.belowValue(endpoint), Cut.<C>aboveAll());
+    return create(Cut.belowValue(endpoint), Cut.aboveAll());
   }
 
   /**
@@ -413,9 +414,22 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * @deprecated Provided only to satisfy the {@link Predicate} interface; use {@link #contains}
    *     instead.
    */
+  @InlineMe(replacement = "this.contains(input)")
   @Deprecated
   @Override
   public boolean apply(C input) {
+    return contains(input);
+  }
+
+  /**
+   * @deprecated Provided only to satisfy the {@link java.util.function.Predicate} interface; use
+   *     {@link #contains} instead.
+   * @since 21.0
+   */
+  @InlineMe(replacement = "this.contains(input)")
+  @Deprecated
+  @Override
+  public boolean test(C input) {
     return contains(input);
   }
 
@@ -646,7 +660,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
    * {@code [3..3)}, {@code (3..3]}, {@code (4..4]} are all unequal.
    */
   @Override
-  public boolean equals(@CheckForNull Object object) {
+  public boolean equals(@Nullable Object object) {
     if (object instanceof Range) {
       Range<?> other = (Range<?>) object;
       return lowerBound.equals(other.lowerBound) && upperBound.equals(other.upperBound);
@@ -701,7 +715,7 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
   }
 
   /** Needed to serialize sorted collections of Ranges. */
-  private static class RangeLexOrdering extends Ordering<Range<?>> implements Serializable {
+  private static final class RangeLexOrdering extends Ordering<Range<?>> implements Serializable {
     static final Ordering<?> INSTANCE = new RangeLexOrdering();
 
     @Override
@@ -712,8 +726,8 @@ public final class Range<C extends Comparable> extends RangeGwtSerializationDepe
           .result();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

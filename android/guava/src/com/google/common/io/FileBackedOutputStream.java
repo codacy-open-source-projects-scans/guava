@@ -31,7 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An {@link OutputStream} that starts buffering to a byte array, but switches to file buffering
@@ -65,7 +65,6 @@ import javax.annotation.CheckForNull;
 @J2ktIncompatible
 @GwtIncompatible
 @J2ObjCIncompatible
-@ElementTypesAreNonnullByDefault
 public final class FileBackedOutputStream extends OutputStream {
   private final int fileThreshold;
   private final boolean resetOnFinalize;
@@ -75,15 +74,13 @@ public final class FileBackedOutputStream extends OutputStream {
   private OutputStream out;
 
   @GuardedBy("this")
-  @CheckForNull
-  private MemoryOutput memory;
+  private @Nullable MemoryOutput memory;
 
   @GuardedBy("this")
-  @CheckForNull
-  private File file;
+  private @Nullable File file;
 
   /** ByteArrayOutputStream that exposes its internals. */
-  private static class MemoryOutput extends ByteArrayOutputStream {
+  private static final class MemoryOutput extends ByteArrayOutputStream {
     byte[] getBuffer() {
       return buf;
     }
@@ -95,8 +92,7 @@ public final class FileBackedOutputStream extends OutputStream {
 
   /** Returns the file holding the data (possibly null). */
   @VisibleForTesting
-  @CheckForNull
-  synchronized File getFile() {
+  synchronized @Nullable File getFile() {
     return file;
   }
 
@@ -242,13 +238,21 @@ public final class FileBackedOutputStream extends OutputStream {
         // this is insurance.
         temp.deleteOnExit();
       }
+      FileOutputStream transfer = null;
       try {
-        FileOutputStream transfer = new FileOutputStream(temp);
+        transfer = new FileOutputStream(temp);
         transfer.write(memory.getBuffer(), 0, memory.getCount());
         transfer.flush();
         // We've successfully transferred the data; switch to writing to file
         out = transfer;
       } catch (IOException e) {
+        if (transfer != null) {
+          try {
+            transfer.close();
+          } catch (IOException closeException) {
+            e.addSuppressed(closeException);
+          }
+        }
         temp.delete();
         throw e;
       }

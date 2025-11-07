@@ -17,6 +17,7 @@
 package com.google.common.base;
 
 import static com.google.common.base.Functions.toStringFunction;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -29,9 +30,11 @@ import com.google.common.testing.SerializableTester;
 import java.util.Iterator;
 import java.util.List;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Unit tests for {@link Converter}. */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class ConverterTest extends TestCase {
 
   private static final Converter<String, Long> STR_TO_LONG =
@@ -101,6 +104,8 @@ public class ConverterTest extends TestCase {
     assertEquals(converter, converter.reverse().reverse());
   }
 
+  // We need to test that apply() does in fact behave like convert().
+  @SuppressWarnings("InlineMeInliner")
   public void testApply() {
     assertEquals(LONG_VAL, STR_TO_LONG.apply(STR_VAL));
   }
@@ -108,7 +113,7 @@ public class ConverterTest extends TestCase {
   private static class StringWrapper {
     private final String value;
 
-    public StringWrapper(String value) {
+    StringWrapper(String value) {
       this.value = value;
     }
   }
@@ -172,8 +177,8 @@ public class ConverterTest extends TestCase {
 
     Converter<String, Number> converter = Converter.<String, Number>from(forward, backward);
 
-    assertNull(converter.convert(null));
-    assertNull(converter.reverse().convert(null));
+    assertThat(converter.convert(null)).isNull();
+    assertThat(converter.reverse().convert(null)).isNull();
 
     assertEquals((Integer) 5, converter.convert("5"));
     assertEquals("5", converter.reverse().convert(5));
@@ -197,7 +202,7 @@ public class ConverterTest extends TestCase {
     assertEquals(null, nullsAreHandled.reverse().convert(null));
   }
 
-  private static Converter<String, String> sillyConverter(final boolean handleNullAutomatically) {
+  private static Converter<String, String> sillyConverter(boolean handleNullAutomatically) {
     return new Converter<String, String>(handleNullAutomatically) {
       @Override
       protected String doForward(String string) {

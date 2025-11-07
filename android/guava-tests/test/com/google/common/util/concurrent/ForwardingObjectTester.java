@@ -25,13 +25,17 @@ import com.google.common.collect.ForwardingObject;
 import com.google.common.collect.Iterables;
 import com.google.common.testing.ForwardingWrapperTester;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tester for typical subclass of {@link ForwardingObject} by using Mockito.
  *
  * @author Ben Yu
  */
+@NullUnmarked
 final class ForwardingObjectTester {
 
   private static final Method DELEGATE_METHOD;
@@ -51,10 +55,12 @@ final class ForwardingObjectTester {
    * Ensures that all interface methods of {@code forwarderClass} are forwarded to the {@link
    * ForwardingObject#delegate}. {@code forwarderClass} is assumed to only implement one interface.
    */
-  static <T extends ForwardingObject> void testForwardingObject(final Class<T> forwarderClass) {
+  static <T extends ForwardingObject> void testForwardingObject(Class<T> forwarderClass) {
+    List<Class<?>> interfaces = new ArrayList<>(Arrays.asList(forwarderClass.getInterfaces()));
+    // Desugaring may introduce AutoCloseable as an extra interface.
+    interfaces.remove(AutoCloseable.class);
     @SuppressWarnings("unchecked") // super interface type of T
-    Class<? super T> interfaceType =
-        (Class<? super T>) Iterables.getOnlyElement(Arrays.asList(forwarderClass.getInterfaces()));
+    Class<? super T> interfaceType = (Class<? super T>) Iterables.getOnlyElement(interfaces);
     new ForwardingWrapperTester()
         .testForwarding(
             interfaceType,
@@ -72,4 +78,6 @@ final class ForwardingObjectTester {
               }
             });
   }
+
+  private ForwardingObjectTester() {}
 }

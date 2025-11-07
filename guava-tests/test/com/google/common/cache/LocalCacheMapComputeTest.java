@@ -29,8 +29,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Test Java8 map.compute in concurrent cache context. */
+@NullUnmarked
 public class LocalCacheMapComputeTest extends TestCase {
   final int count = 10000;
   final String delimiter = "-";
@@ -59,7 +61,7 @@ public class LocalCacheMapComputeTest extends TestCase {
         n -> {
           cache.asMap().computeIfAbsent(key, k -> "value" + n);
         });
-    assertEquals(1, cache.size());
+    assertThat(cache.size()).isEqualTo(1);
   }
 
   public void testComputeIfAbsentEviction() {
@@ -94,7 +96,7 @@ public class LocalCacheMapComputeTest extends TestCase {
         n -> {
           cache.asMap().computeIfPresent(key, (k, v) -> v + delimiter + n);
         });
-    assertEquals(1, cache.size());
+    assertThat(cache.size()).isEqualTo(1);
     assertThat(cache.getIfPresent(key).split(delimiter)).hasLength(count + 1);
   }
 
@@ -123,6 +125,23 @@ public class LocalCacheMapComputeTest extends TestCase {
     CacheTesting.checkEmpty(cache);
   }
 
+  public void testComputeIfPresent_error() {
+    Cache<String, String> cache = CacheBuilder.newBuilder().build();
+    cache.put(key, "1");
+    assertThrows(
+        Error.class,
+        () ->
+            cache
+                .asMap()
+                .computeIfPresent(
+                    key,
+                    (k, v) -> {
+                      throw new Error();
+                    }));
+    assertThat(cache.getIfPresent(key)).isEqualTo("1");
+    assertThat(cache.asMap().computeIfPresent(key, (k, v) -> "2")).isEqualTo("2");
+  }
+
   public void testUpdates() {
     cache.put(key, "1");
     // simultaneous update for same key, some null, some non-null
@@ -131,7 +150,7 @@ public class LocalCacheMapComputeTest extends TestCase {
         n -> {
           cache.asMap().compute(key, (k, v) -> n % 2 == 0 ? v + delimiter + n : null);
         });
-    assertTrue(1 >= cache.size());
+    assertThat(cache.size()).isAtMost(1);
   }
 
   public void testCompute() {
@@ -142,7 +161,7 @@ public class LocalCacheMapComputeTest extends TestCase {
         n -> {
           cache.asMap().compute(key, (k, v) -> null);
         });
-    assertEquals(0, cache.size());
+    assertThat(cache.size()).isEqualTo(0);
   }
 
   public void testComputeWithLoad() {

@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
 import java.util.Random;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Benchmarks for {@link CharStreams#copy}.
@@ -33,6 +34,7 @@ import java.util.Random;
  */
 // These benchmarks allocate a lot of data so use a large heap
 @VmOptions({"-Xms12g", "-Xmx12g", "-d64"})
+@NullUnmarked
 public class CharStreamsCopyBenchmark {
   enum CopyStrategy {
     OLD {
@@ -100,9 +102,9 @@ public class CharStreamsCopyBenchmark {
   @Benchmark
   public long timeCopy(int reps) throws IOException {
     long r = 0;
-    final String localData = data;
-    final TargetSupplier localTarget = target;
-    final CopyStrategy localStrategy = strategy;
+    String localData = data;
+    TargetSupplier localTarget = target;
+    CopyStrategy localStrategy = strategy;
     for (int i = 0; i < reps; i++) {
       Appendable appendable = localTarget.get(localData.length());
       r += localStrategy.copy(new StringReader(localData), appendable);

@@ -20,11 +20,12 @@ import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.common.base.BenchmarkHelpers.SampleMatcherConfig;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Benchmark for the {@link CharMatcher} class.
@@ -33,6 +34,7 @@ import java.util.Random;
  * @author Kevin Bourrillion
  * @author David Richter
  */
+@NullUnmarked
 public class CharMatcherBenchmark {
 
   // Caliper injects params automatically
@@ -119,7 +121,7 @@ public class CharMatcherBenchmark {
     }
     // Use a shuffled index array to ensure constant percentage of matching
     // characters
-    List<Integer> list = Lists.newArrayList();
+    List<Integer> list = new ArrayList<>();
     for (int i = 0; i < length; i++) {
       list.add(i);
     }
@@ -199,7 +201,7 @@ public class CharMatcherBenchmark {
       }
     }
 
-    private int sum = 69552218;
+    private final int sum = 69552218;
     private static int[] prob;
 
     private static void populateProb1() {

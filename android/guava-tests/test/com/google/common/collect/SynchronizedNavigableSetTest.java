@@ -32,27 +32,29 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link Sets#synchronizedNavigableSet(NavigableSet)}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class SynchronizedNavigableSetTest extends TestCase {
   private static final Object MUTEX = new Object[0]; // something Serializable
 
-  @SuppressWarnings("unchecked")
-  protected <E> NavigableSet<E> create() {
-    TestSet<E> inner =
-        new TestSet<>(new TreeSet<E>((Comparator<E>) Ordering.natural().nullsFirst()), MUTEX);
+  protected <E extends Comparable<E>> NavigableSet<E> create() {
+    LockHeldAssertingNavigableSet<E> inner =
+        new LockHeldAssertingNavigableSet<>(new TreeSet<>(Ordering.natural().nullsFirst()), MUTEX);
     NavigableSet<E> outer = Synchronized.navigableSet(inner, MUTEX);
     return outer;
   }
 
-  static class TestSet<E> extends SynchronizedSetTest.TestSet<E> implements NavigableSet<E> {
+  static class LockHeldAssertingNavigableSet<E> extends LockHeldAssertingSet<E>
+      implements NavigableSet<E> {
 
-    TestSet(NavigableSet<E> delegate, @Nullable Object mutex) {
+    LockHeldAssertingNavigableSet(NavigableSet<E> delegate, @Nullable Object mutex) {
       super(delegate, mutex);
     }
 
@@ -162,6 +164,7 @@ public class SynchronizedNavigableSetTest extends TestCase {
     private static final long serialVersionUID = 0;
   }
 
+  @AndroidIncompatible // test-suite builders
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(SynchronizedNavigableSetTest.class);
@@ -173,7 +176,8 @@ public class SynchronizedNavigableSetTest extends TestCase {
                   protected NavigableSet<String> create(String[] elements) {
                     NavigableSet<String> innermost = new SafeTreeSet<>();
                     Collections.addAll(innermost, elements);
-                    TestSet<String> inner = new TestSet<>(innermost, MUTEX);
+                    LockHeldAssertingNavigableSet<String> inner =
+                        new LockHeldAssertingNavigableSet<>(innermost, MUTEX);
                     NavigableSet<String> outer = Synchronized.navigableSet(inner, MUTEX);
                     return outer;
                   }

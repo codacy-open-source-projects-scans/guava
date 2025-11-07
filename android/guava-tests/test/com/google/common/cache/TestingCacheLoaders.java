@@ -19,25 +19,28 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utility {@link CacheLoader} implementations intended for use in testing.
  *
  * @author mike nonemacher
  */
-@GwtCompatible(emulated = true)
-class TestingCacheLoaders {
+@GwtCompatible
+@NullUnmarked
+final class TestingCacheLoaders {
 
   /**
    * Returns a {@link CacheLoader} that implements a naive {@link CacheLoader#loadAll}, delegating
    * {@link CacheLoader#load} calls to {@code loader}.
    */
-  static <K, V> CacheLoader<K, V> bulkLoader(final CacheLoader<K, V> loader) {
+  static <K, V> CacheLoader<K, V> bulkLoader(CacheLoader<K, V> loader) {
     checkNotNull(loader);
     return new CacheLoader<K, V>() {
       @Override
@@ -47,7 +50,7 @@ class TestingCacheLoaders {
 
       @Override
       public Map<K, V> loadAll(Iterable<? extends K> keys) throws Exception {
-        Map<K, V> result = Maps.newHashMap(); // allow nulls
+        Map<K, V> result = new HashMap<>(); // allow nulls
         for (K key : keys) {
           result.put(key, load(key));
         }
@@ -67,7 +70,7 @@ class TestingCacheLoaders {
   }
 
   /** Returns a {@link CacheLoader} that throws the given error for every request. */
-  static <K, V> CacheLoader<K, V> errorLoader(final Error e) {
+  static <K, V> CacheLoader<K, V> errorLoader(Error e) {
     checkNotNull(e);
     return new CacheLoader<K, V>() {
       @Override
@@ -78,7 +81,7 @@ class TestingCacheLoaders {
   }
 
   /** Returns a {@link CacheLoader} that throws the given exception for every request. */
-  static <K, V> CacheLoader<K, V> exceptionLoader(final Exception e) {
+  static <K, V> CacheLoader<K, V> exceptionLoader(Exception e) {
     checkNotNull(e);
     return new CacheLoader<K, V>() {
       @Override
@@ -134,6 +137,7 @@ class TestingCacheLoaders {
     private final AtomicInteger countLoad = new AtomicInteger();
     private final AtomicInteger countReload = new AtomicInteger();
 
+    @CanIgnoreReturnValue // Sure, why not?
     @Override
     public Integer load(Integer key) {
       countLoad.incrementAndGet();
@@ -162,4 +166,6 @@ class TestingCacheLoaders {
       return key;
     }
   }
+
+  private TestingCacheLoaders() {}
 }

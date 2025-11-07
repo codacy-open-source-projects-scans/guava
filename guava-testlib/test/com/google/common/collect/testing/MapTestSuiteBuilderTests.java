@@ -21,7 +21,6 @@ import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_
 import static com.google.common.collect.testing.features.MapFeature.ALLOWS_NULL_VALUES;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.collect.testing.features.Feature;
@@ -46,13 +45,14 @@ import java.util.function.Predicate;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests {@link MapTestSuiteBuilder} by using it against maps that have various negative behaviors.
  *
  * @author George van den Driessche
  */
+@AndroidIncompatible // test-suite builders
 public final class MapTestSuiteBuilderTests extends TestCase {
   private MapTestSuiteBuilderTests() {}
 
@@ -67,7 +67,7 @@ public final class MapTestSuiteBuilderTests extends TestCase {
   private abstract static class WrappedHashMapGenerator extends TestStringMapGenerator {
     @Override
     protected final Map<String, String> create(Entry<String, String>[] entries) {
-      HashMap<String, String> map = Maps.newHashMap();
+      HashMap<String, String> map = new HashMap<>();
       for (Entry<String, String> entry : entries) {
         map.put(entry.getKey(), entry.getValue());
       }
@@ -97,7 +97,7 @@ public final class MapTestSuiteBuilderTests extends TestCase {
     return wrappedHashMapTests(
         new WrappedHashMapGenerator() {
           @Override
-          Map<String, String> wrap(final HashMap<String, String> map) {
+          Map<String, String> wrap(HashMap<String, String> map) {
             if (map.containsKey(null)) {
               throw new NullPointerException();
             }
@@ -123,7 +123,7 @@ public final class MapTestSuiteBuilderTests extends TestCase {
     return wrappedHashMapTests(
         new WrappedHashMapGenerator() {
           @Override
-          Map<String, String> wrap(final HashMap<String, String> map) {
+          Map<String, String> wrap(HashMap<String, String> map) {
             if (map.containsValue(null)) {
               throw new NullPointerException();
             }
@@ -181,7 +181,7 @@ public final class MapTestSuiteBuilderTests extends TestCase {
                       return transform(iterator.next());
                     }
 
-                    private Entry<String, String> transform(final Entry<String, String> next) {
+                    private Entry<String, String> transform(Entry<String, String> next) {
                       return new Entry<String, String>() {
 
                         @Override
@@ -322,7 +322,7 @@ public final class MapTestSuiteBuilderTests extends TestCase {
 
   /** Verifies that {@code setUp} and {@code tearDown} are called in all map test cases. */
   private static Test testsForSetUpTearDown() {
-    final AtomicBoolean setUpRan = new AtomicBoolean();
+    AtomicBoolean setUpRan = new AtomicBoolean();
     Runnable setUp =
         new Runnable() {
           @Override
@@ -352,8 +352,6 @@ public final class MapTestSuiteBuilderTests extends TestCase {
   }
 
   private static LinkageError newLinkageError(Throwable cause) {
-    LinkageError error = new LinkageError(cause.toString());
-    error.initCause(cause);
-    return error;
+    return new LinkageError(cause.toString(), cause);
   }
 }

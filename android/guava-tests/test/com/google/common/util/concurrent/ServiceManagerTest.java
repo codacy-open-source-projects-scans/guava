@@ -28,13 +28,13 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.TestLogHandler;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager.Listener;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -48,6 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link ServiceManager}.
@@ -55,6 +56,7 @@ import junit.framework.TestCase;
  * @author Luke Sandberg
  * @author Chris Nokleberg
  */
+@NullUnmarked
 public class ServiceManagerTest extends TestCase {
 
   private static class NoOpService extends AbstractService {
@@ -74,9 +76,9 @@ public class ServiceManagerTest extends TestCase {
    * of time.
    */
   private static class NoOpDelayedService extends NoOpService {
-    private long delay;
+    private final long delay;
 
-    public NoOpDelayedService(long delay) {
+    NoOpDelayedService(long delay) {
       this.delay = delay;
     }
 
@@ -160,7 +162,7 @@ public class ServiceManagerTest extends TestCase {
     // 1. service times are accurate when the service is started by the manager
     // 2. service times are recorded when the service is not started by the manager (but they may
     // not be accurate).
-    final Service b =
+    Service b =
         new NoOpDelayedService(353) {
           @Override
           protected void doStart() {
@@ -326,7 +328,7 @@ public class ServiceManagerTest extends TestCase {
   public void testFailStart_stopOthers() throws TimeoutException {
     Service a = new FailStartService();
     Service b = new NoOpService();
-    final ServiceManager manager = new ServiceManager(asList(a, b));
+    ServiceManager manager = new ServiceManager(asList(a, b));
     manager.addListener(
         new Listener() {
           @Override
@@ -359,7 +361,7 @@ public class ServiceManagerTest extends TestCase {
           }
         };
 
-    final ServiceManager manager = new ServiceManager(asList(a));
+    ServiceManager manager = new ServiceManager(asList(a));
     manager.startAsync();
     manager.stopAsync();
     manager.awaitStopped(10, MILLISECONDS);
@@ -380,7 +382,7 @@ public class ServiceManagerTest extends TestCase {
             notifyStopped();
           }
         };
-    final ServiceManager manager = new ServiceManager(asList(a));
+    ServiceManager manager = new ServiceManager(asList(a));
     manager.startAsync();
     manager.awaitStopped(10, MILLISECONDS);
     assertThat(manager.servicesByState().keySet()).containsExactly(Service.State.FAILED);
@@ -406,7 +408,7 @@ public class ServiceManagerTest extends TestCase {
     logger.setLevel(Level.FINEST);
     TestLogHandler logHandler = new TestLogHandler();
     logger.addHandler(logHandler);
-    ServiceManager manager = new ServiceManager(Arrays.<Service>asList());
+    ServiceManager manager = new ServiceManager(Arrays.asList());
     RecordingListener listener = new RecordingListener();
     manager.addListener(listener, directExecutor());
     manager.startAsync().awaitHealthy();
@@ -450,8 +452,7 @@ public class ServiceManagerTest extends TestCase {
         assertThrows(IllegalStateException.class, () -> manager.awaitHealthy());
     assertThat(e)
         .hasMessageThat()
-        .contains(
-            "Expected to be healthy after starting. The following services are not " + "running:");
+        .contains("Expected to be healthy after starting. The following services are not running:");
 
     Throwable[] suppressed = e.getSuppressed();
     assertThat(suppressed).hasLength(2);
@@ -471,9 +472,9 @@ public class ServiceManagerTest extends TestCase {
    * even permanently blocked.
    */
   public void testListenerDeadlock() throws InterruptedException {
-    final CountDownLatch failEnter = new CountDownLatch(1);
-    final CountDownLatch failLeave = new CountDownLatch(1);
-    final CountDownLatch afterStarted = new CountDownLatch(1);
+    CountDownLatch failEnter = new CountDownLatch(1);
+    CountDownLatch failLeave = new CountDownLatch(1);
+    CountDownLatch afterStarted = new CountDownLatch(1);
     Service failRunService =
         new AbstractService() {
           @Override
@@ -496,8 +497,7 @@ public class ServiceManagerTest extends TestCase {
             notifyStopped();
           }
         };
-    final ServiceManager manager =
-        new ServiceManager(Arrays.asList(failRunService, new NoOpService()));
+    ServiceManager manager = new ServiceManager(Arrays.asList(failRunService, new NoOpService()));
     manager.addListener(
         new ServiceManager.Listener() {
           @Override
@@ -552,7 +552,7 @@ public class ServiceManagerTest extends TestCase {
   public void testPartiallyConstructedManager_transitionAfterAddListenerBeforeStateIsReady() {
     // The implementation of this test is pretty sensitive to the implementation :( but we want to
     // ensure that if weird things happen during construction then we get exceptions.
-    final NoOpService service1 = new NoOpService();
+    NoOpService service1 = new NoOpService();
     // This service will start service1 when addListener is called.  This simulates service1 being
     // started asynchronously.
     Service service2 =
@@ -628,7 +628,7 @@ public class ServiceManagerTest extends TestCase {
    */
   public void testTransitionRace() throws TimeoutException {
     for (int k = 0; k < 1000; k++) {
-      List<Service> services = Lists.newArrayList();
+      List<Service> services = new ArrayList<>();
       for (int i = 0; i < 5; i++) {
         services.add(new SnappyShutdownService(i));
       }
@@ -668,7 +668,7 @@ public class ServiceManagerTest extends TestCase {
   }
 
   public void testNulls() {
-    ServiceManager manager = new ServiceManager(Arrays.<Service>asList());
+    ServiceManager manager = new ServiceManager(Arrays.asList());
     new NullPointerTester()
         .setDefault(ServiceManager.Listener.class, new RecordingListener())
         .testAllPublicInstanceMethods(manager);

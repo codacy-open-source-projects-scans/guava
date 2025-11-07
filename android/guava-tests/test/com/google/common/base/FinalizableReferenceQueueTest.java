@@ -35,7 +35,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +53,7 @@ import org.junit.runners.JUnit4;
 @AndroidIncompatible
 @GwtIncompatible
 @RunWith(JUnit4.class)
+@NullUnmarked
 public class FinalizableReferenceQueueTest {
 
   private @Nullable FinalizableReferenceQueue frq;
@@ -63,7 +65,7 @@ public class FinalizableReferenceQueueTest {
 
   @Test
   public void testFinalizeReferentCalled() {
-    final MockReference reference = new MockReference(frq = new FinalizableReferenceQueue());
+    MockReference reference = new MockReference(frq = new FinalizableReferenceQueue());
 
     GcFinalization.awaitDone(() -> reference.finalizeReferentCalled);
   }
@@ -189,9 +191,9 @@ public class FinalizableReferenceQueueTest {
             public void finalizeReferent() {
               references.remove(this);
               if (!serverSocket.isClosed()) {
-                finalizeReferentRan.set(true);
                 try {
                   serverSocket.close();
+                  finalizeReferentRan.set(true);
                 } catch (IOException e) {
                   throw new UncheckedIOException(e);
                 }
@@ -230,9 +232,9 @@ public class FinalizableReferenceQueueTest {
     private static Runnable closeServerSocketRunnable(
         ServerSocket serverSocket, AtomicBoolean cleanerRan) {
       return () -> {
-        cleanerRan.set(true);
         try {
           serverSocket.close();
+          cleanerRan.set(true);
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

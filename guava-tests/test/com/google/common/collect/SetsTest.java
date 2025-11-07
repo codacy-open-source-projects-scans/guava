@@ -21,7 +21,6 @@ import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.collect.Sets.cartesianProduct;
 import static com.google.common.collect.Sets.newEnumSet;
 import static com.google.common.collect.Sets.newHashSet;
-import static com.google.common.collect.Sets.newLinkedHashSet;
 import static com.google.common.collect.Sets.powerSet;
 import static com.google.common.collect.Sets.toImmutableEnumSet;
 import static com.google.common.collect.Sets.unmodifiableNavigableSet;
@@ -84,7 +83,8 @@ import java.util.stream.Stream;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@code Sets}.
@@ -92,8 +92,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kevin Bourrillion
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class SetsTest extends TestCase {
 
   private static final IteratorTester.KnownOrder KNOWN_ORDER =
@@ -117,6 +117,7 @@ public class SetsTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(SetsTest.class);
@@ -131,60 +132,6 @@ public class SetsTest extends TestCase {
                 })
             .named("Sets.newConcurrentHashSet")
             .withFeatures(CollectionSize.ANY, SetFeature.GENERAL_PURPOSE)
-            .createTestSuite());
-
-    suite.addTest(
-        SetTestSuiteBuilder.using(
-                new TestStringSetGenerator() {
-                  @Override
-                  protected Set<String> create(String[] elements) {
-                    int size = elements.length;
-                    // Remove last element, if size > 1
-                    Set<String> set1 =
-                        (size > 1)
-                            ? newHashSet(asList(elements).subList(0, size - 1))
-                            : newHashSet(elements);
-                    // Remove first element, if size > 0
-                    Set<String> set2 =
-                        (size > 0)
-                            ? newHashSet(asList(elements).subList(1, size))
-                            : Sets.<String>newHashSet();
-                    return Sets.union(set1, set2);
-                  }
-                })
-            .named("Sets.union")
-            .withFeatures(CollectionSize.ANY, CollectionFeature.ALLOWS_NULL_VALUES)
-            .createTestSuite());
-
-    suite.addTest(
-        SetTestSuiteBuilder.using(
-                new TestStringSetGenerator() {
-                  @Override
-                  protected Set<String> create(String[] elements) {
-                    Set<String> set1 = newHashSet(elements);
-                    set1.add(samples().e3());
-                    Set<String> set2 = newHashSet(elements);
-                    set2.add(samples().e4());
-                    return Sets.intersection(set1, set2);
-                  }
-                })
-            .named("Sets.intersection")
-            .withFeatures(CollectionSize.ANY, CollectionFeature.ALLOWS_NULL_VALUES)
-            .createTestSuite());
-
-    suite.addTest(
-        SetTestSuiteBuilder.using(
-                new TestStringSetGenerator() {
-                  @Override
-                  protected Set<String> create(String[] elements) {
-                    Set<String> set1 = newHashSet(elements);
-                    set1.add(samples().e3());
-                    Set<String> set2 = newHashSet(samples().e3());
-                    return Sets.difference(set1, set2);
-                  }
-                })
-            .named("Sets.difference")
-            .withFeatures(CollectionSize.ANY, CollectionFeature.ALLOWS_NULL_VALUES)
             .createTestSuite());
 
     suite.addTest(
@@ -230,12 +177,13 @@ public class SetsTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   private static Test testsForFilter() {
     return SetTestSuiteBuilder.using(
             new TestStringSetGenerator() {
               @Override
               public Set<String> create(String[] elements) {
-                Set<String> unfiltered = Sets.newLinkedHashSet();
+                Set<String> unfiltered = new LinkedHashSet<>();
                 unfiltered.add("yyy");
                 Collections.addAll(unfiltered, elements);
                 unfiltered.add("zzz");
@@ -254,6 +202,7 @@ public class SetsTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   private static Test testsForFilterNoNulls() {
     TestSuite suite = new TestSuite();
     suite.addTest(
@@ -261,7 +210,7 @@ public class SetsTest extends TestCase {
                 new TestStringSetGenerator() {
                   @Override
                   public Set<String> create(String[] elements) {
-                    Set<String> unfiltered = Sets.newLinkedHashSet();
+                    Set<String> unfiltered = new LinkedHashSet<>();
                     unfiltered.add("yyy");
                     unfiltered.addAll(ImmutableList.copyOf(elements));
                     unfiltered.add("zzz");
@@ -306,12 +255,13 @@ public class SetsTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   private static Test testsForFilterFiltered() {
     return SetTestSuiteBuilder.using(
             new TestStringSetGenerator() {
               @Override
               public Set<String> create(String[] elements) {
-                Set<String> unfiltered = Sets.newLinkedHashSet();
+                Set<String> unfiltered = new LinkedHashSet<>();
                 unfiltered.add("yyy");
                 unfiltered.addAll(ImmutableList.copyOf(elements));
                 unfiltered.add("zzz");
@@ -399,9 +349,9 @@ public class SetsTest extends TestCase {
     assertThat(two).containsExactly(SomeEnum.B, SomeEnum.D).inOrder();
   }
 
+  @GwtIncompatible
   @J2ktIncompatible
-  @GwtIncompatible // java serialization not supported in GWT.
-  public void testImmutableEnumSet_deserializationMakesDefensiveCopy() throws Exception {
+    public void testImmutableEnumSet_deserializationMakesDefensiveCopy() throws Exception {
     ImmutableSet<SomeEnum> original = Sets.immutableEnumSet(SomeEnum.A, SomeEnum.B);
     int handleOffset = 6;
     byte[] serializedForm = serializeWithBackReference(original, handleOffset);
@@ -415,9 +365,9 @@ public class SetsTest extends TestCase {
     assertTrue(deserialized.contains(SomeEnum.A));
   }
 
+  @GwtIncompatible
   @J2ktIncompatible
-  @GwtIncompatible // java serialization not supported in GWT.
-  private static byte[] serializeWithBackReference(Object original, int handleOffset)
+    private static byte[] serializeWithBackReference(Object original, int handleOffset)
       throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -464,6 +414,7 @@ public class SetsTest extends TestCase {
   }
 
   public void testNewHashSetEmpty() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashSet<Integer> set = newHashSet();
     verifySetContents(set, EMPTY_COLLECTION);
   }
@@ -474,6 +425,7 @@ public class SetsTest extends TestCase {
   }
 
   public void testNewHashSetFromCollection() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashSet<Integer> set = newHashSet(SOME_COLLECTION);
     verifySetContents(set, SOME_COLLECTION);
   }
@@ -509,11 +461,13 @@ public class SetsTest extends TestCase {
   }
 
   public void testNewLinkedHashSetEmpty() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     LinkedHashSet<Integer> set = Sets.newLinkedHashSet();
     verifyLinkedHashSetContents(set, EMPTY_COLLECTION);
   }
 
   public void testNewLinkedHashSetFromCollection() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     LinkedHashSet<Integer> set = Sets.newLinkedHashSet(LONGER_LIST);
     verifyLinkedHashSetContents(set, LONGER_LIST);
   }
@@ -691,6 +645,7 @@ public class SetsTest extends TestCase {
   }
 
   public void testNewSetFromMap() {
+    @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
     Set<Integer> set = Sets.newSetFromMap(new HashMap<Integer, Boolean>());
     set.addAll(SOME_COLLECTION);
     verifySetContents(set, SOME_COLLECTION);
@@ -699,12 +654,14 @@ public class SetsTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testNewSetFromMapSerialization() {
+    @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
     Set<Integer> set = Sets.newSetFromMap(new LinkedHashMap<Integer, Boolean>());
     set.addAll(SOME_COLLECTION);
     Set<Integer> copy = SerializableTester.reserializeAndAssert(set);
     assertThat(copy).containsExactly(0, 1).inOrder();
   }
 
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testNewSetFromMapIllegal() {
     Map<Integer, Boolean> map = new LinkedHashMap<>();
     map.put(2, true);
@@ -854,7 +811,7 @@ public class SetsTest extends TestCase {
     assertEquals(8, powerSet.size());
     assertEquals(4 * 1 + 4 * 2 + 4 * 3, powerSet.hashCode());
 
-    Set<Set<Integer>> expected = newHashSet();
+    Set<Set<Integer>> expected = new HashSet<>();
     expected.add(ImmutableSet.<Integer>of());
     expected.add(ImmutableSet.of(1));
     expected.add(ImmutableSet.of(2));
@@ -864,7 +821,7 @@ public class SetsTest extends TestCase {
     expected.add(ImmutableSet.of(2, 3));
     expected.add(ImmutableSet.of(1, 2, 3));
 
-    Set<Set<Integer>> almostPowerSet = newHashSet(expected);
+    Set<Set<Integer>> almostPowerSet = new HashSet<>(expected);
     almostPowerSet.remove(ImmutableSet.of(1, 2, 3));
     almostPowerSet.add(ImmutableSet.of(1, 2, 4));
 
@@ -904,13 +861,13 @@ public class SetsTest extends TestCase {
   public void testPowerSetIteration_iteratorTester() {
     ImmutableSet<Integer> elements = ImmutableSet.of(1, 2);
 
-    Set<Set<Integer>> expected = newLinkedHashSet();
+    Set<Set<Integer>> expected = new LinkedHashSet<>();
     expected.add(ImmutableSet.<Integer>of());
     expected.add(ImmutableSet.of(1));
     expected.add(ImmutableSet.of(2));
     expected.add(ImmutableSet.of(1, 2));
 
-    final Set<Set<Integer>> powerSet = powerSet(elements);
+    Set<Set<Integer>> powerSet = powerSet(elements);
     new IteratorTester<Set<Integer>>(6, UNMODIFIABLE, expected, KNOWN_ORDER) {
       @Override
       protected Iterator<Set<Integer>> newTargetIterator() {
@@ -922,13 +879,13 @@ public class SetsTest extends TestCase {
   public void testPowerSetIteration_iteratorTester_fast() {
     ImmutableSet<Integer> elements = ImmutableSet.of(1, 2);
 
-    Set<Set<Integer>> expected = newLinkedHashSet();
+    Set<Set<Integer>> expected = new LinkedHashSet<>();
     expected.add(ImmutableSet.<Integer>of());
     expected.add(ImmutableSet.of(1));
     expected.add(ImmutableSet.of(2));
     expected.add(ImmutableSet.of(1, 2));
 
-    final Set<Set<Integer>> powerSet = powerSet(elements);
+    Set<Set<Integer>> powerSet = powerSet(elements);
     new IteratorTester<Set<Integer>>(4, UNMODIFIABLE, expected, KNOWN_ORDER) {
       @Override
       protected Iterator<Set<Integer>> newTargetIterator() {
@@ -975,7 +932,7 @@ public class SetsTest extends TestCase {
             4233352, 3284593, 3794208, 3849533, 4013967, 2902658, 1886275, 2131109, 985872,
             1843868);
     for (int i = 0; i < allElements.size(); i++) {
-      Set<Integer> elements = newHashSet(allElements.subList(0, i));
+      Set<Integer> elements = new HashSet<>(allElements.subList(0, i));
       Set<Set<Integer>> powerSet1 = powerSet(elements);
       Set<Set<Integer>> powerSet2 = powerSet(elements);
       new EqualsTester()
@@ -1023,23 +980,18 @@ public class SetsTest extends TestCase {
   }
 
   private static Set<Integer> makeSetOfZeroToTwentyNine() {
-    // TODO: use Range once it's publicly available
-    Set<Integer> zeroToTwentyNine = newHashSet();
-    for (int i = 0; i < 30; i++) {
-      zeroToTwentyNine.add(i);
-    }
-    return zeroToTwentyNine;
+    return ContiguousSet.closedOpen(0, 30);
   }
 
   private static <E> Set<Set<E>> toHashSets(Set<Set<E>> powerSet) {
-    Set<Set<E>> result = newHashSet();
+    Set<Set<E>> result = new HashSet<>();
     for (Set<E> subset : powerSet) {
       result.add(new HashSet<E>(subset));
     }
     return result;
   }
 
-  private static Object objectWithHashCode(final int hashCode) {
+  private static Object objectWithHashCode(int hashCode) {
     return new Object() {
       @Override
       public int hashCode() {
@@ -1058,7 +1010,7 @@ public class SetsTest extends TestCase {
   }
 
   private static void checkHashCode(Set<?> set) {
-    assertEquals(newHashSet(set).hashCode(), set.hashCode());
+    assertEquals(new HashSet<>(set).hashCode(), set.hashCode());
   }
 
   public void testCombinations() {
@@ -1069,7 +1021,7 @@ public class SetsTest extends TestCase {
             ImmutableSet.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
     for (Set<Integer> sampleSet : sampleSets) {
       for (int k = 0; k <= sampleSet.size(); k++) {
-        final int size = k;
+        int size = k;
         Set<Set<Integer>> expected =
             Sets.filter(
                 Sets.powerSet(sampleSet),

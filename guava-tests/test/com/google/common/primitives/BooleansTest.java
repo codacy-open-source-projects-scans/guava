@@ -23,24 +23,25 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.testing.Helpers;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Booleans}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class BooleansTest extends TestCase {
   private static final boolean[] EMPTY = {};
   private static final boolean[] ARRAY_FALSE = {false};
@@ -50,6 +51,7 @@ public class BooleansTest extends TestCase {
 
   private static final boolean[] VALUES = {false, true};
 
+  @SuppressWarnings("InlineMeInliner") // We need to test our method.
   public void testHashCode() {
     assertThat(Booleans.hashCode(true)).isEqualTo(Boolean.TRUE.hashCode());
     assertThat(Booleans.hashCode(false)).isEqualTo(Boolean.FALSE.hashCode());
@@ -69,6 +71,8 @@ public class BooleansTest extends TestCase {
     assertThat(Booleans.falseFirst().compare(true, false)).isGreaterThan(0);
   }
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testCompare() {
     for (boolean x : VALUES) {
       for (boolean y : VALUES) {
@@ -548,7 +552,7 @@ public class BooleansTest extends TestCase {
   }
 
   public void testAsListEquals() {
-    assertThat(Booleans.asList(EMPTY).equals(Collections.emptyList())).isTrue();
+    assertThat(Booleans.asList(EMPTY).equals(ImmutableList.of())).isTrue();
     assertThat(Booleans.asList(ARRAY_FALSE).equals(Booleans.asList(ARRAY_FALSE))).isTrue();
     @SuppressWarnings("EqualsIncompatibleType")
     boolean listEqualsArray = Booleans.asList(ARRAY_FALSE).equals(ARRAY_FALSE);

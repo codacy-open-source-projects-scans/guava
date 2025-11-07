@@ -35,15 +35,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Chars}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class CharsTest extends TestCase {
   private static final char[] EMPTY = {};
   private static final char[] ARRAY1 = {(char) 1};
@@ -54,9 +55,11 @@ public class CharsTest extends TestCase {
 
   private static final char[] VALUES = {LEAST, 'a', '\u00e0', '\udcaa', GREATEST};
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testHashCode() {
     for (char value : VALUES) {
-      assertThat(Chars.hashCode(value)).isEqualTo(((Character) value).hashCode());
+      assertThat(Chars.hashCode(value)).isEqualTo(Character.hashCode(value));
     }
   }
 
@@ -91,12 +94,14 @@ public class CharsTest extends TestCase {
     }
   }
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testCompare() {
     for (char x : VALUES) {
       for (char y : VALUES) {
         assertWithMessage(x + ", " + y)
             .that(Math.signum(Chars.compare(x, y)))
-            .isEqualTo(Math.signum(Character.valueOf(x).compareTo(y)));
+            .isEqualTo(Math.signum(Character.compare(x, y)));
       }
     }
   }
@@ -661,6 +666,8 @@ public class CharsTest extends TestCase {
     assertThat(Chars.toArray(list.subList(2, 2))).isEqualTo(new char[] {});
   }
 
+  // `primitives` can't depend on `collect`, so this is what the prod code has to return.
+  @SuppressWarnings("EmptyList")
   public void testAsListEmpty() {
     assertThat(Chars.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }

@@ -16,18 +16,18 @@ package com.google.common.net;
 
 import static com.google.common.base.CharMatcher.ascii;
 import static com.google.common.base.CharMatcher.javaIsoControl;
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.hash;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Ascii;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMultiset;
@@ -41,9 +41,10 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Represents an <a href="http://en.wikipedia.org/wiki/Internet_media_type">Internet Media Type</a>
@@ -72,7 +73,6 @@ import javax.annotation.CheckForNull;
  */
 @GwtCompatible
 @Immutable
-@ElementTypesAreNonnullByDefault
 public final class MediaType {
   private static final String CHARSET_ATTRIBUTE = "charset";
   private static final ImmutableListMultimap<String, String> UTF_8_CONSTANT_PARAMETERS =
@@ -103,7 +103,7 @@ public final class MediaType {
 
   private static final String WILDCARD = "*";
 
-  private static final Map<MediaType, MediaType> KNOWN_TYPES = Maps.newHashMap();
+  private static final Map<MediaType, MediaType> knownTypes = new HashMap<>();
 
   private static MediaType createConstant(String type, String subtype) {
     MediaType mediaType =
@@ -118,8 +118,9 @@ public final class MediaType {
     return mediaType;
   }
 
+  @CanIgnoreReturnValue
   private static MediaType addKnownType(MediaType mediaType) {
-    KNOWN_TYPES.put(mediaType, mediaType);
+    knownTypes.put(mediaType, mediaType);
     return mediaType;
   }
 
@@ -251,6 +252,13 @@ public final class MediaType {
 
   public static final MediaType SVG_UTF_8 = createConstantUtf8(IMAGE_TYPE, "svg+xml");
   public static final MediaType TIFF = createConstant(IMAGE_TYPE, "tiff");
+
+  /**
+   * <a href="https://en.wikipedia.org/wiki/AVIF">AVIF image format</a>.
+   *
+   * @since 33.5.0
+   */
+  public static final MediaType AVIF = createConstant(IMAGE_TYPE, "avif");
 
   /**
    * <a href="https://en.wikipedia.org/wiki/WebP">WebP image format</a>.
@@ -804,11 +812,14 @@ public final class MediaType {
   private final String subtype;
   private final ImmutableListMultimap<String, String> parameters;
 
-  @LazyInit @CheckForNull private String toString;
+  @LazyInit private @Nullable String toString;
 
   @LazyInit private int hashCode;
 
-  @LazyInit @CheckForNull private Optional<Charset> parsedCharset;
+  // We need to differentiate between "not computed" and "computed to be absent."
+  @SuppressWarnings("NullableOptional")
+  @LazyInit
+  private @Nullable Optional<Charset> parsedCharset;
 
   private MediaType(String type, String subtype, ImmutableListMultimap<String, String> parameters) {
     this.type = type;
@@ -891,23 +902,27 @@ public final class MediaType {
     checkNotNull(attribute);
     checkNotNull(values);
     String normalizedAttribute = normalizeToken(attribute);
-    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, String> updatedParameters =
+        ImmutableListMultimap.builder();
     for (Entry<String, String> entry : parameters.entries()) {
       String key = entry.getKey();
       if (!normalizedAttribute.equals(key)) {
-        builder.put(key, entry.getValue());
+        updatedParameters.put(key, entry.getValue());
       }
     }
     for (String value : values) {
-      builder.put(normalizedAttribute, normalizeParameterValue(normalizedAttribute, value));
+      updatedParameters.put(
+          normalizedAttribute, normalizeParameterValue(normalizedAttribute, value));
     }
-    MediaType mediaType = new MediaType(type, subtype, builder.build());
+    MediaType mediaType = new MediaType(type, subtype, updatedParameters.build());
     // if the attribute isn't charset, we can just inherit the current parsedCharset
     if (!normalizedAttribute.equals(CHARSET_ATTRIBUTE)) {
       mediaType.parsedCharset = this.parsedCharset;
     }
     // Return one of the constants if the media type is a known type.
-    return MoreObjects.firstNonNull(KNOWN_TYPES.get(mediaType), mediaType);
+    @SuppressWarnings("GetOrDefaultNotNull") // getOrDefault requires API Level 24
+    MediaType result = firstNonNull(knownTypes.get(mediaType), mediaType);
+    return result;
   }
 
   /**
@@ -941,7 +956,7 @@ public final class MediaType {
 
   /** Returns true if either the type or subtype is the wildcard. */
   public boolean hasWildcard() {
-    return WILDCARD.equals(type) || WILDCARD.equals(subtype);
+    return type.equals(WILDCARD) || subtype.equals(WILDCARD);
   }
 
   /**
@@ -957,7 +972,7 @@ public final class MediaType {
    *
    * <p>For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * PLAIN_TEXT_UTF_8.is(PLAIN_TEXT_UTF_8) // true
    * PLAIN_TEXT_UTF_8.is(HTML_UTF_8) // false
    * PLAIN_TEXT_UTF_8.is(ANY_TYPE) // true
@@ -966,7 +981,7 @@ public final class MediaType {
    * PLAIN_TEXT_UTF_8.is(ANY_TEXT_TYPE.withCharset(UTF_8)) // true
    * PLAIN_TEXT_UTF_8.withoutParameters().is(ANY_TEXT_TYPE.withCharset(UTF_8)) // false
    * PLAIN_TEXT_UTF_8.is(ANY_TEXT_TYPE.withCharset(UTF_16)) // false
-   * }</pre>
+   * }
    *
    * <p>Note that while it is possible to have the same parameter declared multiple times within a
    * media type this method does not consider the number of occurrences of a parameter. For example,
@@ -999,7 +1014,7 @@ public final class MediaType {
     String normalizedType = normalizeToken(type);
     String normalizedSubtype = normalizeToken(subtype);
     checkArgument(
-        !WILDCARD.equals(normalizedType) || WILDCARD.equals(normalizedSubtype),
+        !normalizedType.equals(WILDCARD) || normalizedSubtype.equals(WILDCARD),
         "A wildcard type cannot be used with a non-wildcard subtype");
     ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
     for (Entry<String, String> entry : parameters.entries()) {
@@ -1008,7 +1023,9 @@ public final class MediaType {
     }
     MediaType mediaType = new MediaType(normalizedType, normalizedSubtype, builder.build());
     // Return one of the constants if the media type is a known type.
-    return MoreObjects.firstNonNull(KNOWN_TYPES.get(mediaType), mediaType);
+    @SuppressWarnings("GetOrDefaultNotNull") // getOrDefault requires API Level 24
+    MediaType result = firstNonNull(knownTypes.get(mediaType), mediaType);
+    return result;
   }
 
   /**
@@ -1074,7 +1091,7 @@ public final class MediaType {
   private static String normalizeParameterValue(String attribute, String value) {
     checkNotNull(value); // for GWT
     checkArgument(ascii().matchesAllOf(value), "parameter values must be ASCII: %s", value);
-    return CHARSET_ATTRIBUTE.equals(attribute) ? Ascii.toLowerCase(value) : value;
+    return attribute.equals(CHARSET_ATTRIBUTE) ? Ascii.toLowerCase(value) : value;
   }
 
   /**
@@ -1096,11 +1113,11 @@ public final class MediaType {
         String attribute = tokenizer.consumeToken(TOKEN_MATCHER);
         consumeSeparator(tokenizer, '=');
         String value;
-        if ('"' == tokenizer.previewChar()) {
+        if (tokenizer.previewChar() == '"') {
           tokenizer.consumeCharacter('"');
           StringBuilder valueBuilder = new StringBuilder();
-          while ('"' != tokenizer.previewChar()) {
-            if ('\\' == tokenizer.previewChar()) {
+          while (tokenizer.previewChar() != '"') {
+            if (tokenizer.previewChar() == '\\') {
               tokenizer.consumeCharacter('\\');
               valueBuilder.append(tokenizer.consumeCharacter(ascii()));
             } else {
@@ -1176,7 +1193,7 @@ public final class MediaType {
   }
 
   @Override
-  public boolean equals(@CheckForNull Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (obj == this) {
       return true;
     } else if (obj instanceof MediaType) {
@@ -1195,7 +1212,7 @@ public final class MediaType {
     // racy single-check idiom
     int h = hashCode;
     if (h == 0) {
-      h = Objects.hashCode(type, subtype, parametersAsMap());
+      h = hash(type, subtype, parametersAsMap());
       hashCode = h;
     }
     return h;

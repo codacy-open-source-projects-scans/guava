@@ -38,23 +38,22 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Objects;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A binary encoding scheme for reversibly translating between byte sequences and printable ASCII
  * strings. This class includes several constants for encoding schemes specified by <a
  * href="http://tools.ietf.org/html/rfc4648">RFC 4648</a>. For example, the expression:
  *
- * <pre>{@code
+ * {@snippet :
  * BaseEncoding.base32().encode("foo".getBytes(US_ASCII))
- * }</pre>
+ * }
  *
  * <p>returns the string {@code "MZXW6==="}, and
  *
- * <pre>{@code
+ * {@snippet :
  * byte[] decoded = BaseEncoding.base32().decode("MZXW6===");
- * }</pre>
+ * }
  *
  * <p>...returns the ASCII bytes of the string {@code "foo"}.
  *
@@ -63,19 +62,19 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * encoding and decoding behavior, use configuration methods to obtain a new encoding with modified
  * behavior:
  *
- * <pre>{@code
+ * {@snippet :
  * BaseEncoding.base16().lowerCase().decode("deadbeef");
- * }</pre>
+ * }
  *
  * <p>Warning: BaseEncoding instances are immutable. Invoking a configuration method has no effect
  * on the receiving instance; you must store and use the new encoding instance it returns, instead.
  *
- * <pre>{@code
+ * {@snippet :
  * // Do NOT do this
  * BaseEncoding hex = BaseEncoding.base16();
  * hex.lowerCase(); // does nothing!
  * return hex.decode("deadbeef"); // throws an IllegalArgumentException
- * }</pre>
+ * }
  *
  * <p>It is guaranteed that {@code encoding.decode(encoding.encode(x))} is always equal to {@code
  * x}, but the reverse does not necessarily hold.
@@ -125,8 +124,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  * @since 14.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class BaseEncoding {
   // TODO(lowasser): consider making encodeTo(Appendable, byte[], int, int) public.
 
@@ -427,6 +425,8 @@ public abstract class BaseEncoding {
    * <p>No line feeds are added by default, as per <a
    * href="http://tools.ietf.org/html/rfc4648#section-3.1">RFC 4648 section 3.1</a>, Line Feeds in
    * Encoded Data. Line feeds may be added using {@link #withSeparator(String, int)}.
+   *
+   * <p><b>Java 17+ users:</b> Consider using the {@link java.util.HexFormat} API instead.
    */
   public static BaseEncoding base16() {
     return BASE16;
@@ -599,7 +599,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object other) {
+    public boolean equals(@Nullable Object other) {
       if (other instanceof Alphabet) {
         Alphabet that = (Alphabet) other;
         return this.ignoreCase == that.ignoreCase && Arrays.equals(this.chars, that.chars);
@@ -616,13 +616,13 @@ public abstract class BaseEncoding {
   private static class StandardBaseEncoding extends BaseEncoding {
     final Alphabet alphabet;
 
-    @CheckForNull final Character paddingChar;
+    final @Nullable Character paddingChar;
 
-    StandardBaseEncoding(String name, String alphabetChars, @CheckForNull Character paddingChar) {
+    StandardBaseEncoding(String name, String alphabetChars, @Nullable Character paddingChar) {
       this(new Alphabet(name, alphabetChars.toCharArray()), paddingChar);
     }
 
-    StandardBaseEncoding(Alphabet alphabet, @CheckForNull Character paddingChar) {
+    StandardBaseEncoding(Alphabet alphabet, @Nullable Character paddingChar) {
       this.alphabet = checkNotNull(alphabet);
       checkArgument(
           paddingChar == null || !alphabet.matches(paddingChar),
@@ -882,9 +882,9 @@ public abstract class BaseEncoding {
       return new SeparatedBaseEncoding(this, separator, afterEveryChars);
     }
 
-    @LazyInit @CheckForNull private volatile BaseEncoding upperCase;
-    @LazyInit @CheckForNull private volatile BaseEncoding lowerCase;
-    @LazyInit @CheckForNull private volatile BaseEncoding ignoreCase;
+    @LazyInit private volatile @Nullable BaseEncoding upperCase;
+    @LazyInit private volatile @Nullable BaseEncoding lowerCase;
+    @LazyInit private volatile @Nullable BaseEncoding ignoreCase;
 
     @Override
     public BaseEncoding upperCase() {
@@ -916,7 +916,7 @@ public abstract class BaseEncoding {
       return result;
     }
 
-    BaseEncoding newInstance(Alphabet alphabet, @CheckForNull Character paddingChar) {
+    BaseEncoding newInstance(Alphabet alphabet, @Nullable Character paddingChar) {
       return new StandardBaseEncoding(alphabet, paddingChar);
     }
 
@@ -935,7 +935,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object other) {
+    public boolean equals(@Nullable Object other) {
       if (other instanceof StandardBaseEncoding) {
         StandardBaseEncoding that = (StandardBaseEncoding) other;
         return this.alphabet.equals(that.alphabet)
@@ -992,17 +992,17 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    BaseEncoding newInstance(Alphabet alphabet, @CheckForNull Character paddingChar) {
+    BaseEncoding newInstance(Alphabet alphabet, @Nullable Character paddingChar) {
       return new Base16Encoding(alphabet);
     }
   }
 
   private static final class Base64Encoding extends StandardBaseEncoding {
-    Base64Encoding(String name, String alphabetChars, @CheckForNull Character paddingChar) {
+    Base64Encoding(String name, String alphabetChars, @Nullable Character paddingChar) {
       this(new Alphabet(name, alphabetChars.toCharArray()), paddingChar);
     }
 
-    private Base64Encoding(Alphabet alphabet, @CheckForNull Character paddingChar) {
+    private Base64Encoding(Alphabet alphabet, @Nullable Character paddingChar) {
       super(alphabet, paddingChar);
       checkArgument(alphabet.chars.length == 64);
     }
@@ -1013,7 +1013,7 @@ public abstract class BaseEncoding {
       checkPositionIndexes(off, off + len, bytes.length);
       int i = off;
       for (int remaining = len; remaining >= 3; remaining -= 3) {
-        int chunk = (bytes[i++] & 0xFF) << 16 | (bytes[i++] & 0xFF) << 8 | bytes[i++] & 0xFF;
+        int chunk = (bytes[i++] & 0xFF) << 16 | (bytes[i++] & 0xFF) << 8 | (bytes[i++] & 0xFF);
         target.append(alphabet.encode(chunk >>> 18));
         target.append(alphabet.encode((chunk >>> 12) & 0x3F));
         target.append(alphabet.encode((chunk >>> 6) & 0x3F));
@@ -1049,7 +1049,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    BaseEncoding newInstance(Alphabet alphabet, @CheckForNull Character paddingChar) {
+    BaseEncoding newInstance(Alphabet alphabet, @Nullable Character paddingChar) {
       return new Base64Encoding(alphabet, paddingChar);
     }
   }
@@ -1101,12 +1101,12 @@ public abstract class BaseEncoding {
       }
 
       @Override
-      public Appendable append(@CheckForNull CharSequence chars, int off, int len) {
+      public Appendable append(@Nullable CharSequence chars, int off, int len) {
         throw new UnsupportedOperationException();
       }
 
       @Override
-      public Appendable append(@CheckForNull CharSequence chars) {
+      public Appendable append(@Nullable CharSequence chars) {
         throw new UnsupportedOperationException();
       }
     };

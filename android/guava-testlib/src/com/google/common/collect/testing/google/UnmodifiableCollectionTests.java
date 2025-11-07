@@ -26,7 +26,6 @@ import static junit.framework.TestCase.fail;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import java.util.ArrayList;
@@ -35,7 +34,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A series of tests that support asserting that collections cannot be modified, either through
@@ -44,7 +44,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Robert Konigsberg
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class UnmodifiableCollectionTests {
 
   public static void assertMapEntryIsUnmodifiable(Entry<?, ?> entry) {
@@ -271,7 +271,7 @@ public class UnmodifiableCollectionTests {
    */
   public static <K extends @Nullable Object, V extends @Nullable Object>
       void assertMultimapIsUnmodifiable(Multimap<K, V> multimap, K sampleKey, V sampleValue) {
-    List<Entry<K, V>> originalEntries = unmodifiableList(Lists.newArrayList(multimap.entries()));
+    List<Entry<K, V>> originalEntries = unmodifiableList(new ArrayList<>(multimap.entries()));
 
     assertMultimapRemainsUnmodified(multimap, originalEntries);
 
@@ -417,4 +417,12 @@ public class UnmodifiableCollectionTests {
       void assertMultimapRemainsUnmodified(Multimap<K, V> expected, List<Entry<K, V>> actual) {
     assertIteratorsInOrder(expected.entries().iterator(), actual.iterator());
   }
+
+  /**
+   * Useless constructor for a class of static utility methods.
+   *
+   * @deprecated Do not instantiate this utility class.
+   */
+  @Deprecated
+  public UnmodifiableCollectionTests() {}
 }

@@ -28,13 +28,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code Synchronized#map}.
  *
  * @author Mike Bostock
  */
+@NullUnmarked
 public class SynchronizedMapTest extends TestCase {
   public final Object mutex = new Object[0]; // something Serializable
 
@@ -46,7 +48,7 @@ public class SynchronizedMapTest extends TestCase {
 
   static class TestMap<K, V> extends ForwardingMap<K, V> implements Serializable {
     public final Object mutex;
-    private Map<K, V> delegate;
+    private final Map<K, V> delegate;
 
     public TestMap(Map<K, V> delegate, Object mutex) {
       checkNotNull(mutex);
@@ -184,7 +186,7 @@ public class SynchronizedMapTest extends TestCase {
   }
 
   public void testGet() {
-    create().get(null);
+    Object unused = create().get(null);
   }
 
   public void testPut() {

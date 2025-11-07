@@ -35,18 +35,20 @@ import java.util.RandomAccess;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Unit tests for {@code ArrayListMultimap}.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ArrayListMultimapTest extends TestCase {
 
   @GwtIncompatible // suite
   @J2ktIncompatible
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTest(

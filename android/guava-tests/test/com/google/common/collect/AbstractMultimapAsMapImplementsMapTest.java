@@ -22,6 +22,7 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.testing.MapInterfaceTest;
 import java.util.Collection;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Test {@link Multimap#asMap()} for an arbitrary multimap with {@link MapInterfaceTest}.
@@ -30,7 +31,7 @@ import java.util.Map;
  * @author Jared Levy
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class AbstractMultimapAsMapImplementsMapTest
     extends MapInterfaceTest<String, Collection<Integer>> {
 
@@ -66,16 +67,16 @@ public abstract class AbstractMultimapAsMapImplementsMapTest
    */
   @Override
   public void testRemove() {
-    final Map<String, Collection<Integer>> map;
+    Map<String, Collection<Integer>> map;
     try {
       map = makePopulatedMap();
     } catch (UnsupportedOperationException e) {
       return;
     }
-    final String keyToRemove = map.keySet().iterator().next();
+    String keyToRemove = map.keySet().iterator().next();
     if (supportsRemove) {
       int initialSize = map.size();
-      map.get(keyToRemove);
+      // var oldValue = map.get(keyToRemove);
       map.remove(keyToRemove);
       // This line doesn't hold - see the Javadoc comments above.
       // assertEquals(expectedValue, oldValue);

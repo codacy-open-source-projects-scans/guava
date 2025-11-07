@@ -26,7 +26,6 @@ import java.util.BitSet;
  * @author Christopher Swenson
  */
 @GwtIncompatible // no precomputation is done in GWT
-@ElementTypesAreNonnullByDefault
 final class SmallCharMatcher extends NamedFastMatcher {
   static final int MAX_SIZE = 1023;
   private final char[] table;
@@ -56,7 +55,7 @@ final class SmallCharMatcher extends NamedFastMatcher {
   }
 
   private boolean checkFilter(int c) {
-    return 1 == (1 & (filter >> c));
+    return ((filter >> c) & 1) == 1;
   }
 
   // This is all essentially copied from ImmutableSet, but we have to duplicate because

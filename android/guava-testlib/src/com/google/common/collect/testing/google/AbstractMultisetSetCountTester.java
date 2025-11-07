@@ -48,7 +48,7 @@ import org.junit.Ignore;
  *
  * @author Chris Povirk
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @Ignore("test runners must not instantiate and run this directly, only via suites we build")
 // @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
@@ -194,14 +194,14 @@ public abstract class AbstractMultisetSetCountTester<E> extends AbstractMultiset
   public void testSetCountZeroToOneConcurrentWithIteration() {
     Iterator<E> iterator = collection.iterator();
     assertSetCount(e3(), 1);
-    assertThrows(ConcurrentModificationException.class, () -> iterator.next());
+    assertThrows(ConcurrentModificationException.class, iterator::next);
   }
 
   @CollectionFeature.Require({SUPPORTS_ADD, FAILS_FAST_ON_CONCURRENT_MODIFICATION})
   public void testSetCountZeroToOneConcurrentWithEntrySetIteration() {
     Iterator<Entry<E>> iterator = getMultiset().entrySet().iterator();
     assertSetCount(e3(), 1);
-    assertThrows(ConcurrentModificationException.class, () -> iterator.next());
+    assertThrows(ConcurrentModificationException.class, iterator::next);
   }
 
   @CollectionFeature.Require(SUPPORTS_ADD)
@@ -244,7 +244,7 @@ public abstract class AbstractMultisetSetCountTester<E> extends AbstractMultiset
   public void testSetCountOneToZeroConcurrentWithIteration() {
     Iterator<E> iterator = collection.iterator();
     assertSetCount(e0(), 0);
-    assertThrows(ConcurrentModificationException.class, () -> iterator.next());
+    assertThrows(ConcurrentModificationException.class, iterator::next);
   }
 
   @CollectionFeature.Require({SUPPORTS_REMOVE, FAILS_FAST_ON_CONCURRENT_MODIFICATION})
@@ -252,7 +252,7 @@ public abstract class AbstractMultisetSetCountTester<E> extends AbstractMultiset
   public void testSetCountOneToZeroConcurrentWithEntrySetIteration() {
     Iterator<Entry<E>> iterator = getMultiset().entrySet().iterator();
     assertSetCount(e0(), 0);
-    assertThrows(ConcurrentModificationException.class, () -> iterator.next());
+    assertThrows(ConcurrentModificationException.class, iterator::next);
   }
 
   @CollectionSize.Require(SEVERAL)

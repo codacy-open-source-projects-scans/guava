@@ -42,7 +42,8 @@ import java.util.Spliterator.OfPrimitive;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tester for {@code Spliterator} implementations.
@@ -50,8 +51,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 33.4.0 (but since 21.0 in the JRE flavor)
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
-@SuppressWarnings("Java7ApiChecker")
+@NullMarked
 @IgnoreJRERequirement // Users will use this only if they're already using Spliterator.
 public final class SpliteratorTester<E extends @Nullable Object> {
   /** Return type from "contains the following elements" assertions. */
@@ -85,7 +85,7 @@ public final class SpliteratorTester<E extends @Nullable Object> {
       return spliterator.estimateSize();
     }
 
-    final Comparator<? super E> getComparator() {
+    final @Nullable Comparator<? super E> getComparator() {
       return spliterator.getComparator();
     }
 

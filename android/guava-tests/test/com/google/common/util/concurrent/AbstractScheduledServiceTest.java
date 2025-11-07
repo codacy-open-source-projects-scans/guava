@@ -19,6 +19,7 @@ package com.google.common.util.concurrent;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.AbstractScheduledService.Scheduler.newFixedDelaySchedule;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -33,7 +34,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Delayed;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -44,13 +44,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link AbstractScheduledService}.
  *
  * @author Luke Sandberg
  */
+@NullUnmarked
 public class AbstractScheduledServiceTest extends TestCase {
 
   volatile Scheduler configuration = newFixedDelaySchedule(0, 10, MILLISECONDS);
@@ -116,8 +118,8 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   public void testFailOnErrorFromStartUpListener() throws InterruptedException {
-    final Error error = new Error();
-    final CountDownLatch latch = new CountDownLatch(1);
+    Error error = new Error();
+    CountDownLatch latch = new CountDownLatch(1);
     TestService service = new TestService();
     service.addListener(
         new Service.Listener() {
@@ -187,7 +189,7 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   public void testDefaultExecutorIsShutdownWhenServiceIsStopped() throws Exception {
-    final AtomicReference<ScheduledExecutorService> executor = Atomics.newReference();
+    AtomicReference<ScheduledExecutorService> executor = Atomics.newReference();
     AbstractScheduledService service =
         new AbstractScheduledService() {
           @Override
@@ -214,7 +216,7 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   public void testDefaultExecutorIsShutdownWhenServiceFails() throws Exception {
-    final AtomicReference<ScheduledExecutorService> executor = Atomics.newReference();
+    AtomicReference<ScheduledExecutorService> executor = Atomics.newReference();
     AbstractScheduledService service =
         new AbstractScheduledService() {
           @Override
@@ -291,14 +293,14 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   private class TestService extends AbstractScheduledService {
-    CyclicBarrier runFirstBarrier = new CyclicBarrier(2);
-    CyclicBarrier runSecondBarrier = new CyclicBarrier(2);
+    final CyclicBarrier runFirstBarrier = new CyclicBarrier(2);
+    final CyclicBarrier runSecondBarrier = new CyclicBarrier(2);
 
     volatile boolean startUpCalled = false;
     volatile boolean shutDownCalled = false;
-    AtomicInteger numberOfTimesRunCalled = new AtomicInteger(0);
-    AtomicInteger numberOfTimesExecutorCalled = new AtomicInteger(0);
-    AtomicInteger numberOfTimesSchedulerCalled = new AtomicInteger(0);
+    final AtomicInteger numberOfTimesRunCalled = new AtomicInteger(0);
+    final AtomicInteger numberOfTimesExecutorCalled = new AtomicInteger(0);
+    final AtomicInteger numberOfTimesSchedulerCalled = new AtomicInteger(0);
     volatile @Nullable Exception runException = null;
     volatile @Nullable Exception startUpException = null;
     volatile @Nullable Exception shutDownException = null;
@@ -466,7 +468,7 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   private static class TestCustomScheduler extends AbstractScheduledService.CustomScheduler {
-    public AtomicInteger scheduleCounter = new AtomicInteger(0);
+    private final AtomicInteger scheduleCounter = new AtomicInteger(0);
 
     @Override
     protected Schedule getNextSchedule() throws Exception {
@@ -476,9 +478,9 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   public void testCustomSchedule_startStop() throws Exception {
-    final CyclicBarrier firstBarrier = new CyclicBarrier(2);
-    final CyclicBarrier secondBarrier = new CyclicBarrier(2);
-    final AtomicBoolean shouldWait = new AtomicBoolean(true);
+    CyclicBarrier firstBarrier = new CyclicBarrier(2);
+    CyclicBarrier secondBarrier = new CyclicBarrier(2);
+    AtomicBoolean shouldWait = new AtomicBoolean(true);
     Runnable task =
         new Runnable() {
           @Override
@@ -494,7 +496,7 @@ public class AbstractScheduledServiceTest extends TestCase {
           }
         };
     TestCustomScheduler scheduler = new TestCustomScheduler();
-    Cancellable future = scheduler.schedule(null, Executors.newScheduledThreadPool(10), task);
+    Cancellable future = scheduler.schedule(null, newScheduledThreadPool(10), task);
     firstBarrier.await();
     assertEquals(1, scheduler.scheduleCounter.get());
     secondBarrier.await();
@@ -519,7 +521,7 @@ public class AbstractScheduledServiceTest extends TestCase {
   }
 
   public void testCustomScheduler_deadlock() throws InterruptedException, BrokenBarrierException {
-    final CyclicBarrier inGetNextSchedule = new CyclicBarrier(2);
+    CyclicBarrier inGetNextSchedule = new CyclicBarrier(2);
     // This will flakily deadlock, so run it multiple times to increase the flake likelihood
     for (int i = 0; i < 1000; i++) {
       Service service =
@@ -595,7 +597,7 @@ public class AbstractScheduledServiceTest extends TestCase {
     @Override
     protected ScheduledExecutorService executor() {
       // use a bunch of threads so that weird overlapping schedules are more likely to happen.
-      return Executors.newScheduledThreadPool(10);
+      return newScheduledThreadPool(10);
     }
 
     @Override
@@ -638,7 +640,7 @@ public class AbstractScheduledServiceTest extends TestCase {
     @Override
     protected ScheduledExecutorService executor() {
       // use a bunch of threads so that weird overlapping schedules are more likely to happen.
-      return Executors.newScheduledThreadPool(10);
+      return newScheduledThreadPool(10);
     }
 
     @Override

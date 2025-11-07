@@ -17,10 +17,9 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.truth.Truth.assertThat;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertSame;
 
 import com.google.common.testing.TearDown;
@@ -29,7 +28,8 @@ import java.lang.reflect.Method;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeoutException;
 import junit.framework.AssertionFailedError;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A helper for concurrency testing. One or more {@code TestThread} instances are instantiated in a
@@ -48,6 +48,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <L> the type of the lock-like object to be used
  * @author Justin T. Sampson
  */
+@NullUnmarked
 public final class TestThread<L> extends Thread implements TearDown {
 
   private static final long DUE_DILIGENCE_MILLIS = 100;
@@ -66,15 +67,26 @@ public final class TestThread<L> extends Thread implements TearDown {
     start();
   }
 
-  // Thread.stop() is okay because all threads started by a test are dying at the end of the test,
-  // so there is no object state put at risk by stopping the threads abruptly. In some cases a test
-  // may put a thread into an uninterruptible operation intentionally, so there is no other way to
-  // clean up these threads.
-  @SuppressWarnings("deprecation")
+  /*
+   * TODO: b/318391980 - Once we test only under Java 20 and higher, avoid calling Thread.stop. As
+   * of Java 20, it always throws an exception, and as of Java 26, the method does not even exist.
+   * For now, we continue using it to clean up under older JDKs.
+   *
+   * Our usages should at least be *relatively* safe: Typically, threads started by a test are dying
+   * at the end of the test, so there is no object state put at risk by stopping the threads
+   * abruptly. In other cases, a test may put a thread into an uninterruptible operation
+   * intentionally, so there is no other way to clean up these threads. (The better solution,
+   * though, would be to run the tests that use TestThread in separate VMs so that their threads
+   * don't hang around during other tests.)
+   */
   @Override
   public void tearDown() throws Exception {
-    stop();
-    join();
+    try {
+      Thread.class.getMethod("stop").invoke(this);
+      join();
+    } catch (ReflectiveOperationException e) {
+      // stop() threw or did not exist. Don't join() the thread, which might hang forever.
+    }
 
     if (uncaughtThrowable != null) {
       throw new AssertionError("Uncaught throwable in " + getName(), uncaughtThrowable);
@@ -141,7 +153,7 @@ public final class TestThread<L> extends Thread implements TearDown {
     sendRequest(methodName, arguments);
     Thread.sleep(DUE_DILIGENCE_MILLIS);
     assertEquals(true, invokeMethod("hasQueuedThread", this));
-    assertNull(responseQueue.poll());
+    assertThat(responseQueue.poll()).isNull();
   }
 
   /**
@@ -159,7 +171,7 @@ public final class TestThread<L> extends Thread implements TearDown {
     sendRequest(methodName, conditionLikeObject);
     Thread.sleep(DUE_DILIGENCE_MILLIS);
     assertEquals(true, invokeMethod("hasWaiters", conditionLikeObject));
-    assertNull(responseQueue.poll());
+    assertThat(responseQueue.poll()).isNull();
   }
 
   /**
@@ -286,7 +298,7 @@ public final class TestThread<L> extends Thread implements TearDown {
     }
 
     Throwable getThrowable() {
-      assertNotNull(throwable);
+      assertThat(throwable).isNotNull();
       return throwable;
     }
   }

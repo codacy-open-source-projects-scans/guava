@@ -20,12 +20,14 @@ import com.google.common.base.Function;
 import com.google.common.testing.ForwardingWrapperTester;
 import java.util.ListIterator;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code ForwardingListIterator}.
  *
  * @author Robert Konigsberg
  */
+@NullUnmarked
 public class ForwardingListIteratorTest extends TestCase {
 
   @SuppressWarnings("rawtypes")
@@ -41,7 +43,7 @@ public class ForwardingListIteratorTest extends TestCase {
             });
   }
 
-  private static <T> ListIterator<T> wrap(final ListIterator<T> delegate) {
+  private static <T> ListIterator<T> wrap(ListIterator<T> delegate) {
     return new ForwardingListIterator<T>() {
       @Override
       protected ListIterator<T> delegate() {

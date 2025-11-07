@@ -36,7 +36,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code Comparators}.
@@ -44,7 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class ComparatorsTest extends TestCase {
   public void testLexicographical() {
     Comparator<String> comparator = Ordering.natural();
@@ -72,7 +73,7 @@ public class ComparatorsTest extends TestCase {
     assertTrue(isInOrder(asList(0, 0, 3, 3), Ordering.natural()));
     assertTrue(isInOrder(asList(0, 3), Ordering.natural()));
     assertTrue(isInOrder(singleton(1), Ordering.natural()));
-    assertTrue(isInOrder(Collections.<Integer>emptyList(), Ordering.natural()));
+    assertTrue(isInOrder(ImmutableList.of(), Ordering.natural()));
   }
 
   public void testIsInStrictOrder() {
@@ -82,7 +83,7 @@ public class ComparatorsTest extends TestCase {
     assertFalse(isInStrictOrder(asList(0, 0, 3, 3), Ordering.natural()));
     assertTrue(isInStrictOrder(asList(0, 3), Ordering.natural()));
     assertTrue(isInStrictOrder(singleton(1), Ordering.natural()));
-    assertTrue(isInStrictOrder(Collections.<Integer>emptyList(), Ordering.natural()));
+    assertTrue(isInStrictOrder(ImmutableList.of(), Ordering.natural()));
   }
 
   public void testEmptiesFirst() {

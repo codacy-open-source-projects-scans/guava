@@ -1,10 +1,18 @@
 # Futures.getChecked, in both of its variants, is incompatible with proguard.
 
-# Used by AtomicReferenceFieldUpdater and sun.misc.Unsafe
+# Used by AtomicReferenceFieldUpdater, sun.misc.Unsafe, and VarHandle.
+# We could be more precise about which classes these are defined in, but that feels error-prone.
 -keepclassmembers class com.google.common.util.concurrent.AbstractFuture** {
-  *** waiters;
-  *** value;
-  *** listeners;
+  *** waitersField;
+  *** valueField;
+  *** listenersField;
+  *** thread;
+  *** next;
+}
+-keepclassmembers class com.google.common.util.concurrent.AbstractFutureState** {
+  *** waitersField;
+  *** valueField;
+  *** listenersField;
   *** thread;
   *** next;
 }
@@ -12,8 +20,8 @@
   *** value;
 }
 -keepclassmembers class com.google.common.util.concurrent.AggregateFutureState {
-  *** remaining;
-  *** seenExceptions;
+  *** remainingField;
+  *** seenExceptionsField;
 }
 
 # Since Unsafe is using the field offsets of these inner classes, we don't want
@@ -21,6 +29,9 @@
 # fields. It's safe to allow obfuscation, since the by-name references are
 # already preserved in the -keep statement above.
 -keep,allowshrinking,allowobfuscation class com.google.common.util.concurrent.AbstractFuture** {
+  <fields>;
+}
+-keep,allowshrinking,allowobfuscation class com.google.common.util.concurrent.AbstractFutureState** {
   <fields>;
 }
 
@@ -36,5 +47,3 @@
 -keep class com.google.apphosting.api.ApiProxy {
   static *** getCurrentEnvironment (...);
 }
-
--dontwarn java.lang.SafeVarargs

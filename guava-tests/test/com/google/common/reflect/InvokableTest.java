@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
+import com.google.errorprone.annotations.Keep;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.AccessibleObject;
@@ -35,7 +36,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.TypeVariable;
 import java.util.Collections;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@link Invokable}.
@@ -43,6 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Ben Yu
  */
 @AndroidIncompatible // lots of failures, possibly some related to bad equals() implementations?
+@NullUnmarked
 public class InvokableTest extends TestCase {
   // Historically Invokable inherited from java.lang.reflect.AccessibleObject. That's no longer the
   // case, but we do check that its API still has the same public methods. We exclude some methods
@@ -158,6 +161,7 @@ public class InvokableTest extends TestCase {
   }
 
   @Retention(RetentionPolicy.RUNTIME)
+  @Keep
   private @interface Tested {}
 
   private abstract static class A {
@@ -170,6 +174,7 @@ public class InvokableTest extends TestCase {
     private volatile char volatileField;
     private transient long transientField;
 
+    @Keep
     @Tested
     public A(Object finalField) {
       this.finalField = finalField;
@@ -178,6 +183,7 @@ public class InvokableTest extends TestCase {
     @Tested
     abstract void abstractMethod();
 
+    @Keep
     @Tested
     void overridableMethod() {}
 
@@ -187,6 +193,7 @@ public class InvokableTest extends TestCase {
     @Tested
     private void privateMethod() {}
 
+    @Keep
     @Tested
     public final void publicFinalMethod() {}
 
@@ -494,7 +501,7 @@ public class InvokableTest extends TestCase {
 
   private class InnerWithOneParameterConstructor {
     @SuppressWarnings("unused") // called by reflection
-    public InnerWithOneParameterConstructor(String s) {}
+    InnerWithOneParameterConstructor(String s) {}
   }
 
   public void testInnerClassWithOneParameterConstructor() {
@@ -533,8 +540,8 @@ public class InvokableTest extends TestCase {
   }
 
   public void testAnonymousClassDefaultConstructor() {
-    final int i = 1;
-    final String s = "hello world";
+    int i = 1;
+    String s = "hello world";
     Class<?> anonymous =
         new Runnable() {
           @Override
@@ -557,8 +564,8 @@ public class InvokableTest extends TestCase {
   }
 
   public void testLocalClassDefaultConstructor() {
-    final int i = 1;
-    final String s = "hello world";
+    int i = 1;
+    String s = "hello world";
     class LocalWithDefaultConstructor implements Runnable {
       @Override
       public void run() {
@@ -574,8 +581,8 @@ public class InvokableTest extends TestCase {
   }
 
   private static void doTestStaticAnonymousClassDefaultConstructor() {
-    final int i = 1;
-    final String s = "hello world";
+    int i = 1;
+    String s = "hello world";
     Class<?> anonymous =
         new Runnable() {
           @Override
@@ -593,8 +600,8 @@ public class InvokableTest extends TestCase {
 
   private static class AnonymousClassInConstructor {
     AnonymousClassInConstructor() {
-      final int i = 1;
-      final String s = "hello world";
+      int i = 1;
+      String s = "hello world";
       Class<?> anonymous =
           new Runnable() {
             @Override
@@ -653,11 +660,11 @@ public class InvokableTest extends TestCase {
   }
 
   public void testLocalClassWithOneParameterConstructor() throws Exception {
-    final int i = 1;
-    final String s = "hello world";
+    int i = 1;
+    String s = "hello world";
     class LocalWithOneParameterConstructor {
       @SuppressWarnings("unused") // called by reflection
-      public LocalWithOneParameterConstructor(String x) {
+      LocalWithOneParameterConstructor(String x) {
         System.out.println(s + i);
       }
     }
@@ -773,7 +780,7 @@ public class InvokableTest extends TestCase {
 
   private static class SubPrepender extends Prepender {
     @SuppressWarnings("unused") // needed to satisfy compiler, never called
-    public SubPrepender() throws NullPointerException {
+    SubPrepender() throws NullPointerException {
       throw new AssertionError();
     }
   }

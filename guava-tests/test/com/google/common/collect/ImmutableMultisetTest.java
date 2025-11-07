@@ -53,19 +53,21 @@ import java.util.stream.Collector;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ImmutableMultiset}.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableMultisetTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite // TODO(cpovirk): add to collect/gwt/suites
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ImmutableMultisetTest.class);
@@ -238,8 +240,7 @@ public class ImmutableMultisetTest extends TestCase {
   }
 
   public void testCopyOf_collection_empty() {
-    // "<String>" is required to work around a javac 1.5 bug.
-    Collection<String> c = MinimalCollection.<String>of();
+    Collection<String> c = MinimalCollection.of();
     Multiset<String> multiset = ImmutableMultiset.copyOf(c);
     assertTrue(multiset.isEmpty());
   }
@@ -356,7 +357,7 @@ public class ImmutableMultisetTest extends TestCase {
         return obj instanceof TypeWithDuplicates && ((TypeWithDuplicates) obj).a == a;
       }
 
-      public boolean fullEquals(@Nullable TypeWithDuplicates other) {
+      boolean fullEquals(@Nullable TypeWithDuplicates other) {
         return other != null && a == other.a && b == other.b;
       }
     }
@@ -511,20 +512,20 @@ public class ImmutableMultisetTest extends TestCase {
 
   public void testBuilderAddAllHandlesNullsCorrectly() {
     {
-    ImmutableMultiset.Builder<String> builder = ImmutableMultiset.builder();
+      ImmutableMultiset.Builder<String> builder = ImmutableMultiset.builder();
       assertThrows(NullPointerException.class, () -> builder.addAll((Collection<String>) null));
     }
 
     {
       ImmutableMultiset.Builder<String> builder = ImmutableMultiset.builder();
-    List<@Nullable String> listWithNulls = asList("a", null, "b");
+      List<@Nullable String> listWithNulls = asList("a", null, "b");
       assertThrows(NullPointerException.class, () -> builder.addAll((List<String>) listWithNulls));
     }
 
     {
       ImmutableMultiset.Builder<String> builder = ImmutableMultiset.builder();
-    Multiset<@Nullable String> multisetWithNull =
-        LinkedHashMultiset.create(Arrays.<@Nullable String>asList("a", null, "b"));
+      Multiset<@Nullable String> multisetWithNull =
+          LinkedHashMultiset.create(Arrays.<@Nullable String>asList("a", null, "b"));
       assertThrows(
           NullPointerException.class, () -> builder.addAll((Multiset<String>) multisetWithNull));
     }

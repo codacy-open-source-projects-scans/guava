@@ -24,12 +24,12 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.j2objc.annotations.WeakOuter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
@@ -37,9 +37,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code Multimap} that does not allow duplicate key-value entries and that
@@ -79,10 +79,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  * @since 2.0
  */
-@GwtCompatible(serializable = true, emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nullable Object>
-    extends LinkedHashMultimapGwtSerializationDependencies<K, V> {
+    extends AbstractSetMultimap<K, V> {
 
   /** Creates a new, empty {@code LinkedHashMultimap} with the default initial capacities. */
   public static <K extends @Nullable Object, V extends @Nullable Object>
@@ -120,38 +119,6 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     return result;
   }
 
-  private interface ValueSetLink<K extends @Nullable Object, V extends @Nullable Object> {
-    ValueSetLink<K, V> getPredecessorInValueSet();
-
-    ValueSetLink<K, V> getSuccessorInValueSet();
-
-    void setPredecessorInValueSet(ValueSetLink<K, V> entry);
-
-    void setSuccessorInValueSet(ValueSetLink<K, V> entry);
-  }
-
-  private static <K extends @Nullable Object, V extends @Nullable Object> void succeedsInValueSet(
-      ValueSetLink<K, V> pred, ValueSetLink<K, V> succ) {
-    pred.setSuccessorInValueSet(succ);
-    succ.setPredecessorInValueSet(pred);
-  }
-
-  private static <K extends @Nullable Object, V extends @Nullable Object> void succeedsInMultimap(
-      ValueEntry<K, V> pred, ValueEntry<K, V> succ) {
-    pred.setSuccessorInMultimap(succ);
-    succ.setPredecessorInMultimap(pred);
-  }
-
-  private static <K extends @Nullable Object, V extends @Nullable Object> void deleteFromValueSet(
-      ValueSetLink<K, V> entry) {
-    succeedsInValueSet(entry.getPredecessorInValueSet(), entry.getSuccessorInValueSet());
-  }
-
-  private static <K extends @Nullable Object, V extends @Nullable Object> void deleteFromMultimap(
-      ValueEntry<K, V> entry) {
-    succeedsInMultimap(entry.getPredecessorInMultimap(), entry.getSuccessorInMultimap());
-  }
-
   /**
    * LinkedHashMultimap entries are in no less than three coexisting linked lists: a bucket in the
    * hash table for a {@code Set<V>} associated with a key, the linked list of insertion-ordered
@@ -160,94 +127,29 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
    */
   @VisibleForTesting
   static final class ValueEntry<K extends @Nullable Object, V extends @Nullable Object>
-      extends ImmutableEntry<K, V> implements ValueSetLink<K, V> {
+      extends SimpleImmutableEntry<K, V> {
     final int smearedValueHash;
 
-    @CheckForNull ValueEntry<K, V> nextInValueBucket;
-    /*
-     * The *InValueSet and *InMultimap fields below are null after construction, but we almost
-     * always call succeedsIn*() to initialize them immediately thereafter.
-     *
-     * The exception is the *InValueSet fields of multimapHeaderEntry, which are never set. (That
-     * works out fine as long as we continue to be careful not to try to delete them or iterate
-     * past them.)
-     *
-     * We could consider "lying" and omitting @CheckNotNull from all these fields. Normally, I'm not
-     * a fan of that: What if we someday implement (presumably to be enabled during tests only)
-     * bytecode rewriting that checks for any null value that passes through an API with a
-     * known-non-null type? But that particular problem might not arise here, since we're not
-     * actually reading from the fields in any case in which they might be null (as proven by the
-     * requireNonNull checks below). Plus, we're *already* lying here, since newHeader passes a null
-     * key and value, which we pass to the superconstructor, even though the key and value type for
-     * a given entry might not include null. The right fix for the header problems is probably to
-     * define a separate MultimapLink interface with a separate "header" implementation, which
-     * hopefully could avoid implementing Entry or ValueSetLink at all. (But note that that approach
-     * requires us to define extra classes -- unfortunate under Android.) *Then* we could consider
-     * lying about the fields below on the grounds that we always initialize them just after the
-     * constructor -- an example of the kind of lying that our hypothetical bytecode rewriter would
-     * already have to deal with, thanks to DI frameworks that perform field and method injection,
-     * frameworks like Android that define post-construct hooks like Activity.onCreate, etc.
-     */
+    @Nullable ValueEntry<K, V> nextInValueBucket;
 
-    @CheckForNull private ValueSetLink<K, V> predecessorInValueSet;
-    @CheckForNull private ValueSetLink<K, V> successorInValueSet;
+    private @Nullable ValueEntry<K, V> predecessorInValueSet;
+    private @Nullable ValueEntry<K, V> successorInValueSet;
 
-    @CheckForNull private ValueEntry<K, V> predecessorInMultimap;
-    @CheckForNull private ValueEntry<K, V> successorInMultimap;
+    private @Nullable ValueEntry<K, V> predecessorInMultimap;
+    private @Nullable ValueEntry<K, V> successorInMultimap;
 
     ValueEntry(
         @ParametricNullness K key,
         @ParametricNullness V value,
         int smearedValueHash,
-        @CheckForNull ValueEntry<K, V> nextInValueBucket) {
+        @Nullable ValueEntry<K, V> nextInValueBucket) {
       super(key, value);
       this.smearedValueHash = smearedValueHash;
       this.nextInValueBucket = nextInValueBucket;
     }
 
-    @SuppressWarnings("nullness") // see the comment on the class fields, especially about newHeader
-    static <K extends @Nullable Object, V extends @Nullable Object> ValueEntry<K, V> newHeader() {
-      return new ValueEntry<>(null, null, 0, null);
-    }
-
-    boolean matchesValue(@CheckForNull Object v, int smearedVHash) {
-      return smearedValueHash == smearedVHash && Objects.equal(getValue(), v);
-    }
-
-    @Override
-    public ValueSetLink<K, V> getPredecessorInValueSet() {
-      return requireNonNull(predecessorInValueSet); // see the comment on the class fields
-    }
-
-    @Override
-    public ValueSetLink<K, V> getSuccessorInValueSet() {
-      return requireNonNull(successorInValueSet); // see the comment on the class fields
-    }
-
-    @Override
-    public void setPredecessorInValueSet(ValueSetLink<K, V> entry) {
-      predecessorInValueSet = entry;
-    }
-
-    @Override
-    public void setSuccessorInValueSet(ValueSetLink<K, V> entry) {
-      successorInValueSet = entry;
-    }
-
-    public ValueEntry<K, V> getPredecessorInMultimap() {
-      return requireNonNull(predecessorInMultimap); // see the comment on the class fields
-    }
-
-    public ValueEntry<K, V> getSuccessorInMultimap() {
-      return requireNonNull(successorInMultimap); // see the comment on the class fields
-    }
-
-    public void setSuccessorInMultimap(ValueEntry<K, V> multimapSuccessor) {
-      this.successorInMultimap = multimapSuccessor;
-    }
-
-    public void setPredecessorInMultimap(ValueEntry<K, V> multimapPredecessor) {
-      this.predecessorInMultimap = multimapPredecessor;
+    boolean matchesValue(@Nullable Object v, int smearedVHash) {
+      return smearedValueHash == smearedVHash && Objects.equals(getValue(), v);
     }
   }
 
@@ -255,16 +157,15 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
   private static final int DEFAULT_VALUE_SET_CAPACITY = 2;
   @VisibleForTesting static final double VALUE_SET_LOAD_FACTOR = 1.0;
 
-  @VisibleForTesting transient int valueSetCapacity = DEFAULT_VALUE_SET_CAPACITY;
-  private transient ValueEntry<K, V> multimapHeaderEntry;
+  @VisibleForTesting transient int valueSetCapacity;
+  private transient MultimapIterationChain<K, V> multimapIterationChain =
+      new MultimapIterationChain<>();
 
   private LinkedHashMultimap(int keyCapacity, int valueSetCapacity) {
-    super(Platform.<K, Collection<V>>newLinkedHashMapWithExpectedSize(keyCapacity));
+    super(Platform.newLinkedHashMapWithExpectedSize(keyCapacity));
     checkNonnegative(valueSetCapacity, "expectedValuesPerKey");
 
     this.valueSetCapacity = valueSetCapacity;
-    this.multimapHeaderEntry = ValueEntry.newHeader();
-    succeedsInMultimap(multimapHeaderEntry, multimapHeaderEntry);
   }
 
   /**
@@ -351,7 +252,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
 
   @VisibleForTesting
   @WeakOuter
-  final class ValueSet extends Sets.ImprovedAbstractSet<V> implements ValueSetLink<K, V> {
+  final class ValueSet extends Sets.ImprovedAbstractSet<V> {
     /*
      * We currently use a fixed load factor of 1.0, a bit higher than normal to reduce memory
      * consumption.
@@ -362,22 +263,40 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     private int size = 0;
     private int modCount = 0;
 
-    // We use the set object itself as the end of the linked list, avoiding an unnecessary
-    // entry object per key.
-    private ValueSetLink<K, V> firstEntry;
-    private ValueSetLink<K, V> lastEntry;
+    private @Nullable ValueEntry<K, V> firstEntry;
+    private @Nullable ValueEntry<K, V> lastEntry;
 
     ValueSet(@ParametricNullness K key, int expectedValues) {
       this.key = key;
-      this.firstEntry = this;
-      this.lastEntry = this;
       // Round expected values up to a power of 2 to get the table size.
       int tableSize = Hashing.closedTableSize(expectedValues, VALUE_SET_LOAD_FACTOR);
 
       @SuppressWarnings({"rawtypes", "unchecked"})
-      @Nullable
-      ValueEntry<K, V>[] hashTable = new @Nullable ValueEntry[tableSize];
+      @Nullable ValueEntry<K, V>[] hashTable = new @Nullable ValueEntry[tableSize];
       this.hashTable = hashTable;
+    }
+
+    private void succeedsInValueSet(
+        @Nullable ValueEntry<K, V> pred, @Nullable ValueEntry<K, V> succ) {
+      if (pred == null) {
+        firstEntry = succ;
+      } else {
+        pred.successorInValueSet = succ;
+      }
+      if (succ == null) {
+        lastEntry = pred;
+      } else {
+        succ.predecessorInValueSet = pred;
+      }
+    }
+
+    private void deleteFromValueSet(ValueEntry<K, V> entry) {
+      succeedsInValueSet(entry.predecessorInValueSet, entry.successorInValueSet);
+    }
+
+    private void appendToValueSet(ValueEntry<K, V> newEntry) {
+      succeedsInValueSet(lastEntry, newEntry);
+      lastEntry = newEntry;
     }
 
     private int mask() {
@@ -385,30 +304,10 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     }
 
     @Override
-    public ValueSetLink<K, V> getPredecessorInValueSet() {
-      return lastEntry;
-    }
-
-    @Override
-    public ValueSetLink<K, V> getSuccessorInValueSet() {
-      return firstEntry;
-    }
-
-    @Override
-    public void setPredecessorInValueSet(ValueSetLink<K, V> entry) {
-      lastEntry = entry;
-    }
-
-    @Override
-    public void setSuccessorInValueSet(ValueSetLink<K, V> entry) {
-      firstEntry = entry;
-    }
-
-    @Override
     public Iterator<V> iterator() {
       return new Iterator<V>() {
-        ValueSetLink<K, V> nextEntry = firstEntry;
-        @CheckForNull ValueEntry<K, V> toRemove;
+        @Nullable ValueEntry<K, V> nextEntry = firstEntry;
+        @Nullable ValueEntry<K, V> toRemove;
         int expectedModCount = modCount;
 
         private void checkForComodification() {
@@ -420,19 +319,20 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
         @Override
         public boolean hasNext() {
           checkForComodification();
-          return nextEntry != ValueSet.this;
+          return nextEntry != null;
         }
 
         @Override
         @ParametricNullness
         public V next() {
-          if (!hasNext()) {
+          checkForComodification();
+          ValueEntry<K, V> entry = nextEntry;
+          if (entry == null) {
             throw new NoSuchElementException();
           }
-          ValueEntry<K, V> entry = (ValueEntry<K, V>) nextEntry;
           V result = entry.getValue();
           toRemove = entry;
-          nextEntry = entry.getSuccessorInValueSet();
+          nextEntry = entry.successorInValueSet;
           return result;
         }
 
@@ -453,7 +353,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       int smearedHash = Hashing.smearedHash(o);
       for (ValueEntry<K, V> entry = hashTable[smearedHash & mask()];
           entry != null;
@@ -477,10 +377,8 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
       }
 
       ValueEntry<K, V> newEntry = new ValueEntry<>(key, value, smearedHash, rowHead);
-      succeedsInValueSet(lastEntry, newEntry);
-      succeedsInValueSet(newEntry, this);
-      succeedsInMultimap(multimapHeaderEntry.getPredecessorInMultimap(), newEntry);
-      succeedsInMultimap(newEntry, multimapHeaderEntry);
+      appendToValueSet(newEntry);
+      multimapIterationChain.append(newEntry);
       hashTable[bucket] = newEntry;
       size++;
       modCount++;
@@ -495,20 +393,19 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
             (ValueEntry<K, V>[]) new ValueEntry<?, ?>[this.hashTable.length * 2];
         this.hashTable = hashTable;
         int mask = hashTable.length - 1;
-        for (ValueSetLink<K, V> entry = firstEntry;
-            entry != this;
-            entry = entry.getSuccessorInValueSet()) {
-          ValueEntry<K, V> valueEntry = (ValueEntry<K, V>) entry;
-          int bucket = valueEntry.smearedValueHash & mask;
-          valueEntry.nextInValueBucket = hashTable[bucket];
-          hashTable[bucket] = valueEntry;
+        for (ValueEntry<K, V> entry = firstEntry;
+            entry != null;
+            entry = entry.successorInValueSet) {
+          int bucket = entry.smearedValueHash & mask;
+          entry.nextInValueBucket = hashTable[bucket];
+          hashTable[bucket] = entry;
         }
       }
     }
 
     @CanIgnoreReturnValue
     @Override
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       int smearedHash = Hashing.smearedHash(o);
       int bucket = smearedHash & mask();
       ValueEntry<K, V> prev = null;
@@ -523,7 +420,7 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
             prev.nextInValueBucket = entry.nextInValueBucket;
           }
           deleteFromValueSet(entry);
-          deleteFromMultimap(entry);
+          multimapIterationChain.delete(entry);
           size--;
           modCount++;
           return true;
@@ -536,13 +433,12 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     public void clear() {
       Arrays.fill(hashTable, null);
       size = 0;
-      for (ValueSetLink<K, V> entry = firstEntry;
-          entry != this;
-          entry = entry.getSuccessorInValueSet()) {
-        ValueEntry<K, V> valueEntry = (ValueEntry<K, V>) entry;
-        deleteFromMultimap(valueEntry);
+      for (ValueEntry<K, V> entry = firstEntry; entry != null; entry = entry.successorInValueSet) {
+        multimapIterationChain.delete(entry);
+        // TODO(cpovirk): Also clear *InValueSet (after reading next) and nextInValueBucket?
       }
-      succeedsInValueSet(this, this);
+      firstEntry = null;
+      lastEntry = null;
       modCount++;
     }
   }
@@ -550,23 +446,23 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
   @Override
   Iterator<Entry<K, V>> entryIterator() {
     return new Iterator<Entry<K, V>>() {
-      ValueEntry<K, V> nextEntry = multimapHeaderEntry.getSuccessorInMultimap();
-      @CheckForNull ValueEntry<K, V> toRemove;
+      @Nullable ValueEntry<K, V> nextEntry = multimapIterationChain.firstEntry;
+      @Nullable ValueEntry<K, V> toRemove;
 
       @Override
       public boolean hasNext() {
-        return nextEntry != multimapHeaderEntry;
+        return nextEntry != null;
       }
 
       @Override
       public Entry<K, V> next() {
-        if (!hasNext()) {
+        ValueEntry<K, V> entry = nextEntry;
+        if (entry == null) {
           throw new NoSuchElementException();
         }
-        ValueEntry<K, V> result = nextEntry;
-        toRemove = result;
-        nextEntry = nextEntry.getSuccessorInMultimap();
-        return result;
+        toRemove = entry;
+        nextEntry = entry.successorInMultimap;
+        return entry;
       }
 
       @Override
@@ -583,19 +479,13 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     return Maps.valueIterator(entryIterator());
   }
 
-  @Override
-  public void clear() {
-    super.clear();
-    succeedsInMultimap(multimapHeaderEntry, multimapHeaderEntry);
-  }
-
   /**
    * @serialData the expected values per key, the number of distinct keys, the number of entries,
    *     and the entries in order
    */
-  @GwtIncompatible // java.io.ObjectOutputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void writeObject(ObjectOutputStream stream) throws IOException {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     stream.writeInt(keySet().size());
     for (K key : keySet()) {
@@ -608,12 +498,11 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     }
   }
 
-  @GwtIncompatible // java.io.ObjectInputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
-    multimapHeaderEntry = ValueEntry.newHeader();
-    succeedsInMultimap(multimapHeaderEntry, multimapHeaderEntry);
+    multimapIterationChain = new MultimapIterationChain<>();
     valueSetCapacity = DEFAULT_VALUE_SET_CAPACITY;
     int distinctKeys = stream.readInt();
     Map<K, Collection<V>> map = Platform.newLinkedHashMapWithExpectedSize(12);
@@ -637,7 +526,33 @@ public final class LinkedHashMultimap<K extends @Nullable Object, V extends @Nul
     setMap(map);
   }
 
-  @GwtIncompatible // java serialization not supported
-  @J2ktIncompatible
-  private static final long serialVersionUID = 1;
+  private static final class MultimapIterationChain<
+      K extends @Nullable Object, V extends @Nullable Object> {
+    @Nullable ValueEntry<K, V> firstEntry;
+    @Nullable ValueEntry<K, V> lastEntry;
+
+    void succeeds(@Nullable ValueEntry<K, V> pred, @Nullable ValueEntry<K, V> succ) {
+      if (pred == null) {
+        firstEntry = succ;
+      } else {
+        pred.successorInMultimap = succ;
+      }
+      if (succ == null) {
+        lastEntry = pred;
+      } else {
+        succ.predecessorInMultimap = pred;
+      }
+    }
+
+    void delete(ValueEntry<K, V> entry) {
+      succeeds(entry.predecessorInMultimap, entry.successorInMultimap);
+    }
+
+    void append(ValueEntry<K, V> newEntry) {
+      succeeds(lastEntry, newEntry);
+      lastEntry = newEntry;
+    }
+  }
+
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
 }

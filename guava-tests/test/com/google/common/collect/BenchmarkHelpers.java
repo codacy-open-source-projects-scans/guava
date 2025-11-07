@@ -22,7 +22,9 @@ import static java.util.Collections.unmodifiableSet;
 
 import com.google.common.base.Equivalence;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Queue;
@@ -33,12 +35,14 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Helper classes for various benchmarks.
  *
  * @author Christopher Swenson
  */
+@NullUnmarked
 final class BenchmarkHelpers {
   /** So far, this is the best way to test various implementations of {@link Set} subclasses. */
   public interface CollectionsImplEnum {
@@ -189,13 +193,13 @@ final class BenchmarkHelpers {
     HashMapImpl {
       @Override
       public <K extends Comparable<K>, V> Map<K, V> create(Map<K, V> map) {
-        return Maps.newHashMap(map);
+        return new HashMap<>(map);
       }
     },
     LinkedHashMapImpl {
       @Override
       public <K extends Comparable<K>, V> Map<K, V> create(Map<K, V> map) {
-        return Maps.newLinkedHashMap(map);
+        return new LinkedHashMap<>(map);
       }
     },
     ConcurrentHashMapImpl {
@@ -417,7 +421,7 @@ final class BenchmarkHelpers {
     final int min;
     final int max;
 
-    private ListSizeDistribution(int min, int max) {
+    ListSizeDistribution(int min, int max) {
       this.min = min;
       this.max = max;
     }
@@ -426,4 +430,6 @@ final class BenchmarkHelpers {
       return random.nextInt(max - min + 1) + min;
     }
   }
+
+  private BenchmarkHelpers() {}
 }

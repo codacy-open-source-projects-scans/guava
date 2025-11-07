@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInts;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Serializable;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An immutable hash code of arbitrary bit length.
@@ -32,7 +32,6 @@ import javax.annotation.CheckForNull;
  * @author Kurt Alfred Kluever
  * @since 11.0
  */
-@ElementTypesAreNonnullByDefault
 public abstract class HashCode {
   HashCode() {}
 
@@ -288,7 +287,7 @@ public abstract class HashCode {
 
     @Override
     public long padToLong() {
-      long retVal = (bytes[0] & 0xFF);
+      long retVal = bytes[0] & 0xFF;
       for (int i = 1; i < min(bytes.length, 8); i++) {
         retVal |= (bytes[i] & 0xFFL) << (i * 8);
       }
@@ -315,7 +314,7 @@ public abstract class HashCode {
 
       boolean areEqual = true;
       for (int i = 0; i < this.bytes.length; i++) {
-        areEqual &= (this.bytes[i] == that.getBytesInternal()[i]);
+        areEqual &= this.bytes[i] == that.getBytesInternal()[i];
       }
       return areEqual;
     }
@@ -368,7 +367,7 @@ public abstract class HashCode {
    * to protect against <a href="http://en.wikipedia.org/wiki/Timing_attack">timing attacks</a>.
    */
   @Override
-  public final boolean equals(@CheckForNull Object object) {
+  public final boolean equals(@Nullable Object object) {
     if (object instanceof HashCode) {
       HashCode that = (HashCode) object;
       return bits() == that.bits() && equalsSameBits(that);
@@ -390,9 +389,9 @@ public abstract class HashCode {
     }
     // If we have less than 4 bytes, use them all.
     byte[] bytes = getBytesInternal();
-    int val = (bytes[0] & 0xFF);
+    int val = bytes[0] & 0xFF;
     for (int i = 1; i < bytes.length; i++) {
-      val |= ((bytes[i] & 0xFF) << (i * 8));
+      val |= (bytes[i] & 0xFF) << (i * 8);
     }
     return val;
   }

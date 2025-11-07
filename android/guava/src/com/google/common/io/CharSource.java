@@ -24,7 +24,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.MustBeClosed;
 import java.io.BufferedReader;
@@ -36,12 +35,12 @@ import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A readable source of characters, such as a text file. Unlike a {@link Reader}, a {@code
@@ -84,7 +83,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public abstract class CharSource {
 
   /** Constructor for use by subclasses. */
@@ -145,19 +143,18 @@ public abstract class CharSource {
    *
    * <p>The caller is responsible for ensuring that the returned stream is closed. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * try (Stream<String> lines = source.lines()) {
    *   lines.map(...)
    *      .filter(...)
    *      .forEach(...);
    * }
-   * }</pre>
+   * }
    *
    * @throws IOException if an I/O error occurs while opening the stream
    * @since 33.4.0 (but since 22.0 in the JRE flavor)
    */
   @MustBeClosed
-  @SuppressWarnings("Java7ApiChecker")
   // If users use this when they shouldn't, we hope that NewApi will catch subsequent Stream calls.
   @IgnoreJRERequirement
   public Stream<String> lines() throws IOException {
@@ -165,7 +162,6 @@ public abstract class CharSource {
     return reader.lines().onClose(() -> closeUnchecked(reader));
   }
 
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // helper for lines()
   /*
    * If we make these calls inline inside the lambda inside lines(), we get an Animal Sniffer error,
@@ -233,7 +229,7 @@ public abstract class CharSource {
     }
   }
 
-  private long countBySkipping(Reader reader) throws IOException {
+  private static long countBySkipping(Reader reader) throws IOException {
     long count = 0;
     long read;
     while ((read = reader.skip(Long.MAX_VALUE)) != 0) {
@@ -315,8 +311,7 @@ public abstract class CharSource {
    *
    * @throws IOException if an I/O error occurs while reading from this source
    */
-  @CheckForNull
-  public String readFirstLine() throws IOException {
+  public @Nullable String readFirstLine() throws IOException {
     Closer closer = Closer.create();
     try {
       BufferedReader reader = closer.register(openBufferedStream());
@@ -343,7 +338,7 @@ public abstract class CharSource {
     Closer closer = Closer.create();
     try {
       BufferedReader reader = closer.register(openBufferedStream());
-      List<String> result = Lists.newArrayList();
+      List<String> result = new ArrayList<>();
       String line;
       while ((line = reader.readLine()) != null) {
         result.add(line);
@@ -399,7 +394,6 @@ public abstract class CharSource {
    *     throws an {@code UncheckedIOException}
    * @since 33.4.0 (but since 22.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   /*
    * We have to rely on users not to call this without library desugaring, as NewApi won't flag
    * Consumer creation.
@@ -549,9 +543,9 @@ public abstract class CharSource {
 
     private static final Splitter LINE_SPLITTER = Splitter.onPattern("\r\n|\n|\r");
 
-    protected final CharSequence seq;
+    final CharSequence seq;
 
-    protected CharSequenceCharSource(CharSequence seq) {
+    CharSequenceCharSource(CharSequence seq) {
       this.seq = checkNotNull(seq);
     }
 
@@ -586,11 +580,10 @@ public abstract class CharSource {
      */
     private Iterator<String> linesIterator() {
       return new AbstractIterator<String>() {
-        Iterator<String> lines = LINE_SPLITTER.split(seq).iterator();
+        final Iterator<String> lines = LINE_SPLITTER.split(seq).iterator();
 
         @Override
-        @CheckForNull
-        protected String computeNext() {
+        protected @Nullable String computeNext() {
           if (lines.hasNext()) {
             String next = lines.next();
             // skip last line if it's empty
@@ -604,7 +597,6 @@ public abstract class CharSource {
     }
 
     @Override
-    @SuppressWarnings("Java7ApiChecker")
     // If users use this when they shouldn't, we hope that NewApi will catch subsequent Stream calls
     @IgnoreJRERequirement
     public Stream<String> lines() {
@@ -612,8 +604,7 @@ public abstract class CharSource {
     }
 
     @Override
-    @CheckForNull
-    public String readFirstLine() {
+    public @Nullable String readFirstLine() {
       Iterator<String> lines = linesIterator();
       return lines.hasNext() ? lines.next() : null;
     }
@@ -657,7 +648,7 @@ public abstract class CharSource {
    * </ul>
    */
   private static class StringCharSource extends CharSequenceCharSource {
-    protected StringCharSource(String seq) {
+    StringCharSource(String seq) {
       super(seq);
     }
 

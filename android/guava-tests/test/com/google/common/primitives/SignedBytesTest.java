@@ -32,14 +32,15 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Unit test for {@link SignedBytes}.
  *
  * @author Kevin Bourrillion
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class SignedBytesTest extends TestCase {
   private static final byte[] EMPTY = {};
   private static final byte[] ARRAY1 = {(byte) 1};
@@ -83,8 +84,8 @@ public class SignedBytesTest extends TestCase {
   public void testCompare() {
     for (byte x : VALUES) {
       for (byte y : VALUES) {
-        // Only compare the sign of the result of compareTo().
-        int expected = Byte.valueOf(x).compareTo(y);
+        // Only compare the sign of the result of compare().
+        int expected = Byte.compare(x, y);
         int actual = SignedBytes.compare(x, y);
         if (expected == 0) {
           assertWithMessage(x + ", " + y).that(actual).isEqualTo(expected);

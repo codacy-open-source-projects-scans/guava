@@ -49,8 +49,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to the {@link Future} interface.
@@ -76,8 +75,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Sven Mawson
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Futures extends GwtFuturesCatchingSpecialization {
 
   // A note on memory visibility.
@@ -271,14 +269,14 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * <p>Usage example:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<Integer> fetchCounterFuture = ...;
    *
    * // Falling back to a zero counter in case an exception happens when
    * // processing the RPC to fetch counters.
    * ListenableFuture<Integer> faultTolerantFuture = Futures.catching(
    *     fetchCounterFuture, FetchException.class, x -> 0, directExecutor());
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the warnings the {@link MoreExecutors#directExecutor} documentation.
@@ -317,18 +315,18 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * <p>Usage examples:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<Integer> fetchCounterFuture = ...;
    *
    * // Falling back to a zero counter in case an exception happens when
    * // processing the RPC to fetch counters.
    * ListenableFuture<Integer> faultTolerantFuture = Futures.catchingAsync(
    *     fetchCounterFuture, FetchException.class, x -> immediateFuture(0), directExecutor());
-   * }</pre>
+   * }
    *
    * <p>The fallback can also choose to propagate the original exception when desired:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<Integer> fetchCounterFuture = ...;
    *
    * // Falling back to a zero counter only in case the exception was a
@@ -343,7 +341,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *       throw e;
    *     },
    *     directExecutor());
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the warnings the {@link MoreExecutors#directExecutor} documentation.
@@ -425,11 +423,11 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * by applying the given {@code AsyncFunction} to the result of the original {@code Future}.
    * Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<RowKey> rowKeyFuture = indexService.lookUp(query);
    * ListenableFuture<QueryResult> queryFuture =
    *     transformAsync(rowKeyFuture, dataService::readFuture, executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the warnings the {@link MoreExecutors#directExecutor} documentation.
@@ -461,11 +459,11 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * Future}. If {@code input} fails, the returned {@code Future} fails with the same exception (and
    * the function is not invoked). Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<QueryResult> queryFuture = ...;
    * ListenableFuture<List<Row>> rowsFuture =
    *     transform(queryFuture, QueryResult::getRows, executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the warnings the {@link MoreExecutors#directExecutor} documentation.
@@ -514,7 +512,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   @J2ktIncompatible
   @GwtIncompatible // TODO
   public static <I extends @Nullable Object, O extends @Nullable Object> Future<O> lazyTransform(
-      final Future<I> input, final Function<? super I, ? extends O> function) {
+      Future<I> input, Function<? super I, ? extends O> function) {
     checkNotNull(input);
     checkNotNull(function);
     return new Future<O>() {
@@ -669,7 +667,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * <p>Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * final ListenableFuture<Instant> loginDateFuture =
    *     loginService.findLastLoginDate(username);
    * final ListenableFuture<List<String>> recentCommandsFuture =
@@ -683,7 +681,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *                     Futures.getDone(loginDateFuture),
    *                     Futures.getDone(recentCommandsFuture)),
    *             executor);
-   * }</pre>
+   * }
    *
    * @since 20.0
    */
@@ -764,12 +762,11 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
      *     you should typically check whether it failed: See <a
      *     href="https://errorprone.info/bugpattern/FutureReturnValueIgnored">https://errorprone.info/bugpattern/FutureReturnValueIgnored</a>.
      */
-    public ListenableFuture<?> run(final Runnable combiner, Executor executor) {
+    public ListenableFuture<?> run(Runnable combiner, Executor executor) {
       return call(
           new Callable<@Nullable Void>() {
             @Override
-            @CheckForNull
-            public Void call() throws Exception {
+            public @Nullable Void call() throws Exception {
               combiner.run();
               return null;
             }
@@ -798,9 +795,9 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   /** A wrapped future that does not propagate cancellation to its delegate. */
   private static final class NonCancellationPropagatingFuture<V extends @Nullable Object>
       extends AbstractFuture.TrustedFuture<V> implements Runnable {
-    @CheckForNull @LazyInit private ListenableFuture<V> delegate;
+    @LazyInit private @Nullable ListenableFuture<V> delegate;
 
-    NonCancellationPropagatingFuture(final ListenableFuture<V> delegate) {
+    NonCancellationPropagatingFuture(ListenableFuture<V> delegate) {
       this.delegate = delegate;
     }
 
@@ -815,8 +812,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
     }
 
     @Override
-    @CheckForNull
-    protected String pendingToString() {
+    protected @Nullable String pendingToString() {
       @RetainedLocalRef ListenableFuture<V> localDelegate = delegate;
       if (localDelegate != null) {
         return "delegate=[" + localDelegate + "]";
@@ -913,16 +909,16 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   public static <T extends @Nullable Object> ImmutableList<ListenableFuture<T>> inCompletionOrder(
       Iterable<? extends ListenableFuture<? extends T>> futures) {
     ListenableFuture<? extends T>[] copy = gwtCompatibleToArray(futures);
-    final InCompletionOrderState<T> state = new InCompletionOrderState<>(copy);
+    InCompletionOrderState<T> state = new InCompletionOrderState<>(copy);
     ImmutableList.Builder<AbstractFuture<T>> delegatesBuilder =
         ImmutableList.builderWithExpectedSize(copy.length);
     for (int i = 0; i < copy.length; i++) {
       delegatesBuilder.add(new InCompletionOrderFuture<T>(state));
     }
 
-    final ImmutableList<AbstractFuture<T>> delegates = delegatesBuilder.build();
+    ImmutableList<AbstractFuture<T>> delegates = delegatesBuilder.build();
     for (int i = 0; i < copy.length; i++) {
-      final int localI = i;
+      int localI = i;
       copy[i].addListener(() -> state.recordInputCompletion(delegates, localI), directExecutor());
     }
 
@@ -935,7 +931,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   @SuppressWarnings("unchecked")
   private static <T extends @Nullable Object> ListenableFuture<? extends T>[] gwtCompatibleToArray(
       Iterable<? extends ListenableFuture<? extends T>> futures) {
-    final Collection<ListenableFuture<? extends T>> collection;
+    Collection<ListenableFuture<? extends T>> collection;
     if (futures instanceof Collection) {
       collection = (Collection<ListenableFuture<? extends T>>) futures;
     } else {
@@ -949,7 +945,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
   // cancelled.
   private static final class InCompletionOrderFuture<T extends @Nullable Object>
       extends AbstractFuture<T> {
-    @CheckForNull private InCompletionOrderState<T> state;
+    private @Nullable InCompletionOrderState<T> state;
 
     private InCompletionOrderFuture(InCompletionOrderState<T> state) {
       this.state = state;
@@ -979,8 +975,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
     }
 
     @Override
-    @CheckForNull
-    protected String pendingToString() {
+    protected @Nullable String pendingToString() {
       InCompletionOrderState<T> localState = state;
       if (localState != null) {
         // Don't print the actual array! We don't want inCompletionOrder(list).toString() to have
@@ -1072,7 +1067,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *
    * <p>Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<QueryResult> future = ...;
    * Executor e = ...
    * addCallback(future,
@@ -1084,7 +1079,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    *         reportError(t);
    *       }
    *     }, e);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the warnings the {@link MoreExecutors#directExecutor} documentation.
@@ -1098,9 +1093,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
    * @since 10.0
    */
   public static <V extends @Nullable Object> void addCallback(
-      final ListenableFuture<V> future,
-      final FutureCallback<? super V> callback,
-      Executor executor) {
+      ListenableFuture<V> future, FutureCallback<? super V> callback, Executor executor) {
     Preconditions.checkNotNull(callback);
     future.addListener(new CallbackListener<V>(future, callback), executor);
   }
@@ -1125,7 +1118,7 @@ public final class Futures extends GwtFuturesCatchingSpecialization {
           return;
         }
       }
-      final V value;
+      V value;
       try {
         value = getDone(future);
       } catch (ExecutionException e) {

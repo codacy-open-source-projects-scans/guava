@@ -40,11 +40,12 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /** Unit test for {@link Streams}. */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class StreamsTest extends TestCase {
   /*
    * Full and proper black-box testing of a Stream-returning method is extremely involved, and is
@@ -57,7 +58,11 @@ public class StreamsTest extends TestCase {
     assertThat(stream(FluentIterable.of(1, 2, 3)).filter(n -> n > 1)).containsExactly(2, 3);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({
+    "deprecation", // test of a deprecated method
+    // We need to test that our methods really do behave like collection.stream().
+    "InlineMeInliner",
+  })
   public void testStream_collection() {
     assertThat(stream(asList())).isEmpty();
     assertThat(stream(asList("a"))).containsExactly("a");
@@ -75,6 +80,8 @@ public class StreamsTest extends TestCase {
     assertThat(stream(com.google.common.base.Optional.of("a"))).containsExactly("a");
   }
 
+  // We need to test that our methods really do behave like optional.stream().
+  @SuppressWarnings("InlineMeInliner")
   public void testStream_javaOptional() {
     assertThat(stream(java.util.Optional.empty())).isEmpty();
     assertThat(stream(java.util.Optional.of("a"))).containsExactly("a");
@@ -85,6 +92,7 @@ public class StreamsTest extends TestCase {
     assertThat(findLast(Stream.of("a", "b", "c", "d"))).hasValue("d");
 
     // test with a large, not-subsized Spliterator
+    @SuppressWarnings("JdkObsolete")
     List<Integer> list =
         IntStream.rangeClosed(0, 10000).boxed().collect(Collectors.toCollection(LinkedList::new));
     assertThat(findLast(list.stream())).hasValue(10000);
@@ -98,6 +106,7 @@ public class StreamsTest extends TestCase {
     assertThat(findLast(IntStream.of(1, 2, 3, 4, 5))).isEqualTo(OptionalInt.of(5));
 
     // test with a large, not-subsized Spliterator
+    @SuppressWarnings("JdkObsolete")
     List<Integer> list =
         IntStream.rangeClosed(0, 10000).boxed().collect(Collectors.toCollection(LinkedList::new));
     assertThat(findLast(list.stream().mapToInt(i -> i))).isEqualTo(OptionalInt.of(10000));
@@ -112,6 +121,7 @@ public class StreamsTest extends TestCase {
     assertThat(findLast(LongStream.of(1, 2, 3, 4, 5))).isEqualTo(OptionalLong.of(5));
 
     // test with a large, not-subsized Spliterator
+    @SuppressWarnings("JdkObsolete")
     List<Long> list =
         LongStream.rangeClosed(0, 10000).boxed().collect(Collectors.toCollection(LinkedList::new));
     assertThat(findLast(list.stream().mapToLong(i -> i))).isEqualTo(OptionalLong.of(10000));
@@ -126,6 +136,7 @@ public class StreamsTest extends TestCase {
     assertThat(findLast(DoubleStream.of(1, 2, 3, 4, 5))).isEqualTo(OptionalDouble.of(5));
 
     // test with a large, not-subsized Spliterator
+    @SuppressWarnings("JdkObsolete")
     List<Long> list =
         LongStream.rangeClosed(0, 10000).boxed().collect(Collectors.toCollection(LinkedList::new));
     assertThat(findLast(list.stream().mapToDouble(i -> i))).isEqualTo(OptionalDouble.of(10000));
@@ -242,16 +253,22 @@ public class StreamsTest extends TestCase {
         .inOrder();
   }
 
+  // We need to test that our methods really do behave like optional.stream().
+  @SuppressWarnings("InlineMeInliner")
   public void testStream_optionalInt() {
     assertThat(stream(OptionalInt.empty())).isEmpty();
     assertThat(stream(OptionalInt.of(5))).containsExactly(5);
   }
 
+  // We need to test that our methods really do behave like optional.stream().
+  @SuppressWarnings("InlineMeInliner")
   public void testStream_optionalLong() {
     assertThat(stream(OptionalLong.empty())).isEmpty();
     assertThat(stream(OptionalLong.of(5L))).containsExactly(5L);
   }
 
+  // We need to test that our methods really do behave like optional.stream().
+  @SuppressWarnings("InlineMeInliner")
   public void testStream_optionalDouble() {
     assertThatDoubleStream(stream(OptionalDouble.empty())).isEmpty();
     assertThatDoubleStream(stream(OptionalDouble.of(5.0))).containsExactly(5.0);
@@ -314,15 +331,15 @@ public class StreamsTest extends TestCase {
   }
 
   public void testMapWithIndex_closeIsPropagated_sizedSource() {
-    testMapWithIndex_closeIsPropagated(Stream.of("a", "b", "c"));
+    checkMapWithIndexCloseIsPropagated(Stream.of("a", "b", "c"));
   }
 
   public void testMapWithIndex_closeIsPropagated_unsizedSource() {
-    testMapWithIndex_closeIsPropagated(
+    checkMapWithIndexCloseIsPropagated(
         Stream.<@Nullable Object>of((Object) null).flatMap(unused -> Stream.of("a", "b", "c")));
   }
 
-  private void testMapWithIndex_closeIsPropagated(Stream<String> source) {
+  private void checkMapWithIndexCloseIsPropagated(Stream<String> source) {
     AtomicInteger stringsCloseCount = new AtomicInteger();
     Stream<String> strings = source.onClose(stringsCloseCount::incrementAndGet);
     Stream<String> withIndex = Streams.mapWithIndex(strings, (str, i) -> str + ":" + i);
@@ -339,15 +356,15 @@ public class StreamsTest extends TestCase {
   }
 
   public void testMapWithIndex_intStream_closeIsPropagated_sized() {
-    testMapWithIndex_intStream_closeIsPropagated(IntStream.of(1, 2, 3));
+    checkMapWithIndexIntStreamCloseIsPropagated(IntStream.of(1, 2, 3));
   }
 
   public void testMapWithIndex_intStream_closeIsPropagated_unsized() {
-    testMapWithIndex_intStream_closeIsPropagated(
+    checkMapWithIndexIntStreamCloseIsPropagated(
         IntStream.of(0).flatMap(unused -> IntStream.of(1, 2, 3)));
   }
 
-  private void testMapWithIndex_intStream_closeIsPropagated(IntStream source) {
+  private void checkMapWithIndexIntStreamCloseIsPropagated(IntStream source) {
     AtomicInteger intStreamCloseCount = new AtomicInteger();
     IntStream intStream = source.onClose(intStreamCloseCount::incrementAndGet);
     Stream<String> withIndex = Streams.mapWithIndex(intStream, (str, i) -> str + ":" + i);
@@ -364,15 +381,15 @@ public class StreamsTest extends TestCase {
   }
 
   public void testMapWithIndex_longStream_closeIsPropagated_sized() {
-    testMapWithIndex_longStream_closeIsPropagated(LongStream.of(1, 2, 3));
+    checkMapWithIndexLongStreamCloseIsPropagated(LongStream.of(1, 2, 3));
   }
 
   public void testMapWithIndex_longStream_closeIsPropagated_unsized() {
-    testMapWithIndex_longStream_closeIsPropagated(
+    checkMapWithIndexLongStreamCloseIsPropagated(
         LongStream.of(0).flatMap(unused -> LongStream.of(1, 2, 3)));
   }
 
-  private void testMapWithIndex_longStream_closeIsPropagated(LongStream source) {
+  private void checkMapWithIndexLongStreamCloseIsPropagated(LongStream source) {
     AtomicInteger longStreamCloseCount = new AtomicInteger();
     LongStream longStream = source.onClose(longStreamCloseCount::incrementAndGet);
     Stream<String> withIndex = Streams.mapWithIndex(longStream, (str, i) -> str + ":" + i);
@@ -391,15 +408,15 @@ public class StreamsTest extends TestCase {
   }
 
   public void testMapWithIndex_doubleStream_closeIsPropagated_sized() {
-    testMapWithIndex_doubleStream_closeIsPropagated(DoubleStream.of(1, 2, 3));
+    checkMapWithIndexDoubleStreamCloseIsPropagated(DoubleStream.of(1, 2, 3));
   }
 
   public void testMapWithIndex_doubleStream_closeIsPropagated_unsized() {
-    testMapWithIndex_doubleStream_closeIsPropagated(
+    checkMapWithIndexDoubleStreamCloseIsPropagated(
         DoubleStream.of(0).flatMap(unused -> DoubleStream.of(1, 2, 3)));
   }
 
-  private void testMapWithIndex_doubleStream_closeIsPropagated(DoubleStream source) {
+  private void checkMapWithIndexDoubleStreamCloseIsPropagated(DoubleStream source) {
     AtomicInteger doubleStreamCloseCount = new AtomicInteger();
     DoubleStream doubleStream = source.onClose(doubleStreamCloseCount::incrementAndGet);
     Stream<String> withIndex = Streams.mapWithIndex(doubleStream, (str, i) -> str + ":" + i);

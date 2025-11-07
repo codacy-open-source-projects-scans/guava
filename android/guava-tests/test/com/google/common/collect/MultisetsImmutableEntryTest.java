@@ -22,7 +22,8 @@ import static java.util.Collections.nCopies;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.Multiset.Entry;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link Multisets#immutableEntry}.
@@ -30,11 +31,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class MultisetsImmutableEntryTest extends TestCase {
   private static final @Nullable String NE = null;
 
-  private static <E extends @Nullable Object> Entry<E> entry(final E element, final int count) {
+  private static <E extends @Nullable Object> Entry<E> entry(E element, int count) {
     return Multisets.immutableEntry(element, count);
   }
 

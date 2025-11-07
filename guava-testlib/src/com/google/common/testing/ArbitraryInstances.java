@@ -17,6 +17,7 @@
 package com.google.common.testing;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterators.peekingIterator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -48,7 +49,6 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedMultiset;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -150,7 +150,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Supplies an arbitrary "default" instance for a wide range of types, often useful in testing
@@ -176,7 +177,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtIncompatible
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public final class ArbitraryInstances {
 
   private static final Ordering<Field> BY_FIELD_NAME =
@@ -250,7 +251,7 @@ public final class ArbitraryInstances {
           .put(CharSink.class, NullByteSink.INSTANCE.asCharSink(UTF_8))
           // All collections are immutable empty. So safe for any type parameter.
           .put(Iterator.class, ImmutableSet.of().iterator())
-          .put(PeekingIterator.class, Iterators.peekingIterator(ImmutableSet.of().iterator()))
+          .put(PeekingIterator.class, peekingIterator(ImmutableSet.of().iterator()))
           .put(ListIterator.class, ImmutableList.of().listIterator())
           .put(Iterable.class, ImmutableSet.of())
           .put(Collection.class, ImmutableList.of())
@@ -376,7 +377,7 @@ public final class ArbitraryInstances {
     if (Modifier.isAbstract(type.getModifiers()) || !Modifier.isPublic(type.getModifiers())) {
       return arbitraryConstantInstanceOrNull(type);
     }
-    final Constructor<T> constructor;
+    Constructor<T> constructor;
     try {
       constructor = type.getConstructor();
     } catch (NoSuchMethodException e) {
@@ -424,18 +425,23 @@ public final class ArbitraryInstances {
   // Internal implementations of some classes, with public default constructor that get() needs.
   private static final class Dummies {
 
+    @Keep
     public static final class InMemoryPrintStream extends PrintStream {
+      @Keep
       public InMemoryPrintStream() {
         super(new ByteArrayOutputStream());
       }
     }
 
+    @Keep
     public static final class InMemoryPrintWriter extends PrintWriter {
+      @Keep
       public InMemoryPrintWriter() {
         super(new StringWriter());
       }
     }
 
+    @Keep
     public static final class DeterministicRandom extends Random {
       @Keep
       public DeterministicRandom() {
@@ -443,23 +449,29 @@ public final class ArbitraryInstances {
       }
     }
 
+    @Keep
     public static final class DummyScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
+      @Keep
       public DummyScheduledThreadPoolExecutor() {
         super(1);
       }
     }
 
+    @Keep
     public static final class DummyCountDownLatch extends CountDownLatch {
+      @Keep
       public DummyCountDownLatch() {
         super(0);
       }
     }
 
+    @Keep
     public static final class DummyRunnable implements Runnable, Serializable {
       @Override
       public void run() {}
     }
 
+    @Keep
     public static final class DummyThreadFactory implements ThreadFactory, Serializable {
       @Override
       public Thread newThread(Runnable r) {
@@ -467,6 +479,7 @@ public final class ArbitraryInstances {
       }
     }
 
+    @Keep
     public static final class DummyExecutor implements Executor, Serializable {
       @Override
       public void execute(Runnable command) {}

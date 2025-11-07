@@ -66,7 +66,7 @@ public class MapTestSuiteBuilder<K, V>
   @SuppressWarnings("rawtypes") // class literals
   @Override
   protected List<Class<? extends AbstractTester>> getTesters() {
-    return Arrays.<Class<? extends AbstractTester>>asList(
+    return Arrays.asList(
         MapClearTester.class,
         MapContainsKeyTester.class,
         MapContainsValueTester.class,
@@ -227,11 +227,10 @@ public class MapTestSuiteBuilder<K, V>
     return derivedFeatures;
   }
 
-  private static class ReserializedMapGenerator<K, V> implements TestMapGenerator<K, V> {
+  private static final class ReserializedMapGenerator<K, V> implements TestMapGenerator<K, V> {
     private final OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>> mapGenerator;
 
-    public ReserializedMapGenerator(
-        OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>> mapGenerator) {
+    ReserializedMapGenerator(OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>> mapGenerator) {
       this.mapGenerator = mapGenerator;
     }
 

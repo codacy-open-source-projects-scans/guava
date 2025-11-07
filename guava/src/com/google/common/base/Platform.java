@@ -14,24 +14,20 @@
 
 package com.google.common.base;
 
+
 import com.google.common.annotations.GwtCompatible;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
-import java.util.ServiceConfigurationError;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Methods factored out so that they can be emulated differently in GWT.
  *
  * @author Jesse Wilson
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 final class Platform {
-  private static final Logger logger = Logger.getLogger(Platform.class.getName());
   private static final PatternCompiler patternCompiler = loadPatternCompiler();
 
   private Platform() {}
@@ -59,7 +55,7 @@ final class Platform {
     return String.format(Locale.ROOT, "%.4g", value);
   }
 
-  static boolean stringIsNullOrEmpty(@CheckForNull String string) {
+  static boolean stringIsNullOrEmpty(@Nullable String string) {
     return string == null || string.isEmpty();
   }
 
@@ -69,7 +65,7 @@ final class Platform {
    * @param string the string to test and possibly return
    * @return {@code string} if it is not null; {@code ""} otherwise
    */
-  static String nullToEmpty(@CheckForNull String string) {
+  static String nullToEmpty(@Nullable String string) {
     return (string == null) ? "" : string;
   }
 
@@ -79,9 +75,16 @@ final class Platform {
    * @param string the string to test and possibly return
    * @return {@code string} if it is not empty; {@code null} otherwise
    */
-  @CheckForNull
-  static String emptyToNull(@CheckForNull String string) {
+  static @Nullable String emptyToNull(@Nullable String string) {
     return stringIsNullOrEmpty(string) ? null : string;
+  }
+
+  static String lenientFormat(@Nullable String template, @Nullable Object @Nullable ... args) {
+    return Strings.lenientFormat(template, args);
+  }
+
+  static String stringValueOf(@Nullable Object o) {
+    return String.valueOf(o);
   }
 
   static CommonPattern compilePattern(String pattern) {
@@ -95,10 +98,6 @@ final class Platform {
 
   private static PatternCompiler loadPatternCompiler() {
     return new JdkPatternCompiler();
-  }
-
-  private static void logPatternCompilerError(ServiceConfigurationError e) {
-    logger.log(Level.WARNING, "Error loading regex compiler, falling back to next option", e);
   }
 
   private static final class JdkPatternCompiler implements PatternCompiler {

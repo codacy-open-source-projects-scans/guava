@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collector;
 import jsinterop.annotations.JsMethod;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * GWT emulated version of {@link com.google.common.collect.ImmutableSet}. For the unsorted sets,
@@ -40,7 +40,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @see ImmutableSortedSet
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
 @SuppressWarnings("serial") // Serialization only done in GWT.
 public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements Set<E> {
   ImmutableSet() {}
@@ -127,8 +126,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
     }
     E first = elements.next();
     if (!elements.hasNext()) {
-      // TODO: Remove "ImmutableSet.<E>" when eclipse bug is fixed.
-      return ImmutableSet.<E>of(first);
+      return of(first);
     }
 
     Set<E> delegate = Sets.newLinkedHashSet();
@@ -199,6 +197,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
       }
     }
 
+    @Override
     ImmutableList<E> createAsList() {
       return new RegularImmutableAsList<E>(this, toArray());
     }

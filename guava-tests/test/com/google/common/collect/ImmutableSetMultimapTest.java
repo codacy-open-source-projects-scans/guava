@@ -49,16 +49,19 @@ import java.util.stream.Collector;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ImmutableSetMultimap}.
  *
  * @author Mike Ward
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableSetMultimapTest extends TestCase {
+  @J2ktIncompatible
+  @AndroidIncompatible // test-suite builders
   private static final class ImmutableSetMultimapGenerator extends TestStringSetMultimapGenerator {
     @Override
     protected SetMultimap<String, String> create(Entry<String, String>[] entries) {
@@ -70,6 +73,8 @@ public class ImmutableSetMultimapTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
+  @AndroidIncompatible // test-suite builders
   private static final class ImmutableSetMultimapCopyOfEntriesGenerator
       extends TestStringSetMultimapGenerator {
     @Override
@@ -80,6 +85,7 @@ public class ImmutableSetMultimapTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ImmutableSetMultimapTest.class);
@@ -208,7 +214,7 @@ public class ImmutableSetMultimapTest extends TestCase {
 
   public void testBuilder_withMutableEntry() {
     ImmutableSetMultimap.Builder<String, Integer> builder = new Builder<>();
-    final StringHolder holder = new StringHolder();
+    StringHolder holder = new StringHolder();
     holder.string = "one";
     Entry<String, Integer> entry =
         new AbstractMapEntry<String, Integer>() {

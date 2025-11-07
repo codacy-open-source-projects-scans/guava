@@ -29,8 +29,7 @@ import java.io.ObjectOutputStream;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@code BiMap} backed by an {@code EnumMap} instance for keys-to-values, and a {@code HashMap}
@@ -43,9 +42,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  * @since 2.0
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
 public final class EnumHashBiMap<K extends Enum<K>, V extends @Nullable Object>
     extends AbstractBiMap<K, V> {
   transient Class<K> keyTypeOrObjectUnderJ2cl;
@@ -94,8 +92,7 @@ public final class EnumHashBiMap<K extends Enum<K>, V extends @Nullable Object>
   @Override
   @SuppressWarnings("RedundantOverride") // b/192446478: RedundantOverride ignores some annotations.
   // TODO(b/192446998): Remove this override after tools understand nullness better.
-  @CheckForNull
-  public V put(K key, @ParametricNullness V value) {
+  public @Nullable V put(K key, @ParametricNullness V value) {
     return super.put(key, value);
   }
 
@@ -103,8 +100,7 @@ public final class EnumHashBiMap<K extends Enum<K>, V extends @Nullable Object>
   @Override
   @SuppressWarnings("RedundantOverride") // b/192446478: RedundantOverride ignores some annotations.
   // TODO(b/192446998): Remove this override after tools understand nullness better.
-  @CheckForNull
-  public V forcePut(K key, @ParametricNullness V value) {
+  public @Nullable V forcePut(K key, @ParametricNullness V value) {
     return super.forcePut(key, value);
   }
 
@@ -135,10 +131,9 @@ public final class EnumHashBiMap<K extends Enum<K>, V extends @Nullable Object>
      * the number of entries in the map, as that makes it easy for hostile inputs to trigger lots of
      * allocation—not that any program should be deserializing hostile inputs to begin with!)
      */
-    setDelegates(new EnumMap<K, V>(keyTypeOrObjectUnderJ2cl), new HashMap<V, K>());
+    setDelegates(new EnumMap<>(keyTypeOrObjectUnderJ2cl), new HashMap<>());
     Serialization.populateMap(this, stream);
   }
 
-  @GwtIncompatible // only needed in emulated source.
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

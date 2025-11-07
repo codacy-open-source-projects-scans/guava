@@ -20,13 +20,13 @@ import static java.util.concurrent.atomic.AtomicIntegerFieldUpdater.newUpdater;
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.j2objc.annotations.ReflectionSupport;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.logging.Level;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A helper which does some thread-safe operations for aggregate futures, which must be implemented
@@ -37,16 +37,20 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *   <li>Decrements a counter atomically
  * </ul>
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @ReflectionSupport(value = ReflectionSupport.Level.FULL)
-@ElementTypesAreNonnullByDefault
 abstract class AggregateFutureState<OutputT extends @Nullable Object>
     extends AbstractFuture.TrustedFuture<OutputT> {
+  /*
+   * The following fields are package-private, even though we intend never to use them outside this
+   * file. For discussion, see AbstractFutureState.
+   */
+
   // Lazily initialized the first time we see an exception; not released until all the input futures
   // have completed and we have processed them all.
-  @CheckForNull private volatile Set<Throwable> seenExceptions = null;
+  volatile @Nullable Set<Throwable> seenExceptionsField = null;
 
-  private volatile int remaining;
+  volatile int remainingField;
 
   private static final AtomicHelper ATOMIC_HELPER;
 
@@ -56,10 +60,7 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
     AtomicHelper helper;
     Throwable thrownReflectionFailure = null;
     try {
-      helper =
-          new SafeAtomicHelper(
-              newUpdater(AggregateFutureState.class, Set.class, "seenExceptions"),
-              newUpdater(AggregateFutureState.class, "remaining"));
+      helper = new SafeAtomicHelper();
     } catch (Throwable reflectionFailure) { // sneaky checked exception
       // Some Android 5.0.x Samsung devices have bugs in JDK reflection APIs that cause
       // getDeclaredField to throw a NoSuchFieldException when the field is definitely there.
@@ -77,27 +78,29 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
   }
 
   AggregateFutureState(int remainingFutures) {
-    this.remaining = remainingFutures;
+    this.remainingField = remainingFutures;
   }
 
   final Set<Throwable> getOrInitSeenExceptions() {
     /*
-     * The initialization of seenExceptions has to be more complicated than we'd like. The simple
-     * approach would be for each caller CAS it from null to a Set populated with its exception. But
-     * there's another race: If the first thread fails with an exception and a second thread
-     * immediately fails with the same exception:
+     * The initialization of seenExceptionsField has to be more complicated than we'd like. The
+     * simple approach would be for each caller CAS it from null to a Set populated with its
+     * exception. But there's another race: If the first thread fails with an exception and a second
+     * thread immediately fails with the same exception:
      *
      * Thread1: calls setException(), which returns true, context switch before it can CAS
-     * seenExceptions to its exception
+     * seenExceptionsField to its exception
      *
-     * Thread2: calls setException(), which returns false, CASes seenExceptions to its exception,
-     * and wrongly believes that its exception is new (leading it to logging it when it shouldn't)
+     * Thread2: calls setException(), which returns false, CASes seenExceptionsField to its
+     * exception, and wrongly believes that its exception is new (leading it to logging it when it
+     * shouldn't)
      *
-     * Our solution is for threads to CAS seenExceptions from null to a Set populated with _the
-     * initial exception_, no matter which thread does the work. This ensures that seenExceptions
-     * always contains not just the current thread's exception but also the initial thread's.
+     * Our solution is for threads to CAS seenExceptionsField from null to a Set populated with _the
+     * initial exception_, no matter which thread does the work. This ensures that
+     * seenExceptionsField always contains not just the current thread's exception but also the
+     * initial thread's.
      */
-    Set<Throwable> seenExceptionsLocal = seenExceptions;
+    Set<Throwable> seenExceptionsLocal = seenExceptionsField;
     if (seenExceptionsLocal == null) {
       // TODO(cpovirk): Should we use a simpler (presumably cheaper) data structure?
       /*
@@ -132,7 +135,7 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
        * requireNonNull is safe because either our compareAndSet succeeded or it failed because
        * another thread did it for us.
        */
-      seenExceptionsLocal = requireNonNull(seenExceptions);
+      seenExceptionsLocal = requireNonNull(seenExceptionsField);
     }
     return seenExceptionsLocal;
   }
@@ -145,37 +148,37 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
   }
 
   final void clearSeenExceptions() {
-    seenExceptions = null;
+    seenExceptionsField = null;
+  }
+
+  @VisibleForTesting
+  static String atomicHelperTypeForTest() {
+    return ATOMIC_HELPER.atomicHelperTypeForTest();
   }
 
   private abstract static class AtomicHelper {
-    /** Atomic compare-and-set of the {@link AggregateFutureState#seenExceptions} field. */
+    /** Performs an atomic compare-and-set of {@link AggregateFutureState#seenExceptionsField}. */
     abstract void compareAndSetSeenExceptions(
-        AggregateFutureState<?> state, @CheckForNull Set<Throwable> expect, Set<Throwable> update);
+        AggregateFutureState<?> state, @Nullable Set<Throwable> expect, Set<Throwable> update);
 
-    /** Atomic decrement-and-get of the {@link AggregateFutureState#remaining} field. */
+    /** Performs an atomic decrement-and-get of {@link AggregateFutureState#remainingField}. */
     abstract int decrementAndGetRemainingCount(AggregateFutureState<?> state);
+
+    abstract String atomicHelperTypeForTest();
   }
 
   private static final class SafeAtomicHelper extends AtomicHelper {
-    final AtomicReferenceFieldUpdater<
+    private static final AtomicReferenceFieldUpdater<
             ? super AggregateFutureState<?>, ? super @Nullable Set<Throwable>>
-        seenExceptionsUpdater;
+        seenExceptionsUpdater =
+            newUpdater(AggregateFutureState.class, Set.class, "seenExceptionsField");
 
-    final AtomicIntegerFieldUpdater<? super AggregateFutureState<?>> remainingCountUpdater;
-
-    SafeAtomicHelper(
-        AtomicReferenceFieldUpdater<
-                ? super AggregateFutureState<?>, ? super @Nullable Set<Throwable>>
-            seenExceptionsUpdater,
-        AtomicIntegerFieldUpdater<? super AggregateFutureState<?>> remainingCountUpdater) {
-      this.seenExceptionsUpdater = seenExceptionsUpdater;
-      this.remainingCountUpdater = remainingCountUpdater;
-    }
+    private static final AtomicIntegerFieldUpdater<? super AggregateFutureState<?>>
+        remainingCountUpdater = newUpdater(AggregateFutureState.class, "remainingField");
 
     @Override
     void compareAndSetSeenExceptions(
-        AggregateFutureState<?> state, @CheckForNull Set<Throwable> expect, Set<Throwable> update) {
+        AggregateFutureState<?> state, @Nullable Set<Throwable> expect, Set<Throwable> update) {
       seenExceptionsUpdater.compareAndSet(state, expect, update);
     }
 
@@ -183,15 +186,20 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
     int decrementAndGetRemainingCount(AggregateFutureState<?> state) {
       return remainingCountUpdater.decrementAndGet(state);
     }
+
+    @Override
+    String atomicHelperTypeForTest() {
+      return "SafeAtomicHelper";
+    }
   }
 
   private static final class SynchronizedAtomicHelper extends AtomicHelper {
     @Override
     void compareAndSetSeenExceptions(
-        AggregateFutureState<?> state, @CheckForNull Set<Throwable> expect, Set<Throwable> update) {
+        AggregateFutureState<?> state, @Nullable Set<Throwable> expect, Set<Throwable> update) {
       synchronized (state) {
-        if (state.seenExceptions == expect) {
-          state.seenExceptions = update;
+        if (state.seenExceptionsField == expect) {
+          state.seenExceptionsField = update;
         }
       }
     }
@@ -199,8 +207,13 @@ abstract class AggregateFutureState<OutputT extends @Nullable Object>
     @Override
     int decrementAndGetRemainingCount(AggregateFutureState<?> state) {
       synchronized (state) {
-        return --state.remaining;
+        return --state.remainingField;
       }
+    }
+
+    @Override
+    String atomicHelperTypeForTest() {
+      return "SynchronizedAtomicHelper";
     }
   }
 }

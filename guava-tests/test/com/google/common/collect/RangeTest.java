@@ -27,21 +27,22 @@ import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
-import com.google.common.base.Predicate;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.EqualsTester;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Range}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class RangeTest extends TestCase {
   public void testOpen() {
     Range<Integer> range = Range.open(4, 8);
@@ -536,12 +537,19 @@ public class RangeTest extends TestCase {
     assertEquals(Range.atLeast(4), range.span(Range.atLeast(10)));
   }
 
-  public void testApply() {
-    Predicate<Integer> predicate = Range.closed(2, 3);
+  @SuppressWarnings({"InlineMeInliner", "deprecation"}) // intentional test of depecated method
+  public void testPredicateMethods() {
+    Range<Integer> predicate = Range.closed(2, 3);
+
     assertFalse(predicate.apply(1));
     assertTrue(predicate.apply(2));
     assertTrue(predicate.apply(3));
     assertFalse(predicate.apply(4));
+
+    assertFalse(predicate.test(1));
+    assertTrue(predicate.test(2));
+    assertTrue(predicate.test(3));
+    assertFalse(predicate.test(4));
   }
 
   public void testEquals() {
@@ -554,6 +562,7 @@ public class RangeTest extends TestCase {
   }
 
   @GwtIncompatible // TODO(b/148207871): Restore once Eclipse compiler no longer flakes for this.
+  @J2ktIncompatible // TODO(b/148207871): Likewise, or once J2KT uses javac instead of Eclipse.
   public void testLegacyComparable() {
     Range<LegacyComparable> unused = Range.closed(LegacyComparable.X, LegacyComparable.Y);
   }

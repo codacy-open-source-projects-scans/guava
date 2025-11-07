@@ -21,7 +21,6 @@ import static com.google.common.collect.NullnessCasts.unsafeNull;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import com.google.j2objc.annotations.RetainedWith;
@@ -36,9 +35,9 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link BiMap} backed by two hash tables. This implementation allows null keys and values. A
@@ -54,7 +53,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMap<K, V> implements BiMap<K, V>, Serializable {
 
@@ -90,25 +88,34 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   /** Maps an "entry" to the key of that entry. */
   transient @Nullable K[] keys;
+
   /** Maps an "entry" to the value of that entry. */
   transient @Nullable V[] values;
 
   transient int size;
   transient int modCount;
+
   /** Maps a bucket to the "entry" of its first element. */
   private transient int[] hashTableKToV;
+
   /** Maps a bucket to the "entry" of its first element. */
   private transient int[] hashTableVToK;
+
   /** Maps an "entry" to the "entry" that follows it in its bucket. */
   private transient int[] nextInBucketKToV;
+
   /** Maps an "entry" to the "entry" that follows it in its bucket. */
   private transient int[] nextInBucketVToK;
+
   /** The "entry" of the first element in insertion order. */
   private transient int firstInInsertionOrder;
+
   /** The "entry" of the last element in insertion order. */
   private transient int lastInInsertionOrder;
+
   /** Maps an "entry" to the "entry" that precedes it in insertion order. */
   private transient int[] prevInInsertionOrder;
+
   /** Maps an "entry" to the "entry" that follows it in insertion order. */
   private transient int[] nextInInsertionOrder;
 
@@ -201,19 +208,19 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   /** Given a key, returns the index of the entry in the tables, or ABSENT if not found. */
-  int findEntryByKey(@CheckForNull Object key) {
+  int findEntryByKey(@Nullable Object key) {
     return findEntryByKey(key, Hashing.smearedHash(key));
   }
 
   /**
    * Given a key and its hash, returns the index of the entry in the tables, or ABSENT if not found.
    */
-  int findEntryByKey(@CheckForNull Object key, int keyHash) {
+  int findEntryByKey(@Nullable Object key, int keyHash) {
     return findEntry(key, keyHash, hashTableKToV, nextInBucketKToV, keys);
   }
 
   /** Given a value, returns the index of the entry in the tables, or ABSENT if not found. */
-  int findEntryByValue(@CheckForNull Object value) {
+  int findEntryByValue(@Nullable Object value) {
     return findEntryByValue(value, Hashing.smearedHash(value));
   }
 
@@ -221,18 +228,18 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
    * Given a value and its hash, returns the index of the entry in the tables, or ABSENT if not
    * found.
    */
-  int findEntryByValue(@CheckForNull Object value, int valueHash) {
+  int findEntryByValue(@Nullable Object value, int valueHash) {
     return findEntry(value, valueHash, hashTableVToK, nextInBucketVToK, values);
   }
 
   int findEntry(
-      @CheckForNull Object o,
+      @Nullable Object o,
       int oHash,
       int[] hashTable,
       int[] nextInBucket,
       @Nullable Object[] array) {
     for (int entry = hashTable[bucket(oHash)]; entry != ABSENT; entry = nextInBucket[entry]) {
-      if (Objects.equal(array[entry], o)) {
+      if (Objects.equals(array[entry], o)) {
         return entry;
       }
     }
@@ -240,7 +247,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   @Override
-  public boolean containsKey(@CheckForNull Object key) {
+  public boolean containsKey(@Nullable Object key) {
     return findEntryByKey(key) != ABSENT;
   }
 
@@ -255,37 +262,33 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
    * @return true if a mapping exists from a key to the specified value
    */
   @Override
-  public boolean containsValue(@CheckForNull Object value) {
+  public boolean containsValue(@Nullable Object value) {
     return findEntryByValue(value) != ABSENT;
   }
 
   @Override
-  @CheckForNull
-  public V get(@CheckForNull Object key) {
+  public @Nullable V get(@Nullable Object key) {
     int entry = findEntryByKey(key);
     return (entry == ABSENT) ? null : values[entry];
   }
 
-  @CheckForNull
-  K getInverse(@CheckForNull Object value) {
+  @Nullable K getInverse(@Nullable Object value) {
     int entry = findEntryByValue(value);
     return (entry == ABSENT) ? null : keys[entry];
   }
 
   @Override
   @CanIgnoreReturnValue
-  @CheckForNull
-  public V put(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V put(@ParametricNullness K key, @ParametricNullness V value) {
     return put(key, value, false);
   }
 
-  @CheckForNull
-  V put(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
+  @Nullable V put(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
     int keyHash = Hashing.smearedHash(key);
     int entryForKey = findEntryByKey(key, keyHash);
     if (entryForKey != ABSENT) {
       V oldValue = values[entryForKey];
-      if (Objects.equal(oldValue, value)) {
+      if (Objects.equals(oldValue, value)) {
         return value;
       } else {
         replaceValueInEntry(entryForKey, value, force);
@@ -319,19 +322,17 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @Override
   @CanIgnoreReturnValue
-  @CheckForNull
-  public V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
     return put(key, value, true);
   }
 
   @CanIgnoreReturnValue
-  @CheckForNull
-  K putInverse(@ParametricNullness V value, @ParametricNullness K key, boolean force) {
+  @Nullable K putInverse(@ParametricNullness V value, @ParametricNullness K key, boolean force) {
     int valueHash = Hashing.smearedHash(value);
     int entryForValue = findEntryByValue(value, valueHash);
     if (entryForValue != ABSENT) {
       K oldKey = keys[entryForValue];
-      if (Objects.equal(oldKey, key)) {
+      if (Objects.equals(oldKey, key)) {
         return key;
       } else {
         replaceKeyInEntry(entryForValue, key, force);
@@ -542,8 +543,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @Override
   @CanIgnoreReturnValue
-  @CheckForNull
-  public V remove(@CheckForNull Object key) {
+  public @Nullable V remove(@Nullable Object key) {
     int keyHash = Hashing.smearedHash(key);
     int entry = findEntryByKey(key, keyHash);
     if (entry == ABSENT) {
@@ -555,8 +555,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
   }
 
-  @CheckForNull
-  K removeInverse(@CheckForNull Object value) {
+  @Nullable K removeInverse(@Nullable Object value) {
     int valueHash = Hashing.smearedHash(value);
     int entry = findEntryByValue(value, valueHash);
     if (entry == ABSENT) {
@@ -771,12 +770,12 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       return HashBiMap.this.containsKey(o);
     }
 
     @Override
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       int oHash = Hashing.smearedHash(o);
       int entry = findEntryByKey(o, oHash);
       if (entry != ABSENT) {
@@ -809,12 +808,12 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       return HashBiMap.this.containsValue(o);
     }
 
     @Override
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       int oHash = Hashing.smearedHash(o);
       int entry = findEntryByValue(o, oHash);
       if (entry != ABSENT) {
@@ -840,27 +839,27 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       if (o instanceof Entry) {
         Entry<?, ?> e = (Entry<?, ?>) o;
         Object k = e.getKey();
         Object v = e.getValue();
         int eIndex = findEntryByKey(k);
-        return eIndex != ABSENT && Objects.equal(v, values[eIndex]);
+        return eIndex != ABSENT && Objects.equals(v, values[eIndex]);
       }
       return false;
     }
 
     @Override
     @CanIgnoreReturnValue
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       if (o instanceof Entry) {
         Entry<?, ?> e = (Entry<?, ?>) o;
         Object k = e.getKey();
         Object v = e.getValue();
         int kHash = Hashing.smearedHash(k);
         int eIndex = findEntryByKey(k, kHash);
-        if (eIndex != ABSENT && Objects.equal(v, values[eIndex])) {
+        if (eIndex != ABSENT && Objects.equals(v, values[eIndex])) {
           removeEntryKeyHashKnown(eIndex, kHash);
           return true;
         }
@@ -892,7 +891,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     void updateIndex() {
-      if (index == ABSENT || index > size || !Objects.equal(keys[index], key)) {
+      if (index == ABSENT || index > size || !Objects.equals(keys[index], key)) {
         index = findEntryByKey(key);
       }
     }
@@ -935,7 +934,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
        * position `index`.
        */
       V oldValue = uncheckedCastNullableTToT(values[index]);
-      if (Objects.equal(oldValue, value)) {
+      if (Objects.equals(oldValue, value)) {
         return value;
       }
       replaceValueInEntry(index, value, false);
@@ -943,15 +942,15 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
   }
 
-  @LazyInit @RetainedWith @CheckForNull private transient BiMap<V, K> inverse;
+  @LazyInit @RetainedWith private transient @Nullable BiMap<V, K> inverse;
 
   @Override
   public BiMap<V, K> inverse() {
     BiMap<V, K> result = inverse;
-    return (result == null) ? inverse = new Inverse<K, V>(this) : result;
+    return (result == null) ? inverse = new Inverse<>(this) : result;
   }
 
-  static class Inverse<K extends @Nullable Object, V extends @Nullable Object>
+  private static final class Inverse<K extends @Nullable Object, V extends @Nullable Object>
       extends AbstractMap<V, K> implements BiMap<V, K>, Serializable {
     private final HashBiMap<K, V> forward;
 
@@ -965,32 +964,29 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean containsKey(@CheckForNull Object key) {
+    public boolean containsKey(@Nullable Object key) {
       return forward.containsValue(key);
     }
 
     @Override
-    @CheckForNull
-    public K get(@CheckForNull Object key) {
+    public @Nullable K get(@Nullable Object key) {
       return forward.getInverse(key);
     }
 
     @Override
-    public boolean containsValue(@CheckForNull Object value) {
+    public boolean containsValue(@Nullable Object value) {
       return forward.containsKey(value);
     }
 
     @Override
     @CanIgnoreReturnValue
-    @CheckForNull
-    public K put(@ParametricNullness V value, @ParametricNullness K key) {
+    public @Nullable K put(@ParametricNullness V value, @ParametricNullness K key) {
       return forward.putInverse(value, key, false);
     }
 
     @Override
     @CanIgnoreReturnValue
-    @CheckForNull
-    public K forcePut(@ParametricNullness V value, @ParametricNullness K key) {
+    public @Nullable K forcePut(@ParametricNullness V value, @ParametricNullness K key) {
       return forward.putInverse(value, key, true);
     }
 
@@ -1001,8 +997,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
     @Override
     @CanIgnoreReturnValue
-    @CheckForNull
-    public K remove(@CheckForNull Object value) {
+    public @Nullable K remove(@Nullable Object value) {
       return forward.removeInverse(value);
     }
 
@@ -1036,33 +1031,33 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
   }
 
-  static class InverseEntrySet<K extends @Nullable Object, V extends @Nullable Object>
+  private static final class InverseEntrySet<K extends @Nullable Object, V extends @Nullable Object>
       extends View<K, V, Entry<V, K>> {
     InverseEntrySet(HashBiMap<K, V> biMap) {
       super(biMap);
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       if (o instanceof Entry) {
         Entry<?, ?> e = (Entry<?, ?>) o;
         Object v = e.getKey();
         Object k = e.getValue();
         int eIndex = biMap.findEntryByValue(v);
-        return eIndex != ABSENT && Objects.equal(biMap.keys[eIndex], k);
+        return eIndex != ABSENT && Objects.equals(biMap.keys[eIndex], k);
       }
       return false;
     }
 
     @Override
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       if (o instanceof Entry) {
         Entry<?, ?> e = (Entry<?, ?>) o;
         Object v = e.getKey();
         Object k = e.getValue();
         int vHash = Hashing.smearedHash(v);
         int eIndex = biMap.findEntryByValue(v, vHash);
-        if (eIndex != ABSENT && Objects.equal(biMap.keys[eIndex], k)) {
+        if (eIndex != ABSENT && Objects.equals(biMap.keys[eIndex], k)) {
           biMap.removeEntryValueHashKnown(eIndex, vHash);
           return true;
         }
@@ -1095,7 +1090,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     private void updateIndex() {
-      if (index == ABSENT || index > biMap.size || !Objects.equal(value, biMap.values[index])) {
+      if (index == ABSENT || index > biMap.size || !Objects.equals(value, biMap.values[index])) {
         index = biMap.findEntryByValue(value);
       }
     }
@@ -1123,7 +1118,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
         return unsafeNull(); // see EntryForKey.setValue()
       }
       K oldKey = uncheckedCastNullableTToT(biMap.keys[index]); // see EntryForKey.setValue()
-      if (Objects.equal(oldKey, key)) {
+      if (Objects.equals(oldKey, key)) {
         return key;
       }
       biMap.replaceKeyInEntry(index, key, false);
@@ -1134,19 +1129,21 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   /**
    * @serialData the number of entries, first key, first value, second key, second value, and so on.
    */
-  @GwtIncompatible // java.io.ObjectOutputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void writeObject(ObjectOutputStream stream) throws IOException {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     Serialization.writeMap(this, stream);
   }
 
-  @GwtIncompatible // java.io.ObjectInputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
     int size = Serialization.readCount(stream);
     init(16); // resist hostile attempts to allocate gratuitous heap
     Serialization.populateMap(this, stream, size);
   }
+
+  // TODO(cpovirk): Should we have a serialVersionUID here?
 }

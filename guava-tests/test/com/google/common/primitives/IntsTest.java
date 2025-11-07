@@ -36,15 +36,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Ints}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 @SuppressWarnings("cast") // redundant casts are intentional and harmless
 public class IntsTest extends TestCase {
   private static final int[] EMPTY = {};
@@ -56,9 +57,11 @@ public class IntsTest extends TestCase {
 
   private static final int[] VALUES = {LEAST, (int) -1, (int) 0, (int) 1, GREATEST};
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testHashCode() {
     for (int value : VALUES) {
-      assertThat(Ints.hashCode(value)).isEqualTo(((Integer) value).hashCode());
+      assertThat(Ints.hashCode(value)).isEqualTo(Integer.hashCode(value));
     }
   }
 
@@ -93,13 +96,13 @@ public class IntsTest extends TestCase {
     }
   }
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testCompare() {
     for (int x : VALUES) {
       for (int y : VALUES) {
         // note: spec requires only that the sign is the same
-        assertWithMessage(x + ", " + y)
-            .that(Ints.compare(x, y))
-            .isEqualTo(Integer.valueOf(x).compareTo(y));
+        assertWithMessage(x + ", " + y).that(Ints.compare(x, y)).isEqualTo(Integer.compare(x, y));
       }
     }
   }
@@ -532,9 +535,9 @@ public class IntsTest extends TestCase {
     List<Byte> bytes = Arrays.asList((byte) 0, (byte) 1, (byte) 2);
     List<Short> shorts = Arrays.asList((short) 0, (short) 1, (short) 2);
     List<Integer> ints = Arrays.asList(0, 1, 2);
-    List<Float> floats = Arrays.asList((float) 0, (float) 1, (float) 2);
-    List<Long> longs = Arrays.asList((long) 0, (long) 1, (long) 2);
-    List<Double> doubles = Arrays.asList((double) 0, (double) 1, (double) 2);
+    List<Float> floats = Arrays.asList(0.0f, 1.0f, 2.0f);
+    List<Long> longs = Arrays.asList(0L, 1L, 2L);
+    List<Double> doubles = Arrays.asList(0.0, 1.0, 2.0);
 
     assertThat(Ints.toArray(bytes)).isEqualTo(array);
     assertThat(Ints.toArray(shorts)).isEqualTo(array);
@@ -574,6 +577,8 @@ public class IntsTest extends TestCase {
     assertThat(Ints.toArray(list.subList(2, 2))).isEqualTo(new int[] {});
   }
 
+  // `primitives` can't depend on `collect`, so this is what the prod code has to return.
+  @SuppressWarnings("EmptyList")
   public void testAsListEmpty() {
     assertThat(Ints.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }
@@ -586,14 +591,14 @@ public class IntsTest extends TestCase {
 
   public void testStringConverter_convert() {
     Converter<String, Integer> converter = Ints.stringConverter();
-    assertThat(converter.convert("1")).isEqualTo((Integer) 1);
-    assertThat(converter.convert("0")).isEqualTo((Integer) 0);
-    assertThat(converter.convert("-1")).isEqualTo((Integer) (-1));
-    assertThat(converter.convert("0xff")).isEqualTo((Integer) 255);
-    assertThat(converter.convert("0xFF")).isEqualTo((Integer) 255);
-    assertThat(converter.convert("-0xFF")).isEqualTo((Integer) (-255));
-    assertThat(converter.convert("#0000FF")).isEqualTo((Integer) 255);
-    assertThat(converter.convert("0666")).isEqualTo((Integer) 438);
+    assertThat(converter.convert("1")).isEqualTo(1);
+    assertThat(converter.convert("0")).isEqualTo(0);
+    assertThat(converter.convert("-1")).isEqualTo(-1);
+    assertThat(converter.convert("0xff")).isEqualTo(255);
+    assertThat(converter.convert("0xFF")).isEqualTo(255);
+    assertThat(converter.convert("-0xFF")).isEqualTo(-255);
+    assertThat(converter.convert("#0000FF")).isEqualTo(255);
+    assertThat(converter.convert("0666")).isEqualTo(438);
   }
 
   public void testStringConverter_convertError() {

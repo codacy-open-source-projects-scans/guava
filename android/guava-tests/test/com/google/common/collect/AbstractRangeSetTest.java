@@ -14,11 +14,14 @@
 
 package com.google.common.collect;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.common.annotations.GwtIncompatible;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Base class for {@link RangeSet} tests.
@@ -26,6 +29,7 @@ import junit.framework.TestCase;
  * @author Louis Wasserman
  */
 @GwtIncompatible // TreeRangeSet
+@NullUnmarked
 public abstract class AbstractRangeSetTest extends TestCase {
   public static void testInvariants(RangeSet<?> rangeSet) {
     testInvariantsInternal(rangeSet);
@@ -66,7 +70,7 @@ public abstract class AbstractRangeSetTest extends TestCase {
       Range<C> span = rangeSet.span();
       assertEquals(expectedSpan, span);
     } catch (NoSuchElementException e) {
-      assertNull(expectedSpan);
+      assertThat(expectedSpan).isNull();
     }
 
     // test that asDescendingSetOfRanges is the reverse of asRanges

@@ -43,8 +43,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link NavigableMap} whose contents will never change, with many other important properties
@@ -63,8 +62,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  * @since 2.0 (implements {@code NavigableMap} since 12.0)
  */
-@GwtCompatible(serializable = true, emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     implements NavigableMap<K, V> {
   /**
@@ -115,15 +113,13 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   private static final Comparator<?> NATURAL_ORDER = Ordering.natural();
 
   private static final ImmutableSortedMap<Comparable<?>, Object> NATURAL_EMPTY_MAP =
-      new ImmutableSortedMap<>(
-          ImmutableSortedSet.emptySet(Ordering.natural()), ImmutableList.<Object>of());
+      new ImmutableSortedMap<>(ImmutableSortedSet.emptySet(Ordering.natural()), ImmutableList.of());
 
   static <K, V> ImmutableSortedMap<K, V> emptyMap(Comparator<? super K> comparator) {
     if (Ordering.natural().equals(comparator)) {
       return of();
     } else {
-      return new ImmutableSortedMap<>(
-          ImmutableSortedSet.emptySet(comparator), ImmutableList.<V>of());
+      return new ImmutableSortedMap<>(ImmutableSortedSet.emptySet(comparator), ImmutableList.of());
     }
   }
 
@@ -298,7 +294,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
      * This explicit type parameter works around what seems to be a javac bug in certain
      * configurations: b/339186525#comment6
      */
-    return ImmutableSortedMap.<K, V>fromEntries(
+    return ImmutableSortedMap.fromEntries(
         entryOf(k1, v1),
         entryOf(k2, v2),
         entryOf(k3, v3),
@@ -498,7 +494,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   }
 
   private static <K, V> ImmutableSortedMap<K, V> fromEntries(
-      final Comparator<? super K> comparator,
+      Comparator<? super K> comparator,
       boolean sameComparator,
       @Nullable Entry<K, V>[] entryArray,
       int size) {
@@ -594,14 +590,14 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
    * A builder for creating immutable sorted map instances, especially {@code public static final}
    * maps ("constant maps"). Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * static final ImmutableSortedMap<Integer, String> INT_TO_WORD =
    *     new ImmutableSortedMap.Builder<Integer, String>(Ordering.natural())
    *         .put(1, "one")
    *         .put(2, "two")
    *         .put(3, "three")
    *         .buildOrThrow();
-   * }</pre>
+   * }
    *
    * <p>For <i>small</i> immutable sorted maps, the {@code ImmutableSortedMap.of()} methods are even
    * more convenient.
@@ -691,6 +687,12 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
       throw new UnsupportedOperationException("Not available on ImmutableSortedMap.Builder");
     }
 
+    /*
+     * While the current implementation returns `this`, that's not something we mean to guarantee.
+     * Anyway, the purpose of this method is to implement a BinaryOperator combiner for a Collector,
+     * so its return value will get used naturally.
+     */
+    @SuppressWarnings("CanIgnoreReturnValueSuggester")
     @Override
     Builder<K, V> combine(ImmutableMap.Builder<K, V> other) {
       super.combine(other);
@@ -755,7 +757,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
 
   private final transient RegularImmutableSortedSet<K> keySet;
   private final transient ImmutableList<V> valueList;
-  @CheckForNull private transient ImmutableSortedMap<K, V> descendingMap;
+  private final transient @Nullable ImmutableSortedMap<K, V> descendingMap;
 
   ImmutableSortedMap(RegularImmutableSortedSet<K> keySet, ImmutableList<V> valueList) {
     this(keySet, valueList, null);
@@ -764,7 +766,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   ImmutableSortedMap(
       RegularImmutableSortedSet<K> keySet,
       ImmutableList<V> valueList,
-      @CheckForNull ImmutableSortedMap<K, V> descendingMap) {
+      @Nullable ImmutableSortedMap<K, V> descendingMap) {
     this.keySet = keySet;
     this.valueList = valueList;
     this.descendingMap = descendingMap;
@@ -785,8 +787,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   }
 
   @Override
-  @CheckForNull
-  public V get(@CheckForNull Object key) {
+  public @Nullable V get(@Nullable Object key) {
     int index = keySet.indexOf(key);
     return (index == -1) ? null : valueList.get(index);
   }
@@ -804,7 +805,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
 
   @Override
   ImmutableSet<Entry<K, V>> createEntrySet() {
-    class EntrySet extends ImmutableMapEntrySet<K, V> {
+    final class EntrySet extends ImmutableMapEntrySet<K, V> {
       @Override
       public UnmodifiableIterator<Entry<K, V>> iterator() {
         return asList().iterator();
@@ -843,9 +844,9 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
           // redeclare to help optimizers with b/310253115
           @SuppressWarnings("RedundantOverride")
           @Override
-          @J2ktIncompatible // serialization
-          @GwtIncompatible // serialization
-          Object writeReplace() {
+          @J2ktIncompatible
+          @GwtIncompatible
+                    Object writeReplace() {
             return super.writeReplace();
           }
         };
@@ -859,13 +860,13 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
       // redeclare to help optimizers with b/310253115
       @SuppressWarnings("RedundantOverride")
       @Override
-      @J2ktIncompatible // serialization
-      @GwtIncompatible // serialization
-      Object writeReplace() {
+      @J2ktIncompatible
+      @GwtIncompatible
+            Object writeReplace() {
         return super.writeReplace();
       }
     }
-    return isEmpty() ? ImmutableSet.<Entry<K, V>>of() : new EntrySet();
+    return isEmpty() ? ImmutableSet.of() : new EntrySet();
   }
 
   /** Returns an immutable sorted set of the keys in this map. */
@@ -1026,62 +1027,52 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> lowerEntry(K key) {
+  public @Nullable Entry<K, V> lowerEntry(K key) {
     return headMap(key, false).lastEntry();
   }
 
   @Override
-  @CheckForNull
-  public K lowerKey(K key) {
+  public @Nullable K lowerKey(K key) {
     return keyOrNull(lowerEntry(key));
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> floorEntry(K key) {
+  public @Nullable Entry<K, V> floorEntry(K key) {
     return headMap(key, true).lastEntry();
   }
 
   @Override
-  @CheckForNull
-  public K floorKey(K key) {
+  public @Nullable K floorKey(K key) {
     return keyOrNull(floorEntry(key));
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> ceilingEntry(K key) {
+  public @Nullable Entry<K, V> ceilingEntry(K key) {
     return tailMap(key, true).firstEntry();
   }
 
   @Override
-  @CheckForNull
-  public K ceilingKey(K key) {
+  public @Nullable K ceilingKey(K key) {
     return keyOrNull(ceilingEntry(key));
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> higherEntry(K key) {
+  public @Nullable Entry<K, V> higherEntry(K key) {
     return tailMap(key, false).firstEntry();
   }
 
   @Override
-  @CheckForNull
-  public K higherKey(K key) {
+  public @Nullable K higherKey(K key) {
     return keyOrNull(higherEntry(key));
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> firstEntry() {
+  public @Nullable Entry<K, V> firstEntry() {
     return isEmpty() ? null : entrySet().asList().get(0);
   }
 
   @Override
-  @CheckForNull
-  public Entry<K, V> lastEntry() {
+  public @Nullable Entry<K, V> lastEntry() {
     return isEmpty() ? null : entrySet().asList().get(size() - 1);
   }
 
@@ -1095,8 +1086,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  @CheckForNull
-  public final Entry<K, V> pollFirstEntry() {
+  public final @Nullable Entry<K, V> pollFirstEntry() {
     throw new UnsupportedOperationException();
   }
 
@@ -1110,8 +1100,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  @CheckForNull
-  public final Entry<K, V> pollLastEntry() {
+  public final @Nullable Entry<K, V> pollLastEntry() {
     throw new UnsupportedOperationException();
   }
 
@@ -1150,7 +1139,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
    * remain as implementation details.
    */
   @J2ktIncompatible // serialization
-  private static class SerializedForm<K, V> extends ImmutableMap.SerializedForm<K, V> {
+  private static final class SerializedForm<K, V> extends ImmutableMap.SerializedForm<K, V> {
     private final Comparator<? super K> comparator;
 
     SerializedForm(ImmutableSortedMap<K, V> sortedMap) {
@@ -1163,7 +1152,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
       return new Builder<>(comparator);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   @Override
@@ -1179,7 +1168,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
 
   // This class is never actually serialized directly, but we have to make the
   // warning go away (and suppressing would suppress for all nested classes too)
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 
   /**
    * Not supported. Use {@link #toImmutableSortedMap}, which offers better type-safety, instead.

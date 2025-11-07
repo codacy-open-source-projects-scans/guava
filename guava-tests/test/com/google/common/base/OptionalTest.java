@@ -31,19 +31,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Optional}.
  *
  * @author Kurt Alfred Kluever
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public final class OptionalTest extends TestCase {
   @SuppressWarnings("NullOptional")
   public void testToJavaUtil_static() {
-    assertNull(Optional.toJavaUtil(null));
+    assertThat(Optional.toJavaUtil(null)).isNull();
     assertEquals(java.util.Optional.empty(), Optional.toJavaUtil(Optional.absent()));
     assertEquals(java.util.Optional.of("abc"), Optional.toJavaUtil(Optional.of("abc")));
   }
@@ -55,7 +56,7 @@ public final class OptionalTest extends TestCase {
 
   @SuppressWarnings("NullOptional")
   public void testFromJavaUtil() {
-    assertNull(Optional.fromJavaUtil(null));
+    assertThat(Optional.fromJavaUtil(null)).isNull();
     assertEquals(Optional.absent(), Optional.fromJavaUtil(java.util.Optional.empty()));
     assertEquals(Optional.of("abc"), Optional.fromJavaUtil(java.util.Optional.of("abc")));
   }
@@ -146,7 +147,7 @@ public final class OptionalTest extends TestCase {
   }
 
   public void testOrNull_absent() {
-    assertNull(Optional.absent().orNull());
+    assertThat(Optional.absent().orNull()).isNull();
   }
 
   public void testAsSet_present() {

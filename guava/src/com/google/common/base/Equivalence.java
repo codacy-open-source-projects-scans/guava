@@ -17,12 +17,15 @@ package com.google.common.base;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.ForOverride;
+import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.function.BiPredicate;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A strategy for determining whether two instances are considered equivalent, and for computing
@@ -36,11 +39,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     source-compatible</a> since 4.0)
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 /*
  * The type parameter is <T> rather than <T extends @Nullable> so that we can use T in the
  * doEquivalent and doHash methods to indicate that the parameter cannot be null.
  */
+@SuppressWarnings("UngroupedOverloads")
 public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullable T> {
   /** Constructor for use by subclasses. */
   protected Equivalence() {}
@@ -62,7 +65,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    * <p>Note that all calls to {@code equivalent(x, y)} are expected to return the same result as
    * long as neither {@code x} nor {@code y} is modified.
    */
-  public final boolean equivalent(@CheckForNull T a, @CheckForNull T b) {
+  public final boolean equivalent(@Nullable T a, @Nullable T b) {
     if (a == b) {
       return true;
     }
@@ -77,9 +80,10 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    *     instead.
    * @since 21.0
    */
+  @InlineMe(replacement = "this.equivalent(t, u)")
   @Deprecated
   @Override
-  public final boolean test(@CheckForNull T t, @CheckForNull T u) {
+  public final boolean test(@Nullable T t, @Nullable T u) {
     return equivalent(t, u);
   }
 
@@ -94,6 +98,22 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    */
   @ForOverride
   protected abstract boolean doEquivalent(T a, T b);
+
+  /**
+   * <i>May</i> return {@code true} if {@code object} is a {@code Equivalence} that behaves
+   * identically to this equivalence.
+   *
+   * <p><b>Warning: do not depend</b> on the behavior of this method.
+   *
+   * <p>Historically, {@code Equivalence} instances in this library have implemented this method to
+   * recognize certain cases where distinct {@code Equivalence} instances would in fact behave
+   * identically. However, as code migrates to {@code java.util.function}, that behavior will
+   * disappear. It is best not to depend on it.
+   */
+  @Override
+  public boolean equals(@Nullable Object object) {
+    return super.equals(object);
+  }
 
   /**
    * Returns a hash code for {@code t}.
@@ -112,7 +132,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    *   <li>{@code hash(null)} is {@code 0}.
    * </ul>
    */
-  public final int hash(@CheckForNull T t) {
+  public final int hash(@Nullable T t) {
     if (t == null) {
       return 0;
     }
@@ -140,9 +160,9 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    *
    * <p>For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * Equivalence<Person> SAME_AGE = Equivalence.equals().onResultOf(GET_PERSON_AGE);
-   * }</pre>
+   * }
    *
    * <p>{@code function} will never be invoked with a null value.
    *
@@ -179,16 +199,16 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    * <p>For example, given an {@link Equivalence} for {@link String strings} named {@code equiv}
    * that tests equivalence using their lengths:
    *
-   * <pre>{@code
+   * {@snippet :
    * equiv.wrap("a").equals(equiv.wrap("b")) // true
    * equiv.wrap("a").equals(equiv.wrap("hello")) // false
-   * }</pre>
+   * }
    *
    * <p>Note in particular that an equivalence wrapper is never equal to the object it wraps.
    *
-   * <pre>{@code
+   * {@snippet :
    * equiv.wrap(obj).equals(obj) // always false
-   * }</pre>
+   * }
    *
    * @since 10.0
    */
@@ -222,7 +242,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
      * equivalence.
      */
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj == this) {
         return true;
       }
@@ -257,7 +277,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
       return equivalence + ".wrap(" + reference + ")";
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -273,7 +293,6 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    *
    * @since 10.0
    */
-  @GwtCompatible(serializable = true)
   public final <S extends @Nullable T> Equivalence<Iterable<S>> pairwise() {
     // Ideally, the returned equivalence would support Iterable<? extends T>. However,
     // the need for this is so rare that it's not worth making callers deal with the ugly wildcard.
@@ -286,7 +305,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
    *
    * @since 10.0
    */
-  public final Predicate<@Nullable T> equivalentTo(@CheckForNull T target) {
+  public final Predicate<@Nullable T> equivalentTo(@Nullable T target) {
     return new EquivalentToPredicate<>(this, target);
   }
 
@@ -294,33 +313,33 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
       implements Predicate<@Nullable T>, Serializable {
 
     private final Equivalence<T> equivalence;
-    @CheckForNull private final T target;
+    private final @Nullable T target;
 
-    EquivalentToPredicate(Equivalence<T> equivalence, @CheckForNull T target) {
+    EquivalentToPredicate(Equivalence<T> equivalence, @Nullable T target) {
       this.equivalence = checkNotNull(equivalence);
       this.target = target;
     }
 
     @Override
-    public boolean apply(@CheckForNull T input) {
+    public boolean apply(@Nullable T input) {
       return equivalence.equivalent(input, target);
     }
 
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (this == obj) {
         return true;
       }
       if (obj instanceof EquivalentToPredicate) {
         EquivalentToPredicate<?> that = (EquivalentToPredicate<?>) obj;
-        return equivalence.equals(that.equivalence) && Objects.equal(target, that.target);
+        return equivalence.equals(that.equivalence) && Objects.equals(target, that.target);
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(equivalence, target);
+      return Objects.hash(equivalence, target);
     }
 
     @Override
@@ -328,7 +347,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
       return equivalence + ".equivalentTo(" + target + ")";
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -375,7 +394,7 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   static final class Identity extends Equivalence<Object> implements Serializable {
@@ -396,6 +415,6 @@ public abstract class Equivalence<T> implements BiPredicate<@Nullable T, @Nullab
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 }

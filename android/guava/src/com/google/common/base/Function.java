@@ -15,8 +15,8 @@
 package com.google.common.base;
 
 import com.google.common.annotations.GwtCompatible;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Determines an output value based on an input value; a pre-Java-8 version of {@link
@@ -44,7 +44,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public interface Function<F extends @Nullable Object, T extends @Nullable Object> {
   /**
    * Returns the result of applying this function to {@code input}. This method is <i>generally
@@ -52,8 +51,8 @@ public interface Function<F extends @Nullable Object, T extends @Nullable Object
    *
    * <ul>
    *   <li>Its execution does not cause any observable side effects.
-   *   <li>The computation is <i>consistent with equals</i>; that is, {@link Objects#equal
-   *       Objects.equal}{@code (a, b)} implies that {@code Objects.equal(function.apply(a),
+   *   <li>The computation is <i>consistent with equals</i>; that is, {@link Objects#equals
+   *       Objects.equals}{@code (a, b)} implies that {@code Objects.equals(function.apply(a),
    *       function.apply(b))}.
    * </ul>
    *
@@ -64,8 +63,8 @@ public interface Function<F extends @Nullable Object, T extends @Nullable Object
   T apply(@ParametricNullness F input);
 
   /**
-   * <i>May</i> return {@code true} if {@code object} is a {@code Function} that behaves identically
-   * to this function.
+   * <i>May</i> return {@code true} if {@code obj} is a {@code Function} that behaves identically to
+   * this function.
    *
    * <p><b>Warning: do not depend</b> on the behavior of this method.
    *
@@ -75,5 +74,5 @@ public interface Function<F extends @Nullable Object, T extends @Nullable Object
    * disappear. It is best not to depend on it.
    */
   @Override
-  boolean equals(@CheckForNull Object object);
+  boolean equals(@Nullable Object obj);
 }

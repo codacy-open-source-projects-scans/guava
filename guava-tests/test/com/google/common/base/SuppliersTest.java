@@ -38,7 +38,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests com.google.common.base.Suppliers.
@@ -46,8 +47,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Laurence Gonsalves
  * @author Harry Heymann
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class SuppliersTest extends TestCase {
 
   static class CountingSupplier implements Supplier<Integer> {
@@ -73,11 +74,11 @@ public class SuppliersTest extends TestCase {
   }
 
   static class SerializableCountingSupplier extends CountingSupplier implements Serializable {
-    private static final long serialVersionUID = 0L;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0L;
   }
 
   static class SerializableThrowingSupplier extends ThrowingSupplier implements Serializable {
-    private static final long serialVersionUID = 0L;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0L;
   }
 
   static void checkMemoize(CountingSupplier countingSupplier, Supplier<Integer> memoizedSupplier) {
@@ -106,11 +107,11 @@ public class SuppliersTest extends TestCase {
   }
 
   public void testMemoize_redudantly() {
-    memoize_redudantlyTest(new CountingSupplier());
-    memoize_redudantlyTest(new SerializableCountingSupplier());
+    memoizeRedudantlyTest(new CountingSupplier());
+    memoizeRedudantlyTest(new SerializableCountingSupplier());
   }
 
-  private void memoize_redudantlyTest(CountingSupplier countingSupplier) {
+  private void memoizeRedudantlyTest(CountingSupplier countingSupplier) {
     Supplier<Integer> memoizedSupplier = Suppliers.memoize(countingSupplier);
     assertSame(memoizedSupplier, Suppliers.memoize(memoizedSupplier));
   }
@@ -206,7 +207,7 @@ public class SuppliersTest extends TestCase {
         new Function<List<Integer>, List<Integer>>() {
           @Override
           public List<Integer> apply(List<Integer> list) {
-            ArrayList<Integer> result = Lists.newArrayList(list);
+            ArrayList<Integer> result = new ArrayList<>(list);
             result.add(1);
             return result;
           }
@@ -320,7 +321,7 @@ public class SuppliersTest extends TestCase {
 
   public void testOfInstanceSuppliesNull() {
     Supplier<@Nullable Integer> nullSupplier = Suppliers.ofInstance(null);
-    assertNull(nullSupplier.get());
+    assertThat(nullSupplier.get()).isNull();
   }
 
   @J2ktIncompatible
@@ -354,13 +355,13 @@ public class SuppliersTest extends TestCase {
   @GwtIncompatible // Thread
   private void testSupplierThreadSafe(Function<Supplier<Boolean>, Supplier<Boolean>> memoizer)
       throws Throwable {
-    final AtomicInteger count = new AtomicInteger(0);
-    final AtomicReference<Throwable> thrown = new AtomicReference<>(null);
-    final int numThreads = 3;
-    final Thread[] threads = new Thread[numThreads];
-    final long timeout = SECONDS.toNanos(60);
+    AtomicInteger count = new AtomicInteger(0);
+    AtomicReference<Throwable> thrown = new AtomicReference<>(null);
+    int numThreads = 3;
+    Thread[] threads = new Thread[numThreads];
+    long timeout = SECONDS.toNanos(60);
 
-    final Supplier<Boolean> supplier =
+    Supplier<Boolean> supplier =
         new Supplier<Boolean>() {
           boolean isWaiting(Thread thread) {
             switch (thread.getState()) {
@@ -404,7 +405,7 @@ public class SuppliersTest extends TestCase {
           }
         };
 
-    final Supplier<Boolean> memoizedSupplier = memoizer.apply(supplier);
+    Supplier<Boolean> memoizedSupplier = memoizer.apply(supplier);
 
     for (int i = 0; i < numThreads; i++) {
       threads[i] =
@@ -432,7 +433,7 @@ public class SuppliersTest extends TestCase {
   @GwtIncompatible // Thread
   @SuppressWarnings("ThreadPriorityCheck") // doing our best to test for races
   public void testSynchronizedSupplierThreadSafe() throws InterruptedException {
-    final Supplier<Integer> nonThreadSafe =
+    Supplier<Integer> nonThreadSafe =
         new Supplier<Integer>() {
           int counter = 0;
 
@@ -445,8 +446,8 @@ public class SuppliersTest extends TestCase {
           }
         };
 
-    final int numThreads = 10;
-    final int iterations = 1000;
+    int numThreads = 10;
+    int iterations = 1000;
     Thread[] threads = new Thread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       threads[i] =

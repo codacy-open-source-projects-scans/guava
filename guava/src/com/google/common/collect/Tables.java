@@ -19,11 +19,13 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.NullnessCasts.uncheckedCastNullableTToT;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSortedMap;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Table.Cell;
 import java.io.Serializable;
@@ -31,14 +33,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.Spliterator;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Provides static methods that involve a {@code Table}.
@@ -51,7 +53,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 7.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class Tables {
   private Tables() {}
 
@@ -163,7 +164,7 @@ public final class Tables {
       return value;
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   abstract static class AbstractCell<
@@ -173,22 +174,22 @@ public final class Tables {
     AbstractCell() {}
 
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj == this) {
         return true;
       }
       if (obj instanceof Cell) {
         Cell<?, ?, ?> other = (Cell<?, ?, ?>) obj;
-        return Objects.equal(getRowKey(), other.getRowKey())
-            && Objects.equal(getColumnKey(), other.getColumnKey())
-            && Objects.equal(getValue(), other.getValue());
+        return Objects.equals(getRowKey(), other.getRowKey())
+            && Objects.equals(getColumnKey(), other.getColumnKey())
+            && Objects.equals(getValue(), other.getValue());
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(getRowKey(), getColumnKey(), getValue());
+      return Objects.hash(getRowKey(), getColumnKey(), getValue());
     }
 
     @Override
@@ -216,7 +217,7 @@ public final class Tables {
         : new TransposeTable<C, R, V>(table);
   }
 
-  private static class TransposeTable<
+  private static final class TransposeTable<
           C extends @Nullable Object, R extends @Nullable Object, V extends @Nullable Object>
       extends AbstractTable<C, R, V> {
     final Table<R, C, V> original;
@@ -246,34 +247,32 @@ public final class Tables {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public boolean contains(@Nullable Object rowKey, @Nullable Object columnKey) {
       return original.contains(columnKey, rowKey);
     }
 
     @Override
-    public boolean containsColumn(@CheckForNull Object columnKey) {
+    public boolean containsColumn(@Nullable Object columnKey) {
       return original.containsRow(columnKey);
     }
 
     @Override
-    public boolean containsRow(@CheckForNull Object rowKey) {
+    public boolean containsRow(@Nullable Object rowKey) {
       return original.containsColumn(rowKey);
     }
 
     @Override
-    public boolean containsValue(@CheckForNull Object value) {
+    public boolean containsValue(@Nullable Object value) {
       return original.containsValue(value);
     }
 
     @Override
-    @CheckForNull
-    public V get(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public @Nullable V get(@Nullable Object rowKey, @Nullable Object columnKey) {
       return original.get(columnKey, rowKey);
     }
 
     @Override
-    @CheckForNull
-    public V put(
+    public @Nullable V put(
         @ParametricNullness C rowKey,
         @ParametricNullness R columnKey,
         @ParametricNullness V value) {
@@ -286,8 +285,7 @@ public final class Tables {
     }
 
     @Override
-    @CheckForNull
-    public V remove(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public @Nullable V remove(@Nullable Object rowKey, @Nullable Object columnKey) {
       return original.remove(columnKey, rowKey);
     }
 
@@ -410,7 +408,7 @@ public final class Tables {
     return new TransformedTable<>(fromTable, function);
   }
 
-  private static class TransformedTable<
+  private static final class TransformedTable<
           R extends @Nullable Object,
           C extends @Nullable Object,
           V1 extends @Nullable Object,
@@ -425,13 +423,12 @@ public final class Tables {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public boolean contains(@Nullable Object rowKey, @Nullable Object columnKey) {
       return fromTable.contains(rowKey, columnKey);
     }
 
     @Override
-    @CheckForNull
-    public V2 get(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public @Nullable V2 get(@Nullable Object rowKey, @Nullable Object columnKey) {
       // The function is passed a null input only when the table contains a null
       // value.
       // The cast is safe because of the contains() check.
@@ -451,8 +448,7 @@ public final class Tables {
     }
 
     @Override
-    @CheckForNull
-    public V2 put(
+    public @Nullable V2 put(
         @ParametricNullness R rowKey,
         @ParametricNullness C columnKey,
         @ParametricNullness V2 value) {
@@ -465,8 +461,7 @@ public final class Tables {
     }
 
     @Override
-    @CheckForNull
-    public V2 remove(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public @Nullable V2 remove(@Nullable Object rowKey, @Nullable Object columnKey) {
       return contains(rowKey, columnKey)
           // The cast is safe because of the contains() check.
           ? function.apply(uncheckedCastNullableTToT(fromTable.remove(rowKey, columnKey)))
@@ -483,24 +478,18 @@ public final class Tables {
       return Maps.transformValues(fromTable.column(columnKey), function);
     }
 
-    Function<Cell<R, C, V1>, Cell<R, C, V2>> cellFunction() {
-      return new Function<Cell<R, C, V1>, Cell<R, C, V2>>() {
-        @Override
-        public Cell<R, C, V2> apply(Cell<R, C, V1> cell) {
-          return immutableCell(
-              cell.getRowKey(), cell.getColumnKey(), function.apply(cell.getValue()));
-        }
-      };
+    Cell<R, C, V2> applyToValue(Cell<R, C, V1> cell) {
+      return immutableCell(cell.getRowKey(), cell.getColumnKey(), function.apply(cell.getValue()));
     }
 
     @Override
     Iterator<Cell<R, C, V2>> cellIterator() {
-      return Iterators.transform(fromTable.cellSet().iterator(), cellFunction());
+      return Iterators.transform(fromTable.cellSet().iterator(), this::applyToValue);
     }
 
     @Override
     Spliterator<Cell<R, C, V2>> cellSpliterator() {
-      return CollectSpliterators.map(fromTable.cellSet().spliterator(), cellFunction());
+      return CollectSpliterators.map(fromTable.cellSet().spliterator(), this::applyToValue);
     }
 
     @Override
@@ -520,26 +509,13 @@ public final class Tables {
 
     @Override
     public Map<R, Map<C, V2>> rowMap() {
-      Function<Map<C, V1>, Map<C, V2>> rowFunction =
-          new Function<Map<C, V1>, Map<C, V2>>() {
-            @Override
-            public Map<C, V2> apply(Map<C, V1> row) {
-              return Maps.transformValues(row, function);
-            }
-          };
-      return Maps.transformValues(fromTable.rowMap(), rowFunction);
+      return Maps.transformValues(fromTable.rowMap(), row -> Maps.transformValues(row, function));
     }
 
     @Override
     public Map<C, Map<R, V2>> columnMap() {
-      Function<Map<R, V1>, Map<R, V2>> columnFunction =
-          new Function<Map<R, V1>, Map<R, V2>>() {
-            @Override
-            public Map<R, V2> apply(Map<R, V1> column) {
-              return Maps.transformValues(column, function);
-            }
-          };
-      return Maps.transformValues(fromTable.columnMap(), columnFunction);
+      return Maps.transformValues(
+          fromTable.columnMap(), column -> Maps.transformValues(column, function));
     }
   }
 
@@ -597,13 +573,11 @@ public final class Tables {
 
     @Override
     public Map<C, Map<R, V>> columnMap() {
-      Function<Map<R, V>, Map<R, V>> wrapper = unmodifiableWrapper();
-      return Collections.unmodifiableMap(Maps.transformValues(super.columnMap(), wrapper));
+      return unmodifiableMap(Maps.transformValues(super.columnMap(), Collections::unmodifiableMap));
     }
 
     @Override
-    @CheckForNull
-    public V put(
+    public @Nullable V put(
         @ParametricNullness R rowKey,
         @ParametricNullness C columnKey,
         @ParametricNullness V value) {
@@ -616,8 +590,7 @@ public final class Tables {
     }
 
     @Override
-    @CheckForNull
-    public V remove(@CheckForNull Object rowKey, @CheckForNull Object columnKey) {
+    public @Nullable V remove(@Nullable Object rowKey, @Nullable Object columnKey) {
       throw new UnsupportedOperationException();
     }
 
@@ -633,8 +606,7 @@ public final class Tables {
 
     @Override
     public Map<R, Map<C, V>> rowMap() {
-      Function<Map<C, V>, Map<C, V>> wrapper = unmodifiableWrapper();
-      return Collections.unmodifiableMap(Maps.transformValues(super.rowMap(), wrapper));
+      return unmodifiableMap(Maps.transformValues(super.rowMap(), Collections::unmodifiableMap));
     }
 
     @Override
@@ -642,7 +614,7 @@ public final class Tables {
       return Collections.unmodifiableCollection(super.values());
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -672,7 +644,7 @@ public final class Tables {
           R extends @Nullable Object, C extends @Nullable Object, V extends @Nullable Object>
       extends UnmodifiableTable<R, C, V> implements RowSortedTable<R, C, V> {
 
-    public UnmodifiableRowSortedMap(RowSortedTable<R, ? extends C, ? extends V> delegate) {
+    UnmodifiableRowSortedMap(RowSortedTable<R, ? extends C, ? extends V> delegate) {
       super(delegate);
     }
 
@@ -683,8 +655,8 @@ public final class Tables {
 
     @Override
     public SortedMap<R, Map<C, V>> rowMap() {
-      Function<Map<C, V>, Map<C, V>> wrapper = unmodifiableWrapper();
-      return Collections.unmodifiableSortedMap(Maps.transformValues(delegate().rowMap(), wrapper));
+      return unmodifiableSortedMap(
+          Maps.transformValues(delegate().rowMap(), Collections::unmodifiableMap));
     }
 
     @Override
@@ -692,22 +664,8 @@ public final class Tables {
       return Collections.unmodifiableSortedSet(delegate().rowKeySet());
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
-
-  @SuppressWarnings("unchecked")
-  private static <K extends @Nullable Object, V extends @Nullable Object>
-      Function<Map<K, V>, Map<K, V>> unmodifiableWrapper() {
-    return (Function) UNMODIFIABLE_WRAPPER;
-  }
-
-  private static final Function<? extends Map<?, ?>, ? extends Map<?, ?>> UNMODIFIABLE_WRAPPER =
-      new Function<Map<Object, Object>, Map<Object, Object>>() {
-        @Override
-        public Map<Object, Object> apply(Map<Object, Object> input) {
-          return Collections.unmodifiableMap(input);
-        }
-      };
 
   /**
    * Returns a synchronized (thread-safe) table backed by the specified table. In order to guarantee
@@ -717,8 +675,8 @@ public final class Tables {
    * <p>It is imperative that the user manually synchronize on the returned table when accessing any
    * of its collection views:
    *
-   * <pre>{@code
-   * Table<R, C, V> table = Tables.synchronizedTable(HashBasedTable.<R, C, V>create());
+   * {@snippet :
+   * Table<R, C, V> table = Tables.synchronizedTable(HashBasedTable.create());
    * ...
    * Map<C, V> row = table.row(rowKey);  // Needn't be in synchronized block
    * ...
@@ -728,7 +686,7 @@ public final class Tables {
    *     foo(i.next());
    *   }
    * }
-   * }</pre>
+   * }
    *
    * <p>Failure to follow this advice may result in non-deterministic behavior.
    *
@@ -744,7 +702,7 @@ public final class Tables {
     return Synchronized.table(table, null);
   }
 
-  static boolean equalsImpl(Table<?, ?, ?> table, @CheckForNull Object obj) {
+  static boolean equalsImpl(Table<?, ?, ?> table, @Nullable Object obj) {
     if (obj == table) {
       return true;
     } else if (obj instanceof Table) {

@@ -16,6 +16,7 @@
 
 package com.google.common.io;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Strings;
@@ -29,12 +30,14 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.CharBuffer;
 import java.util.List;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link CharStreams}.
  *
  * @author Chris Nokleberg
  */
+@NullUnmarked
 public class CharStreamsTest extends IoTestCase {
 
   private static final String TEXT = "The quick brown fox jumped over the lazy dog.";
@@ -97,7 +100,7 @@ public class CharStreamsTest extends IoTestCase {
 
     // Test a LineProcessor that is conditional.
     r = new StringReader(text);
-    final StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
     LineProcessor<Integer> conditional =
         new LineProcessor<Integer>() {
           int seen;
@@ -141,7 +144,7 @@ public class CharStreamsTest extends IoTestCase {
     Appendable plainAppendable = new StringBuilder();
     Writer result = CharStreams.asWriter(plainAppendable);
     assertNotSame(plainAppendable, result);
-    assertNotNull(result);
+    assertThat(result).isNotNull();
 
     // A Writer should not be wrapped
     Appendable secretlyAWriter = new StringWriter();
@@ -224,6 +227,7 @@ public class CharStreamsTest extends IoTestCase {
    * is permanently reduced, but with certain Reader implementations it could also cause the buffer
    * size to reach 0, causing an infinite loop.
    */
+  @SuppressWarnings("InlineMeInliner") // String.repeat unavailable under Java 8
   public void testCopyWithReaderThatDoesNotFillBuffer() throws IOException {
     // need a long enough string for the buffer to hit 0 remaining before the copy completes
     String string = Strings.repeat("0123456789", 100);
@@ -297,7 +301,7 @@ public class CharStreamsTest extends IoTestCase {
   }
 
   /** Wrap an appendable in an appendable to defeat any type specific optimizations. */
-  private static Appendable wrapAsGenericAppendable(final Appendable a) {
+  private static Appendable wrapAsGenericAppendable(Appendable a) {
     return new Appendable() {
 
       @Override
@@ -321,7 +325,7 @@ public class CharStreamsTest extends IoTestCase {
   }
 
   /** Wrap a readable in a readable to defeat any type specific optimizations. */
-  private static Readable wrapAsGenericReadable(final Readable a) {
+  private static Readable wrapAsGenericReadable(Readable a) {
     return new Readable() {
       @Override
       public int read(CharBuffer cb) throws IOException {

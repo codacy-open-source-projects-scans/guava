@@ -18,6 +18,7 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.NullnessCasts.uncheckedCastNullableTToT;
+import static com.google.common.collect.SneakyThrows.sneakyThrow;
 import static java.lang.Math.min;
 import static java.util.Objects.requireNonNull;
 
@@ -49,8 +50,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods related to {@code Stream} instances.
@@ -58,8 +58,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 33.4.0 (but since 21.0 in the JRE flavor)
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
-@SuppressWarnings("Java7ApiChecker")
 /*
  * Users will use most of these methods only if they're already using Stream. For a few other
  * methods, like stream(Iterable), we have to rely on users not to call them without library
@@ -179,17 +177,6 @@ public final class Streams {
       // But theoretically we could see sneaky checked exception
       sneakyThrow(exception);
     }
-  }
-
-  /** Throws an undeclared checked exception. */
-  private static void sneakyThrow(Throwable t) {
-    class SneakyThrower<T extends Throwable> {
-      @SuppressWarnings("unchecked") // not really safe, but that's the point
-      void throwIt(Throwable t) throws T {
-        throw (T) t;
-      }
-    }
-    new SneakyThrower<Error>().throwIt(t);
   }
 
   /**
@@ -329,12 +316,12 @@ public final class Streams {
    *
    * <p>For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * Streams.zip(
    *   Stream.of("foo1", "foo2", "foo3"),
    *   Stream.of("bar1", "bar2"),
    *   (arg1, arg2) -> arg1 + ":" + arg2)
-   * }</pre>
+   * }
    *
    * <p>will return {@code Stream.of("foo1:bar1", "foo2:bar2")}.
    *
@@ -387,19 +374,19 @@ public final class Streams {
    * ignored. Elements passed to the consumer are guaranteed to come from the same position in their
    * respective source streams. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * Streams.forEachPair(
    *   Stream.of("foo1", "foo2", "foo3"),
    *   Stream.of("bar1", "bar2"),
    *   (arg1, arg2) -> System.out.println(arg1 + ":" + arg2)
-   * }</pre>
+   * }
    *
    * <p>will print:
    *
-   * <pre>{@code
+   * {@snippet :
    * foo1:bar1
    * foo2:bar2
-   * }</pre>
+   * }
    *
    * <p><b>Warning:</b> If either supplied stream is a parallel stream, the same correspondence
    * between elements will be made, but the order in which those pairs of elements are passed to the
@@ -428,7 +415,7 @@ public final class Streams {
   }
 
   // Use this carefully - it doesn't implement value semantics
-  private static class TemporaryPair<A extends @Nullable Object, B extends @Nullable Object> {
+  private static final class TemporaryPair<A extends @Nullable Object, B extends @Nullable Object> {
     @ParametricNullness final A a;
     @ParametricNullness final B b;
 
@@ -442,11 +429,11 @@ public final class Streams {
    * Returns a stream consisting of the results of applying the given function to the elements of
    * {@code stream} and their indices in the stream. For example,
    *
-   * <pre>{@code
+   * {@snippet :
    * mapWithIndex(
    *     Stream.of("a", "b", "c"),
    *     (e, index) -> index + ":" + e)
-   * }</pre>
+   * }
    *
    * <p>would return {@code Stream.of("0:a", "1:b", "2:c")}.
    *
@@ -487,8 +474,9 @@ public final class Streams {
               isParallel)
           .onClose(stream::close);
     }
-    class Splitr extends MapWithIndexSpliterator<Spliterator<T>, R, Splitr> implements Consumer<T> {
-      @CheckForNull T holder;
+    final class Splitr extends MapWithIndexSpliterator<Spliterator<T>, R, Splitr>
+        implements Consumer<T> {
+      @Nullable T holder;
 
       Splitr(Spliterator<T> splitr, long index) {
         super(splitr, index);
@@ -525,11 +513,11 @@ public final class Streams {
    * Returns a stream consisting of the results of applying the given function to the elements of
    * {@code stream} and their indexes in the stream. For example,
    *
-   * <pre>{@code
+   * {@snippet :
    * mapWithIndex(
    *     IntStream.of(10, 11, 12),
    *     (e, index) -> index + ":" + e)
-   * }</pre>
+   * }
    *
    * <p>...would return {@code Stream.of("0:10", "1:11", "2:12")}.
    *
@@ -543,7 +531,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @SuppressWarnings("AndroidJdkLibsChecker") // b/229998664
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       IntStream stream, IntFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -571,8 +558,8 @@ public final class Streams {
               isParallel)
           .onClose(stream::close);
     }
-    class Splitr extends MapWithIndexSpliterator<Spliterator.OfInt, R, Splitr>
-        implements IntConsumer, Spliterator<R> {
+    final class Splitr extends MapWithIndexSpliterator<Spliterator.OfInt, R, Splitr>
+        implements IntConsumer {
       int holder;
 
       Splitr(Spliterator.OfInt splitr, long index) {
@@ -605,11 +592,11 @@ public final class Streams {
    * Returns a stream consisting of the results of applying the given function to the elements of
    * {@code stream} and their indexes in the stream. For example,
    *
-   * <pre>{@code
+   * {@snippet :
    * mapWithIndex(
    *     LongStream.of(10, 11, 12),
    *     (e, index) -> index + ":" + e)
-   * }</pre>
+   * }
    *
    * <p>...would return {@code Stream.of("0:10", "1:11", "2:12")}.
    *
@@ -623,7 +610,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @SuppressWarnings("AndroidJdkLibsChecker") // b/229998664
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       LongStream stream, LongFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -651,8 +637,8 @@ public final class Streams {
               isParallel)
           .onClose(stream::close);
     }
-    class Splitr extends MapWithIndexSpliterator<Spliterator.OfLong, R, Splitr>
-        implements LongConsumer, Spliterator<R> {
+    final class Splitr extends MapWithIndexSpliterator<Spliterator.OfLong, R, Splitr>
+        implements LongConsumer {
       long holder;
 
       Splitr(Spliterator.OfLong splitr, long index) {
@@ -685,11 +671,11 @@ public final class Streams {
    * Returns a stream consisting of the results of applying the given function to the elements of
    * {@code stream} and their indexes in the stream. For example,
    *
-   * <pre>{@code
+   * {@snippet :
    * mapWithIndex(
    *     DoubleStream.of(0.0, 1.0, 2.0)
    *     (e, index) -> index + ":" + e)
-   * }</pre>
+   * }
    *
    * <p>...would return {@code Stream.of("0:0.0", "1:1.0", "2:2.0")}.
    *
@@ -703,7 +689,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @SuppressWarnings("AndroidJdkLibsChecker") // b/229998664
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       DoubleStream stream, DoubleFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -731,8 +716,8 @@ public final class Streams {
               isParallel)
           .onClose(stream::close);
     }
-    class Splitr extends MapWithIndexSpliterator<Spliterator.OfDouble, R, Splitr>
-        implements DoubleConsumer, Spliterator<R> {
+    final class Splitr extends MapWithIndexSpliterator<Spliterator.OfDouble, R, Splitr>
+        implements DoubleConsumer {
       double holder;
 
       Splitr(Spliterator.OfDouble splitr, long index) {
@@ -797,8 +782,7 @@ public final class Streams {
     abstract S createSplit(F from, long i);
 
     @Override
-    @CheckForNull
-    public S trySplit() {
+    public @Nullable S trySplit() {
       Spliterator<?> splitOrNull = fromSpliterator.trySplit();
       if (splitOrNull == null) {
         return null;
@@ -890,9 +874,9 @@ public final class Streams {
    * element in the prior one.")
    */
   public static <T> java.util.Optional<T> findLast(Stream<T> stream) {
-    class OptionalState {
+    final class OptionalState {
       boolean set = false;
-      @CheckForNull T value = null;
+      @Nullable T value = null;
 
       void set(T value) {
         this.set = true;

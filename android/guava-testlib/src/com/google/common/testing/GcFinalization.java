@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Testing utilities relating to garbage collection finalization.
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>Here's an example that tests a {@code finalize} method:
  *
- * <pre>{@code
+ * {@snippet :
  * final CountDownLatch latch = new CountDownLatch(1);
  * Object x = new MyClass() {
  *   ...
@@ -63,11 +64,11 @@ import java.util.concurrent.TimeoutException;
  * };
  * x = null;  // Hint to the JIT that x is stack-unreachable
  * GcFinalization.await(latch);
- * }</pre>
+ * }
  *
  * <p>Here's an example that uses a user-defined finalization predicate:
  *
- * <pre>{@code
+ * {@snippet :
  * final WeakHashMap<Object, Object> map = new WeakHashMap<>();
  * map.put(new Object(), Boolean.TRUE);
  * GcFinalization.awaitDone(new FinalizationPredicate() {
@@ -75,12 +76,12 @@ import java.util.concurrent.TimeoutException;
  *     return map.isEmpty();
  *   }
  * });
- * }</pre>
+ * }
  *
  * <p>Even if your non-test code does not use finalization, you can use this class to test for
  * leaks, by ensuring that objects are no longer strongly referenced:
  *
- * <pre>{@code
+ * {@snippet :
  * // Helper function keeps victim stack-unreachable.
  * private WeakReference<Foo> fooWeakRef() {
  *   Foo x = ....;
@@ -92,7 +93,7 @@ import java.util.concurrent.TimeoutException;
  * public void testFooLeak() {
  *   GcFinalization.awaitClear(fooWeakRef());
  * }
- * }</pre>
+ * }
  *
  * <p>This class cannot currently be used to test soft references, since this class does not try to
  * create the memory pressure required to cause soft references to be cleared.
@@ -107,7 +108,7 @@ import java.util.concurrent.TimeoutException;
 @GwtIncompatible
 @J2ktIncompatible
 @J2ObjCIncompatible // gc
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public final class GcFinalization {
   private GcFinalization() {}
 
@@ -260,24 +261,18 @@ public final class GcFinalization {
    *
    * <p>This is a convenience method, equivalent to:
    *
-   * <pre>{@code
+   * {@snippet :
    * awaitDone(new FinalizationPredicate() {
    *   public boolean isDone() {
    *     return ref.get() == null;
    *   }
    * });
-   * }</pre>
+   * }
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
   public static void awaitClear(WeakReference<?> ref) {
-    awaitDone(
-        new FinalizationPredicate() {
-          @Override
-          public boolean isDone() {
-            return ref.get() == null;
-          }
-        });
+    awaitDone(() -> ref.get() == null);
   }
 
   /**

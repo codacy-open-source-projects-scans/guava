@@ -21,21 +21,23 @@ import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link Closer}.
  *
  * @author Colin Decker
  */
+@NullUnmarked
 public class CloserTest extends TestCase {
 
   private TestSuppressor suppressor;
@@ -113,7 +115,7 @@ public class CloserTest extends TestCase {
 
     assertTrue(c1.isClosed());
     assertTrue(c2.isClosed());
-    assertNull(c3);
+    assertThat(c3).isNull();
 
     assertTrue(suppressor.suppressions.isEmpty());
   }
@@ -322,7 +324,7 @@ public class CloserTest extends TestCase {
   /** Suppressor that records suppressions. */
   private static class TestSuppressor implements Closer.Suppressor {
 
-    private final List<Suppression> suppressions = Lists.newArrayList();
+    private final List<Suppression> suppressions = new ArrayList<>();
 
     @Override
     public void suppress(Closeable closeable, Throwable thrown, Throwable suppressed) {
@@ -355,7 +357,7 @@ public class CloserTest extends TestCase {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(closeable, thrown, suppressed);
+      return Objects.hash(closeable, thrown, suppressed);
     }
 
     @Override
@@ -389,7 +391,7 @@ public class CloserTest extends TestCase {
       this.throwOnClose = throwOnClose;
     }
 
-    public boolean isClosed() {
+    boolean isClosed() {
       return closed;
     }
 

@@ -32,7 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link PeekingIterator}.
@@ -40,8 +41,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mick Killianey
  */
 @SuppressWarnings("serial") // No serialization is used in this test
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class PeekingIteratorTest extends TestCase {
 
   /**
@@ -54,10 +55,10 @@ public class PeekingIteratorTest extends TestCase {
    * remove()}.
    */
   private static class PeekingIteratorTester<T extends @Nullable Object> extends IteratorTester<T> {
-    private Iterable<T> master;
+    private final Iterable<T> master;
     private @Nullable List<T> targetList;
 
-    public PeekingIteratorTester(Collection<T> master) {
+    PeekingIteratorTester(Collection<T> master) {
       super(master.size() + 3, MODIFIABLE, master, IteratorTester.KnownOrder.KNOWN_ORDER);
       this.master = master;
     }
@@ -67,7 +68,7 @@ public class PeekingIteratorTest extends TestCase {
       // make copy from master to verify later
       targetList = Lists.newArrayList(master);
       Iterator<T> iterator = targetList.iterator();
-      return Iterators.peekingIterator(iterator);
+      return peekingIterator(iterator);
     }
 
     @Override
@@ -77,7 +78,7 @@ public class PeekingIteratorTest extends TestCase {
     }
   }
 
-  private <T extends @Nullable Object> void actsLikeIteratorHelper(final List<T> list) {
+  private <T extends @Nullable Object> void actsLikeIteratorHelper(List<T> list) {
     // Check with modifiable copies of the list
     new PeekingIteratorTester<T>(list).test();
 
@@ -87,7 +88,7 @@ public class PeekingIteratorTest extends TestCase {
       @Override
       protected Iterator<T> newTargetIterator() {
         Iterator<T> iterator = unmodifiableList(list).iterator();
-        return Iterators.peekingIterator(iterator);
+        return peekingIterator(iterator);
       }
     }.test();
   }
@@ -114,7 +115,7 @@ public class PeekingIteratorTest extends TestCase {
   public void testPeekOnEmptyList() {
     List<?> list = emptyList();
     Iterator<?> iterator = list.iterator();
-    PeekingIterator<?> peekingIterator = Iterators.peekingIterator(iterator);
+    PeekingIterator<?> peekingIterator = peekingIterator(iterator);
 
     assertThrows(NoSuchElementException.class, () -> peekingIterator.peek());
   }
@@ -122,7 +123,7 @@ public class PeekingIteratorTest extends TestCase {
   public void testPeekDoesntChangeIteration() {
     List<?> list = Lists.newArrayList("A", "B", "C");
     Iterator<?> iterator = list.iterator();
-    PeekingIterator<?> peekingIterator = Iterators.peekingIterator(iterator);
+    PeekingIterator<?> peekingIterator = peekingIterator(iterator);
 
     assertEquals("Should be able to peek() at first element", "A", peekingIterator.peek());
     assertEquals(
@@ -150,7 +151,7 @@ public class PeekingIteratorTest extends TestCase {
   public void testCantRemoveAfterPeek() {
     List<String> list = Lists.newArrayList("A", "B", "C");
     Iterator<String> iterator = list.iterator();
-    PeekingIterator<?> peekingIterator = Iterators.peekingIterator(iterator);
+    PeekingIterator<?> peekingIterator = peekingIterator(iterator);
 
     assertEquals("A", peekingIterator.next());
     assertEquals("B", peekingIterator.peek());

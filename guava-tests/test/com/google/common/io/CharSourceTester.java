@@ -17,11 +17,11 @@
 package com.google.common.io;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.io.SourceSinkFactory.ByteSourceFactory;
 import com.google.common.io.SourceSinkFactory.CharSourceFactory;
 import java.io.BufferedReader;
@@ -29,10 +29,12 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * A generator of {@code TestSuite} instances for testing {@code CharSource} implementations.
@@ -42,6 +44,7 @@ import junit.framework.TestSuite;
  * @author Colin Decker
  */
 @AndroidIncompatible // TODO(b/230620681): Make this available (even though we won't run it).
+@NullUnmarked
 public class CharSourceTester extends SourceSinkTester<CharSource, String, CharSourceFactory> {
 
   private static final ImmutableList<Method> testMethods = getTestMethods(CharSourceTester.class);
@@ -152,7 +155,7 @@ public class CharSourceTester extends SourceSinkTester<CharSource, String, CharS
 
   public void testReadFirstLine() throws IOException {
     if (expectedLines.isEmpty()) {
-      assertNull(source.readFirstLine());
+      assertThat(source.readFirstLine()).isNull();
     } else {
       assertEquals(expectedLines.get(0), source.readFirstLine());
     }
@@ -181,7 +184,7 @@ public class CharSourceTester extends SourceSinkTester<CharSource, String, CharS
     List<String> list =
         source.readLines(
             new LineProcessor<List<String>>() {
-              List<String> list = Lists.newArrayList();
+              final List<String> list = new ArrayList<>();
 
               @Override
               public boolean processLine(String line) throws IOException {
@@ -202,7 +205,7 @@ public class CharSourceTester extends SourceSinkTester<CharSource, String, CharS
     List<String> list =
         source.readLines(
             new LineProcessor<List<String>>() {
-              List<String> list = Lists.newArrayList();
+              final List<String> list = new ArrayList<>();
 
               @Override
               public boolean processLine(String line) throws IOException {

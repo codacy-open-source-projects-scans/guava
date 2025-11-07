@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
+import com.google.errorprone.annotations.InlineMe;
 
 /**
  * A {@link ValueGraph} whose elements and structural relationships will never change. Instances of
@@ -44,7 +45,6 @@ import com.google.errorprone.annotations.Immutable;
 @Beta
 @Immutable(containerOf = {"N", "V"})
 @SuppressWarnings("Immutable") // Extends StandardValueGraph but uses ImmutableMaps.
-@ElementTypesAreNonnullByDefault
 public final class ImmutableValueGraph<N, V> extends StandardValueGraph<N, V> {
 
   private ImmutableValueGraph(ValueGraph<N, V> graph) {
@@ -63,6 +63,9 @@ public final class ImmutableValueGraph<N, V> extends StandardValueGraph<N, V> {
    *
    * @deprecated no need to use this
    */
+  @InlineMe(
+      replacement = "checkNotNull(graph)",
+      staticImports = "com.google.common.base.Preconditions.checkNotNull")
   @Deprecated
   public static <N, V> ImmutableValueGraph<N, V> copyOf(ImmutableValueGraph<N, V> graph) {
     return checkNotNull(graph);
@@ -106,7 +109,7 @@ public final class ImmutableValueGraph<N, V> extends StandardValueGraph<N, V> {
    * A builder for creating {@link ImmutableValueGraph} instances, especially {@code static final}
    * graphs. Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * static final ImmutableValueGraph<City, Distance> CITY_ROAD_DISTANCE_GRAPH =
    *     ValueGraphBuilder.undirected()
    *         .<City, Distance>immutable()
@@ -115,7 +118,7 @@ public final class ImmutableValueGraph<N, V> extends StandardValueGraph<N, V> {
    *         .putEdgeValue(BERLIN, BRUSSELS, kilometers(764))
    *         .addNode(REYKJAVIK)
    *         .build();
-   * }</pre>
+   * }
    *
    * <p>Builder instances can be reused; it is safe to call {@link #build} multiple times to build
    * multiple graphs in series. Each new graph contains all the elements of the ones created before

@@ -20,21 +20,22 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An object of this class encapsulates type mappings from type variables. Mappings are established
@@ -50,7 +51,6 @@ import javax.annotation.CheckForNull;
  * @author Ben Yu
  * @since 15.0
  */
-@ElementTypesAreNonnullByDefault
 public final class TypeResolver {
 
   private final TypeTable typeTable;
@@ -110,7 +110,7 @@ public final class TypeResolver {
    *     corresponding mappings exist in the current {@code TypeResolver} instance.
    */
   public TypeResolver where(Type formal, Type actual) {
-    Map<TypeVariableKey, Type> mappings = Maps.newHashMap();
+    Map<TypeVariableKey, Type> mappings = new HashMap<>();
     populateTypeMappings(mappings, checkNotNull(formal), checkNotNull(actual));
     return where(mappings);
   }
@@ -226,6 +226,7 @@ public final class TypeResolver {
     }
   }
 
+  @CanIgnoreReturnValue
   Type[] resolveTypesInPlace(Type[] types) {
     for (int i = 0; i < types.length; i++) {
       types[i] = resolveType(types[i]);
@@ -330,17 +331,28 @@ public final class TypeResolver {
         Type[] resolvedBounds = new TypeResolver(forDependants).resolveTypes(bounds);
         /*
          * We'd like to simply create our own TypeVariable with the newly resolved bounds. There's
-         * just one problem: Starting with JDK 7u51, the JDK TypeVariable's equals() method doesn't
-         * recognize instances of our TypeVariable implementation. This is a problem because users
-         * compare TypeVariables from the JDK against TypeVariables returned by TypeResolver. To
-         * work with all JDK versions, TypeResolver must return the appropriate TypeVariable
+         * just one problem: We want to interoperate properly with the platform's built-in
+         * implementation of TypeVariable, but the behavior of the built-in implementation differs
+         * across platforms:
+         *
+         * - Under the JDK, the built-in TypeVariable's equals() method doesn't recognize instances
+         *   of our TypeVariable implementation.
+         *
+         * - Under Android, it does.
+         *
+         * We want users to see the same behavior when they compare a built-in TypeVariable against
+         * ours as they do when they perform the same comparison in reverse. To provide that
+         * behavior on all platforms, TypeResolver must return the appropriate TypeVariable
          * implementation in each of the three possible cases:
          *
-         * 1. Prior to JDK 7u51, the JDK TypeVariable implementation interoperates with ours.
-         * Therefore, we can always create our own TypeVariable.
+         * 1. Under Android, the built-in TypeVariable implementation interoperates with ours.
+         * Therefore, we can always create our own TypeVariable. (One downside of our TypeVariable
+         * in some situations is that it does not support the AnnotatedType API. However, those
+         * situations don't arise under Android because Android does not provide the AnnotatedType
+         * API at all.)
          *
-         * 2. Starting with JDK 7u51, the JDK TypeVariable implementations does not interoperate
-         * with ours. Therefore, we have to be careful about whether we create our own TypeVariable:
+         * 2. Under the JDK, the built-in TypeVariable implementation does not interoperate with
+         * ours. Therefore, we have to be careful about whether we create our own TypeVariable:
          *
          * 2a. If the resolved types are identical to the original types, then we can return the
          * original, identical JDK TypeVariable. By doing so, we sidestep the problem entirely.
@@ -355,6 +367,14 @@ public final class TypeResolver {
          * new TypeVariable _will_ be equal to is an equivalent TypeVariable that was also created
          * by us. And that equality is guaranteed to hold because it doesn't involve the JDK
          * TypeVariable implementation at all.
+         *
+         * NOTE: b/147144588 - Custom TypeVariables created by Guava do not preserve
+         * annotations. This is intentional. The semantics of annotation handling during
+         * type resolution are unclear and have changed across Java versions. Until there's
+         * a clear specification for what annotations should mean on resolved TypeVariables
+         * with modified bounds, annotation methods will throw
+         * UnsupportedOperationException. Frameworks requiring annotation preservation
+         * should use the original TypeVariable when bounds haven't changed.
          */
         if (Types.NativeTypeVariableEquals.NATIVE_TYPE_VARIABLE_ONLY
             && Arrays.equals(bounds, resolvedBounds)) {
@@ -370,7 +390,7 @@ public final class TypeResolver {
 
   private static final class TypeMappingIntrospector extends TypeVisitor {
 
-    private final Map<TypeVariableKey, Type> mappings = Maps.newHashMap();
+    private final Map<TypeVariableKey, Type> mappings = new HashMap<>();
 
     /**
      * Returns type mappings using type parameters and type arguments found in the generic
@@ -526,8 +546,7 @@ public final class TypeResolver {
       return new WildcardCapturer(id);
     }
 
-    @CheckForNull
-    private Type captureNullable(@CheckForNull Type type) {
+    private @Nullable Type captureNullable(@Nullable Type type) {
       if (type == null) {
         return null;
       }
@@ -557,11 +576,11 @@ public final class TypeResolver {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(var.getGenericDeclaration(), var.getName());
+      return Objects.hash(var.getGenericDeclaration(), var.getName());
     }
 
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof TypeVariableKey) {
         TypeVariableKey that = (TypeVariableKey) obj;
         return equalsTypeVariable(that.var);
@@ -576,8 +595,7 @@ public final class TypeResolver {
     }
 
     /** Wraps {@code t} in a {@code TypeVariableKey} if it's a type variable. */
-    @CheckForNull
-    static TypeVariableKey forLookup(Type t) {
+    static @Nullable TypeVariableKey forLookup(Type t) {
       if (t instanceof TypeVariable) {
         return new TypeVariableKey((TypeVariable<?>) t);
       } else {

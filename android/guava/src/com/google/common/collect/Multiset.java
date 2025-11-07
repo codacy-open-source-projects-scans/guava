@@ -24,8 +24,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A collection that supports order-independent equality, like {@link Set}, but may have duplicate
@@ -51,8 +50,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>In addition to these required methods, implementations of {@code Multiset} are expected to
  * provide two {@code static} creation methods: {@code create()}, returning an empty multiset, and
  * {@code create(Iterable<? extends E>)}, returning a multiset containing the given initial
- * elements. This is simply a refinement of {@code Collection}'s constructor recommendations,
- * reflecting the new developments of Java 5.
+ * elements. This is simply a refinement of {@code Collection}'s constructor recommendations.
  *
  * <p>As with other collection types, the modification operations are optional, and should throw
  * {@link UnsupportedOperationException} when they are not implemented. Most implementations should
@@ -89,7 +87,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public interface Multiset<E extends @Nullable Object> extends Collection<E> {
   // Query Operations
 
@@ -115,7 +112,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * @return the number of occurrences of the element in this multiset; possibly zero but never
    *     negative
    */
-  int count(@CompatibleWith("E") @CheckForNull Object element);
+  int count(@CompatibleWith("E") @Nullable Object element);
 
   // Bulk Operations
 
@@ -176,7 +173,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * @throws IllegalArgumentException if {@code occurrences} is negative
    */
   @CanIgnoreReturnValue
-  int remove(@CompatibleWith("E") @CheckForNull Object element, int occurrences);
+  int remove(@CompatibleWith("E") @Nullable Object element, int occurrences);
 
   /**
    * Removes a <i>single</i> occurrence of the specified element from this multiset, if present.
@@ -192,7 +189,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @CanIgnoreReturnValue
   @Override
-  boolean remove(@CheckForNull Object element);
+  boolean remove(@Nullable Object element);
 
   /**
    * Adds or removes the necessary occurrences of an element such that the element attains the
@@ -302,14 +299,14 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
      * represent the same element and count. That is, two entries {@code a} and {@code b} are equal
      * if:
      *
-     * <pre>{@code
-     * Objects.equal(a.getElement(), b.getElement())
+     * {@snippet :
+     * Objects.equals(a.getElement(), b.getElement())
      *     && a.getCount() == b.getCount()
-     * }</pre>
+     * }
      */
     @Override
     // TODO(kevinb): check this wrt TreeMultiset?
-    boolean equals(@CheckForNull Object o);
+    boolean equals(@Nullable Object o);
 
     /**
      * {@inheritDoc}
@@ -317,9 +314,9 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
      * <p>The hash code of a multiset entry for element {@code element} and count {@code count} is
      * defined as:
      *
-     * <pre>{@code
+     * {@snippet :
      * ((element == null) ? 0 : element.hashCode()) ^ count
-     * }</pre>
+     * }
      */
     @Override
     int hashCode();
@@ -343,14 +340,14 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    */
   @Override
   // TODO(kevinb): caveats about equivalence-relation?
-  boolean equals(@CheckForNull Object object);
+  boolean equals(@Nullable Object object);
 
   /**
    * Returns the hash code for this multiset. This is defined as the sum of
    *
-   * <pre>{@code
+   * {@snippet :
    * ((element == null) ? 0 : element.hashCode()) ^ count(element)
-   * }</pre>
+   * }
    *
    * <p>over all distinct elements in the multiset. It follows that a multiset and its entry set
    * always have the same hash code.
@@ -389,7 +386,7 @@ public interface Multiset<E extends @Nullable Object> extends Collection<E> {
    * @return {@code true} if this multiset contains at least one occurrence of the element
    */
   @Override
-  boolean contains(@CheckForNull Object element);
+  boolean contains(@Nullable Object element);
 
   /**
    * Returns {@code true} if this multiset contains at least one occurrence of each element in the

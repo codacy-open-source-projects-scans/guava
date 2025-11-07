@@ -24,8 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.InlineMe;
 import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code String} or {@code CharSequence} instances.
@@ -34,7 +33,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 3.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class Strings {
   private Strings() {}
 
@@ -44,7 +42,7 @@ public final class Strings {
    * @param string the string to test and possibly return
    * @return {@code string} itself if it is non-null; {@code ""} if it is null
    */
-  public static String nullToEmpty(@CheckForNull String string) {
+  public static String nullToEmpty(@Nullable String string) {
     return Platform.nullToEmpty(string);
   }
 
@@ -54,8 +52,7 @@ public final class Strings {
    * @param string the string to test and possibly return
    * @return {@code string} itself if it is nonempty; {@code null} if it is empty or null
    */
-  @CheckForNull
-  public static String emptyToNull(@CheckForNull String string) {
+  public static @Nullable String emptyToNull(@Nullable String string) {
     return Platform.emptyToNull(string);
   }
 
@@ -70,7 +67,7 @@ public final class Strings {
    * @param string a string reference to check
    * @return {@code true} if the string is null or is the empty string
    */
-  public static boolean isNullOrEmpty(@CheckForNull String string) {
+  public static boolean isNullOrEmpty(@Nullable String string) {
     return Platform.stringIsNullOrEmpty(string);
   }
 
@@ -159,14 +156,14 @@ public final class Strings {
     }
 
     // IF YOU MODIFY THE CODE HERE, you must update StringsRepeatBenchmark
-    final int len = string.length();
-    final long longSize = (long) len * (long) count;
-    final int size = (int) longSize;
+    int len = string.length();
+    long longSize = (long) len * (long) count;
+    int size = (int) longSize;
     if (size != longSize) {
       throw new ArrayIndexOutOfBoundsException("Required array size too large: " + longSize);
     }
 
-    final char[] array = new char[size];
+    char[] array = new char[size];
     string.getChars(0, len, array, 0);
     int n;
     for (n = len; n < size - n; n <<= 1) {
@@ -267,15 +264,11 @@ public final class Strings {
    */
   // TODO(diamondm) consider using Arrays.toString() for array parameters
   public static String lenientFormat(
-      @CheckForNull String template, @CheckForNull @Nullable Object... args) {
+      @Nullable String template, @Nullable Object @Nullable ... args) {
     template = String.valueOf(template); // null -> "null"
 
     if (args == null) {
       args = new Object[] {"(Object[])null"};
-    } else {
-      for (int i = 0; i < args.length; i++) {
-        args[i] = lenientToString(args[i]);
-      }
     }
 
     // start substituting the arguments into the '%s' placeholders
@@ -288,18 +281,18 @@ public final class Strings {
         break;
       }
       builder.append(template, templateStart, placeholderStart);
-      builder.append(args[i++]);
+      builder.append(lenientToString(args[i++]));
       templateStart = placeholderStart + 2;
     }
     builder.append(template, templateStart, template.length());
 
-    // if we run out of placeholders, append the extra args in square braces
+    // if we run out of placeholders, append the extra args in square brackets
     if (i < args.length) {
-      builder.append(" [");
-      builder.append(args[i++]);
-      while (i < args.length) {
-        builder.append(", ");
-        builder.append(args[i++]);
+      String prefix = " [";
+      for (; i < args.length; i++) {
+        builder.append(prefix);
+        builder.append(lenientToString(args[i]));
+        prefix = ", ";
       }
       builder.append(']');
     }
@@ -307,13 +300,14 @@ public final class Strings {
     return builder.toString();
   }
 
-  private static String lenientToString(@CheckForNull Object o) {
+  @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
+  private static String lenientToString(@Nullable Object o) {
     if (o == null) {
       return "null";
     }
     try {
       return o.toString();
-    } catch (Exception e) {
+    } catch (Exception e) { // sneaky checked exception
       // Default toString() behavior - see Object.toString()
       String objectToString =
           o.getClass().getName() + '@' + Integer.toHexString(System.identityHashCode(o));

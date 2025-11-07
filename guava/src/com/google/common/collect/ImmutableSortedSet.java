@@ -18,6 +18,7 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.asImmutableList;
 import static com.google.common.collect.ObjectArrays.checkElementsNotNull;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.sort;
@@ -42,8 +43,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link NavigableSet} whose contents will never change, with many other important properties
@@ -63,9 +63,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0 (implements {@code NavigableSet} since 12.0)
  */
 // TODO(benyu): benchmark and optimize all creation paths, which are a mess now
-@GwtCompatible(serializable = true, emulated = true)
+@GwtCompatible
 @SuppressWarnings("serial") // we're overriding default serialization
-@ElementTypesAreNonnullByDefault
 public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E>
     implements NavigableSet<E>, SortedIterable<E> {
   static final int SPLITERATOR_CHARACTERISTICS =
@@ -383,8 +382,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
       }
     }
     Arrays.fill(contents, uniques, n, null);
-    return new RegularImmutableSortedSet<>(
-        ImmutableList.<E>asImmutableList(contents, uniques), comparator);
+    return new RegularImmutableSortedSet<>(asImmutableList(contents, uniques), comparator);
   }
 
   /**
@@ -421,13 +419,13 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
    * A builder for creating immutable sorted set instances, especially {@code public static final}
    * sets ("constant sets"), with a given comparator. Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * public static final ImmutableSortedSet<Number> LUCKY_NUMBERS =
    *     new ImmutableSortedSet.Builder<Number>(ODDS_FIRST_COMPARATOR)
    *         .addAll(SINGLE_DIGIT_PRIMES)
    *         .add(42)
    *         .build();
-   * }</pre>
+   * }
    *
    * <p>Builder instances can be reused; it is safe to call {@link #build} multiple times to build
    * multiple sets in series. Each set is a superset of the set created before it.
@@ -503,7 +501,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
       copyIfNecessary();
       if (n == elements.length) {
         sortAndDedup();
-        /**
+        /*
          * sortAndDedup may have made enough room for this element, but that's not necessarily good
          * enough. Consider, for example, the case where we have a buffer of size (n+1), add n
          * distinct elements, and add the last element over again many times over. We don't want a
@@ -592,17 +590,16 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
         return emptySet(comparator);
       } else {
         forceCopy = true;
-        return new RegularImmutableSortedSet<>(
-            ImmutableList.asImmutableList(elements, n), comparator);
+        return new RegularImmutableSortedSet<>(asImmutableList(elements, n), comparator);
       }
     }
   }
 
-  int unsafeCompare(Object a, @CheckForNull Object b) {
+  int unsafeCompare(Object a, @Nullable Object b) {
     return unsafeCompare(comparator, a, b);
   }
 
-  static int unsafeCompare(Comparator<?> comparator, Object a, @CheckForNull Object b) {
+  static int unsafeCompare(Comparator<?> comparator, Object a, @Nullable Object b) {
     // Pretend the comparator can compare anything. If it turns out it can't
     // compare a and b, we should get a CCE or NPE on the subsequent line. Only methods
     // that are spec'd to throw CCE and NPE should call this.
@@ -645,7 +642,9 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     return headSet(toElement, false);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @Override
   public ImmutableSortedSet<E> headSet(E toElement, boolean inclusive) {
     return headSetImpl(checkNotNull(toElement), inclusive);
@@ -668,7 +667,9 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     return subSet(fromElement, true, toElement, false);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public ImmutableSortedSet<E> subSet(
@@ -694,7 +695,9 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     return tailSet(fromElement, true);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @Override
   public ImmutableSortedSet<E> tailSet(E fromElement, boolean inclusive) {
     return tailSetImpl(checkNotNull(fromElement), inclusive);
@@ -711,33 +714,37 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
 
   abstract ImmutableSortedSet<E> tailSetImpl(E fromElement, boolean inclusive);
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
-  @CheckForNull
-  public E lower(E e) {
+  public @Nullable E lower(E e) {
     return Iterators.<@Nullable E>getNext(headSet(e, false).descendingIterator(), null);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @Override
-  @CheckForNull
-  public E floor(E e) {
+  public @Nullable E floor(E e) {
     return Iterators.<@Nullable E>getNext(headSet(e, true).descendingIterator(), null);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @Override
-  @CheckForNull
-  public E ceiling(E e) {
+  public @Nullable E ceiling(E e) {
     return Iterables.<@Nullable E>getFirst(tailSet(e, true), null);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
-  @CheckForNull
-  public E higher(E e) {
+  public @Nullable E higher(E e) {
     return Iterables.<@Nullable E>getFirst(tailSet(e, false), null);
   }
 
@@ -763,8 +770,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
   @GwtIncompatible // NavigableSet
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  @CheckForNull
-  public final E pollFirst() {
+  public final @Nullable E pollFirst() {
     throw new UnsupportedOperationException();
   }
 
@@ -780,17 +786,17 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
   @GwtIncompatible // NavigableSet
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  @CheckForNull
-  public final E pollLast() {
+  public final @Nullable E pollLast() {
     throw new UnsupportedOperationException();
   }
 
   @GwtIncompatible // NavigableSet
   @LazyInit
-  @CheckForNull
-  transient ImmutableSortedSet<E> descendingSet;
+  transient @Nullable ImmutableSortedSet<E> descendingSet;
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public ImmutableSortedSet<E> descendingSet() {
@@ -832,13 +838,15 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     };
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public abstract UnmodifiableIterator<E> descendingIterator();
 
   /** Returns the position of an element within the set, or -1 if not present. */
-  abstract int indexOf(@CheckForNull Object target);
+  abstract int indexOf(@Nullable Object target);
 
   /*
    * This class is used to serialize all ImmutableSortedSet instances,
@@ -847,11 +855,11 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
    * implementation type is an implementation detail.
    */
   @J2ktIncompatible // serialization
-  private static class SerializedForm<E> implements Serializable {
+  private static final class SerializedForm<E> implements Serializable {
     final Comparator<? super E> comparator;
     final Object[] elements;
 
-    public SerializedForm(Comparator<? super E> comparator, Object[] elements) {
+    SerializedForm(Comparator<? super E> comparator, Object[] elements) {
       this.comparator = comparator;
       this.elements = elements;
     }
@@ -861,7 +869,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
       return new Builder<E>(comparator).add((E[]) elements).build();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   @J2ktIncompatible // serialization
@@ -1022,5 +1030,5 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     throw new UnsupportedOperationException();
   }
 
-  private static final long serialVersionUID = 0xcafebabe;
+  @GwtIncompatible @J2ktIncompatible   private static final long serialVersionUID = 0xcafebabe;
 }

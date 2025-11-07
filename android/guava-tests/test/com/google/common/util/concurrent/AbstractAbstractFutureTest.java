@@ -36,13 +36,15 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base class for tests for emulated {@link AbstractFuture} that allow subclasses to swap in a
  * different "source Future" for {@link AbstractFuture#setFuture} calls.
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 abstract class AbstractAbstractFutureTest extends TestCase {
   private TestedFuture<Integer> future;
   private AbstractFuture<Integer> delegate;
@@ -112,38 +114,26 @@ abstract class AbstractAbstractFutureTest extends TestCase {
   }
 
   public void testSetFutureDelegateAlreadyCancelled() throws Exception {
-    delegate.cancel(
-        false
-        /** mayInterruptIfRunning */
-        );
+    delegate.cancel(/* mayInterruptIfRunning= */ false);
     assertThat(future.setFuture(delegate)).isTrue();
     assertCancelled(future, false);
   }
 
   public void testSetFutureDelegateLaterCancelled() throws Exception {
     assertThat(future.setFuture(delegate)).isTrue();
-    delegate.cancel(
-        false
-        /** mayInterruptIfRunning */
-        );
+    delegate.cancel(/* mayInterruptIfRunning= */ false);
     assertCancelled(future, false);
   }
 
   public void testSetFutureDelegateAlreadyInterrupted() throws Exception {
-    delegate.cancel(
-        true
-        /** mayInterruptIfRunning */
-        );
+    delegate.cancel(/* mayInterruptIfRunning= */ true);
     assertThat(future.setFuture(delegate)).isTrue();
     assertCancelled(future, /* expectWasInterrupted= */ false);
   }
 
   public void testSetFutureDelegateLaterInterrupted() throws Exception {
     assertThat(future.setFuture(delegate)).isTrue();
-    delegate.cancel(
-        true
-        /** mayInterruptIfRunning */
-        );
+    delegate.cancel(/* mayInterruptIfRunning= */ true);
     assertCancelled(future, /* expectWasInterrupted= */ false);
   }
 

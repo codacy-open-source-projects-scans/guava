@@ -21,6 +21,7 @@ import static com.google.common.util.concurrent.Callables.returning;
 import static com.google.common.util.concurrent.Futures.getDone;
 import static com.google.common.util.concurrent.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.util.concurrent.TestPlatform.verifyThreadWasNotInterrupted;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -31,15 +32,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /** Test case for {@link TrustedListenableFutureTask}. */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class TrustedListenableFutureTaskTest extends TestCase {
 
   public void testSuccessful() throws Exception {
@@ -63,7 +64,7 @@ public class TrustedListenableFutureTaskTest extends TestCase {
   }
 
   public void testFailed() throws Exception {
-    final Exception e = new Exception();
+    Exception e = new Exception();
     TrustedListenableFutureTask<Integer> task =
         TrustedListenableFutureTask.create(
             new Callable<Integer>() {
@@ -83,10 +84,10 @@ public class TrustedListenableFutureTaskTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // blocking wait
   public void testCancel_interrupted() throws Exception {
-    final AtomicBoolean interruptedExceptionThrown = new AtomicBoolean();
-    final CountDownLatch enterLatch = new CountDownLatch(1);
-    final CountDownLatch exitLatch = new CountDownLatch(1);
-    final TrustedListenableFutureTask<Integer> task =
+    AtomicBoolean interruptedExceptionThrown = new AtomicBoolean();
+    CountDownLatch enterLatch = new CountDownLatch(1);
+    CountDownLatch exitLatch = new CountDownLatch(1);
+    TrustedListenableFutureTask<Integer> task =
         TrustedListenableFutureTask.create(
             new Callable<Integer>() {
               @Override
@@ -130,11 +131,11 @@ public class TrustedListenableFutureTaskTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // blocking wait
   public void testRunIdempotency() throws Exception {
-    final int numThreads = 10;
-    final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    int numThreads = 10;
+    ExecutorService executor = newFixedThreadPool(numThreads);
     for (int i = 0; i < 1000; i++) {
-      final AtomicInteger counter = new AtomicInteger();
-      final TrustedListenableFutureTask<Integer> task =
+      AtomicInteger counter = new AtomicInteger();
+      TrustedListenableFutureTask<Integer> task =
           TrustedListenableFutureTask.create(
               new Callable<Integer>() {
                 @Override
@@ -142,7 +143,7 @@ public class TrustedListenableFutureTaskTest extends TestCase {
                   return counter.incrementAndGet();
                 }
               });
-      final CyclicBarrier barrier = new CyclicBarrier(numThreads + 1);
+      CyclicBarrier barrier = new CyclicBarrier(numThreads + 1);
       Runnable wrapper =
           new Runnable() {
             @Override
@@ -166,9 +167,9 @@ public class TrustedListenableFutureTaskTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // blocking wait
   public void testToString() throws Exception {
-    final CountDownLatch enterLatch = new CountDownLatch(1);
-    final CountDownLatch exitLatch = new CountDownLatch(1);
-    final TrustedListenableFutureTask<@Nullable Void> task =
+    CountDownLatch enterLatch = new CountDownLatch(1);
+    CountDownLatch exitLatch = new CountDownLatch(1);
+    TrustedListenableFutureTask<@Nullable Void> task =
         TrustedListenableFutureTask.create(
             new Callable<@Nullable Void>() {
               @Override

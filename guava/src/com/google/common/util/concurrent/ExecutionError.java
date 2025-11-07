@@ -15,7 +15,9 @@
 package com.google.common.util.concurrent;
 
 import com.google.common.annotations.GwtCompatible;
-import javax.annotation.CheckForNull;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link Error} variant of {@link java.util.concurrent.ExecutionException}. As with {@code
@@ -28,7 +30,6 @@ import javax.annotation.CheckForNull;
  * @since 10.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public class ExecutionError extends Error {
   /*
    * Ideally, this class would have exposed only constructors that require a non-null cause. See
@@ -63,8 +64,9 @@ public class ExecutionError extends Error {
    *     calling {@link #initCause} later, so it is not quite equivalent to using a constructor that
    *     omits the cause.
    */
+  @SuppressWarnings("InlineMeSuggester") // b/387265535
   @Deprecated
-  protected ExecutionError(@CheckForNull String message) {
+  protected ExecutionError(@Nullable String message) {
     super(message);
   }
 
@@ -72,7 +74,7 @@ public class ExecutionError extends Error {
    * Creates a new instance with the given detail message and cause. Prefer to provide a
    * non-nullable {@code cause}, as many users expect to find one.
    */
-  public ExecutionError(@CheckForNull String message, @CheckForNull Error cause) {
+  public ExecutionError(@Nullable String message, @Nullable Error cause) {
     super(message, cause);
   }
 
@@ -80,9 +82,9 @@ public class ExecutionError extends Error {
    * Creates a new instance with {@code null} as its detail message and the given cause. Prefer to
    * provide a non-nullable {@code cause}, as many users expect to find one.
    */
-  public ExecutionError(@CheckForNull Error cause) {
+  public ExecutionError(@Nullable Error cause) {
     super(cause);
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

@@ -30,8 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * CompactLinkedHashMap is an implementation of a Map with insertion or LRU iteration order,
@@ -55,8 +54,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible // no support for access-order mode in LinkedHashMap delegate
 @GwtIncompatible // not worth using in GWT for now
-@ElementTypesAreNonnullByDefault
-class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Object>
+final class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Object>
     extends CompactHashMap<K, V> {
   // TODO(lowasser): implement removeEldestEntry so this can be used as a drop-in replacement
 
@@ -91,7 +89,7 @@ class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Objec
    * <p>A node with "prev" pointer equal to {@code ENDPOINT} is the first node in the linked list,
    * and a node with "next" pointer equal to {@code ENDPOINT} is the last node.
    */
-  @CheckForNull @VisibleForTesting transient long[] links;
+  @VisibleForTesting transient long @Nullable [] links;
 
   /** Pointer to the first node in the linked list, or {@code ENDPOINT} if there are no entries. */
   private transient int firstEntry;
@@ -157,7 +155,7 @@ class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Objec
   }
 
   private void setSuccessor(int entry, int succ) {
-    long succMask = (~0L) >>> 32;
+    long succMask = ~0L >>> 32;
     setLink(entry, (link(entry) & ~succMask) | ((succ + 1) & succMask));
   }
 
@@ -232,7 +230,7 @@ class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Objec
   @Override
   Set<Entry<K, V>> createEntrySet() {
     @WeakOuter
-    class EntrySetImpl extends EntrySetView {
+    final class EntrySetImpl extends EntrySetView {
       @Override
       public Spliterator<Entry<K, V>> spliterator() {
         return Spliterators.spliterator(this, Spliterator.ORDERED | Spliterator.DISTINCT);
@@ -244,7 +242,7 @@ class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Objec
   @Override
   Set<K> createKeySet() {
     @WeakOuter
-    class KeySetImpl extends KeySetView {
+    final class KeySetImpl extends KeySetView {
       @Override
       public @Nullable Object[] toArray() {
         return ObjectArrays.toArrayImpl(this);
@@ -267,7 +265,7 @@ class CompactLinkedHashMap<K extends @Nullable Object, V extends @Nullable Objec
   @Override
   Collection<V> createValues() {
     @WeakOuter
-    class ValuesImpl extends ValuesView {
+    final class ValuesImpl extends ValuesView {
       @Override
       public @Nullable Object[] toArray() {
         return ObjectArrays.toArrayImpl(this);

@@ -37,7 +37,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * GWT emulation of {@link com.google.common.collect.ImmutableMap}. For non sorted maps, it is a
@@ -49,7 +49,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @see ImmutableSortedMap
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
 public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
   abstract static class IteratorBasedImmutableMap<K, V> extends ImmutableMap<K, V> {
@@ -277,16 +276,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
     @CanIgnoreReturnValue
     public Builder<K, V> put(Entry<? extends K, ? extends V> entry) {
-      if (entry instanceof ImmutableEntry) {
-        checkNotNull(entry.getKey());
-        checkNotNull(entry.getValue());
-        @SuppressWarnings("unchecked") // all supported methods are covariant
-        Entry<K, V> immutableEntry = (Entry<K, V>) entry;
-        entries.add(immutableEntry);
-      } else {
-        entries.add(entryOf((K) entry.getKey(), (V) entry.getValue()));
-      }
-      return this;
+      return put(entry.getKey(), entry.getValue());
     }
 
     @CanIgnoreReturnValue
@@ -322,8 +312,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
     private ImmutableMap<K, V> build(boolean throwIfDuplicateKeys) {
       if (valueComparator != null) {
-        Collections.sort(
-            entries, Ordering.from(valueComparator).onResultOf(Maps.<V>valueFunction()));
+        Collections.sort(entries, Ordering.from(valueComparator).onResultOf(Entry::getValue));
       }
       return fromEntryList(throwIfDuplicateKeys, entries);
     }
@@ -391,7 +380,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
         return of();
       case 1:
         Entry<? extends K, ? extends V> entry = getOnlyElement(map.entrySet());
-        return ImmutableMap.<K, V>of(entry.getKey(), entry.getValue());
+        return ImmutableMap.of(entry.getKey(), entry.getValue());
       default:
         Map<K, V> orderPreservingCopy = Maps.newLinkedHashMap();
         for (Entry<? extends K, ? extends V> e : map.entrySet()) {
@@ -412,18 +401,22 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
   abstract boolean isPartialView();
 
+  @Override
   public final @Nullable V put(K k, V v) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final @Nullable V remove(Object o) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final void putAll(Map<? extends K, ? extends V> map) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final void clear() {
     throw new UnsupportedOperationException();
   }
@@ -445,6 +438,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
   private transient @Nullable ImmutableSet<Entry<K, V>> cachedEntrySet = null;
 
+  @Override
   public final ImmutableSet<Entry<K, V>> entrySet() {
     if (cachedEntrySet != null) {
       return cachedEntrySet;
@@ -456,6 +450,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
   private transient @Nullable ImmutableSet<K> cachedKeySet = null;
 
+  @Override
   public ImmutableSet<K> keySet() {
     if (cachedKeySet != null) {
       return cachedKeySet;
@@ -488,6 +483,7 @@ public abstract class ImmutableMap<K, V> implements Map<K, V>, Serializable {
 
   private transient @Nullable ImmutableCollection<V> cachedValues = null;
 
+  @Override
   public ImmutableCollection<V> values() {
     if (cachedValues != null) {
       return cachedValues;

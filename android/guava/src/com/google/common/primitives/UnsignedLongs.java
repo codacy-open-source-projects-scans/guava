@@ -48,7 +48,6 @@ import java.util.Comparator;
  * @since 10.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class UnsignedLongs {
   private UnsignedLongs() {}
 
@@ -75,6 +74,7 @@ public final class UnsignedLongs {
    * @return a negative value if {@code a} is less than {@code b}; a positive value if {@code a} is
    *     greater than {@code b}; or zero if they are equal
    */
+  @SuppressWarnings("InlineMeInliner") // Integer.compare unavailable under GWT+J2CL
   public static int compare(long a, long b) {
     return Longs.compare(flip(a), flip(b));
   }
@@ -152,6 +152,9 @@ public final class UnsignedLongs {
    * <p>The returned comparator is inconsistent with {@link Object#equals(Object)} (since arrays
    * support only identity equality), but it is consistent with {@link Arrays#equals(long[],
    * long[])}.
+   *
+   * <p><b>Java 9+ users:</b> Use {@link Arrays#compareUnsigned(long[], long[])
+   * Arrays::compareUnsigned}.
    */
   public static Comparator<long[]> lexicographicalComparator() {
     return LexicographicalComparator.INSTANCE;
@@ -402,7 +405,7 @@ public final class UnsignedLongs {
     static final int[] maxSafeDigits = new int[Character.MAX_RADIX + 1];
 
     static {
-      BigInteger overflow = new BigInteger("10000000000000000", 16);
+      BigInteger overflow = BigInteger.ONE.shiftLeft(64);
       for (int i = Character.MIN_RADIX; i <= Character.MAX_RADIX; i++) {
         maxValueDivs[i] = divide(MAX_VALUE, i);
         maxValueMods[i] = (int) remainder(MAX_VALUE, i);
@@ -425,7 +428,7 @@ public final class UnsignedLongs {
           return true;
         }
         // current == maxValueDivs[radix]
-        return (digit > maxValueMods[radix]);
+        return digit > maxValueMods[radix];
       }
 
       // current < 0: high bit is set

@@ -23,24 +23,25 @@ import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotMock;
+import com.google.errorprone.annotations.InlineMe;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link ListenableFuture} that supports fluent chains of operations. For example:
  *
- * <pre>{@code
+ * {@snippet :
  * ListenableFuture<Boolean> adminIsLoggedIn =
  *     FluentFuture.from(usersDatabase.getAdminUser())
  *         .transform(User::getId, directExecutor())
  *         .transform(ActivityService::isLoggedIn, threadPool)
  *         .catching(RpcException.class, e -> false, directExecutor());
- * }</pre>
+ * }
  *
  * <h3>Alternatives</h3>
  *
@@ -73,8 +74,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 23.0
  */
 @DoNotMock("Use FluentFuture.from(Futures.immediate*Future) or SettableFuture")
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class FluentFuture<V extends @Nullable Object>
     extends GwtFluentFutureCatchingSpecialization<V> {
 
@@ -142,6 +142,9 @@ public abstract class FluentFuture<V extends @Nullable Object>
    * @deprecated no need to use this
    * @since 28.0
    */
+  @InlineMe(
+      replacement = "checkNotNull(future)",
+      staticImports = "com.google.common.base.Preconditions.checkNotNull")
   @Deprecated
   public static <V extends @Nullable Object> FluentFuture<V> from(FluentFuture<V> future) {
     return checkNotNull(future);
@@ -156,12 +159,12 @@ public abstract class FluentFuture<V extends @Nullable Object>
    *
    * <p>Usage example:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Falling back to a zero counter in case an exception happens when processing the RPC to fetch
    * // counters.
    * ListenableFuture<Integer> faultTolerantFuture =
    *     fetchCounters().catching(FetchException.class, x -> 0, directExecutor());
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link #addListener} documentation. All its warnings about heavyweight
@@ -200,17 +203,17 @@ public abstract class FluentFuture<V extends @Nullable Object>
    *
    * <p>Usage examples:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Falling back to a zero counter in case an exception happens when processing the RPC to fetch
    * // counters.
    * ListenableFuture<Integer> faultTolerantFuture =
    *     fetchCounters().catchingAsync(
    *         FetchException.class, x -> immediateFuture(0), directExecutor());
-   * }</pre>
+   * }
    *
    * <p>The fallback can also choose to propagate the original exception when desired:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Falling back to a zero counter only in case the exception was a
    * // TimeoutException.
    * ListenableFuture<Integer> faultTolerantFuture =
@@ -223,7 +226,7 @@ public abstract class FluentFuture<V extends @Nullable Object>
    *           throw e;
    *         },
    *         directExecutor());
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link #addListener} documentation. All its warnings about heavyweight
@@ -268,7 +271,6 @@ public abstract class FluentFuture<V extends @Nullable Object>
    */
   @J2ktIncompatible
   @GwtIncompatible // ScheduledExecutorService
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public final FluentFuture<V> withTimeout(
       Duration timeout, ScheduledExecutorService scheduledExecutor) {
@@ -302,11 +304,11 @@ public abstract class FluentFuture<V extends @Nullable Object>
    * by applying the given {@code AsyncFunction} to the result of the original {@code Future}.
    * Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * FluentFuture<RowKey> rowKeyFuture = FluentFuture.from(indexService.lookUp(query));
    * ListenableFuture<QueryResult> queryFuture =
    *     rowKeyFuture.transformAsync(dataService::readFuture, executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link #addListener} documentation. All its warnings about heavyweight
@@ -342,10 +344,10 @@ public abstract class FluentFuture<V extends @Nullable Object>
    * this input {@code Future} fails, the returned {@code Future} fails with the same exception (and
    * the function is not invoked). Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * ListenableFuture<List<Row>> rowsFuture =
    *     queryFuture.transform(QueryResult::getRows, executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link #addListener} documentation. All its warnings about heavyweight
@@ -385,7 +387,7 @@ public abstract class FluentFuture<V extends @Nullable Object>
    *
    * <p>Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * future.addCallback(
    *     new FutureCallback<QueryResult>() {
    *       public void onSuccess(QueryResult result) {
@@ -395,7 +397,7 @@ public abstract class FluentFuture<V extends @Nullable Object>
    *         reportError(t);
    *       }
    *     }, executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link #addListener} documentation. All its warnings about heavyweight

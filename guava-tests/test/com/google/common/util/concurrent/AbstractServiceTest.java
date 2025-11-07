@@ -25,22 +25,24 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service.Listener;
 import com.google.common.util.concurrent.Service.State;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link AbstractService}.
  *
  * @author Jesse Wilson
  */
+@NullUnmarked
 public class AbstractServiceTest extends TestCase {
 
   private static final long LONG_TIMEOUT_MILLIS = 10000;
@@ -235,7 +237,7 @@ public class AbstractServiceTest extends TestCase {
    */
   public void testManualServiceStopMultipleTimesWhileStarting() throws Exception {
     ManualSwitchedService service = new ManualSwitchedService();
-    final AtomicInteger stoppingCount = new AtomicInteger();
+    AtomicInteger stoppingCount = new AtomicInteger();
     service.addListener(
         new Listener() {
           @Override
@@ -332,7 +334,7 @@ public class AbstractServiceTest extends TestCase {
   }
 
   public void testAwaitTerminated() throws Exception {
-    final NoOpService service = new NoOpService();
+    NoOpService service = new NoOpService();
     Thread waiter =
         new Thread() {
           @Override
@@ -349,8 +351,8 @@ public class AbstractServiceTest extends TestCase {
   }
 
   public void testAwaitTerminated_failedService() throws Exception {
-    final ManualSwitchedService service = new ManualSwitchedService();
-    final AtomicReference<Throwable> exception = Atomics.newReference();
+    ManualSwitchedService service = new ManualSwitchedService();
+    AtomicReference<Throwable> exception = Atomics.newReference();
     Thread waiter =
         new Thread() {
           @Override
@@ -621,7 +623,7 @@ public class AbstractServiceTest extends TestCase {
   }
 
   public void testAddListenerAfterFailureDoesntCauseDeadlock() throws InterruptedException {
-    final StartFailingService service = new StartFailingService();
+    StartFailingService service = new StartFailingService();
     service.startAsync();
     assertEquals(State.FAILED, service.state());
     service.addListener(new RecordingListener(service), directExecutor());
@@ -640,7 +642,7 @@ public class AbstractServiceTest extends TestCase {
   }
 
   public void testListenerDoesntDeadlockOnStartAndWaitFromRunning() throws Exception {
-    final NoOpThreadedService service = new NoOpThreadedService();
+    NoOpThreadedService service = new NoOpThreadedService();
     service.addListener(
         new Listener() {
           @Override
@@ -654,7 +656,7 @@ public class AbstractServiceTest extends TestCase {
   }
 
   public void testListenerDoesntDeadlockOnStopAndWaitFromTerminated() throws Exception {
-    final NoOpThreadedService service = new NoOpThreadedService();
+    NoOpThreadedService service = new NoOpThreadedService();
     service.addListener(
         new Listener() {
           @Override
@@ -788,7 +790,7 @@ public class AbstractServiceTest extends TestCase {
     }
 
     @GuardedBy("this")
-    final List<State> stateHistory = Lists.newArrayList();
+    final List<State> stateHistory = new ArrayList<>();
 
     final CountDownLatch completionLatch = new CountDownLatch(1);
 

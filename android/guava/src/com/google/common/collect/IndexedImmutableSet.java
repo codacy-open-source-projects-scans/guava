@@ -19,10 +19,9 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 abstract class IndexedImmutableSet<E> extends ImmutableSet<E> {
   abstract E get(int index);
 
@@ -58,9 +57,9 @@ abstract class IndexedImmutableSet<E> extends ImmutableSet<E> {
       // redeclare to help optimizers with b/310253115
       @SuppressWarnings("RedundantOverride")
       @Override
-      @J2ktIncompatible // serialization
-      @GwtIncompatible // serialization
-      Object writeReplace() {
+      @J2ktIncompatible
+      @GwtIncompatible
+            Object writeReplace() {
         return super.writeReplace();
       }
     };
@@ -69,9 +68,9 @@ abstract class IndexedImmutableSet<E> extends ImmutableSet<E> {
   // redeclare to help optimizers with b/310253115
   @SuppressWarnings("RedundantOverride")
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return super.writeReplace();
   }
 }

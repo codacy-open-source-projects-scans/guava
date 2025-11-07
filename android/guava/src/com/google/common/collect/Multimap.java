@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A collection that maps keys to values, similar to {@link Map}, but in which each key may be
@@ -57,7 +56,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <p>The following code:
  *
- * <pre>{@code
+ * {@snippet :
  * ListMultimap<String, String> multimap = ArrayListMultimap.create();
  * for (President pres : US_PRESIDENTS_IN_ORDER) {
  *   multimap.put(pres.firstName(), pres.lastName());
@@ -66,17 +65,17 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *   List<String> lastNames = multimap.get(firstName);
  *   out.println(firstName + ": " + lastNames);
  * }
- * }</pre>
+ * }
  *
  * ... produces output such as:
  *
- * <pre>{@code
+ * {@snippet :
  * Zachary: [Taylor]
  * John: [Adams, Adams, Tyler, Kennedy]  // Remember, Quincy!
  * George: [Washington, Bush, Bush]
  * Grover: [Cleveland, Cleveland]        // Two, non-consecutive terms, rep'ing NJ!
  * ...
- * }</pre>
+ * }
  *
  * <h3>Views</h3>
  *
@@ -161,7 +160,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @DoNotMock("Use ImmutableMultimap, HashMultimap, or another implementation")
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public interface Multimap<K extends @Nullable Object, V extends @Nullable Object> {
   // Query Operations
 
@@ -184,21 +182,20 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * Returns {@code true} if this multimap contains at least one key-value pair with the key {@code
    * key}.
    */
-  boolean containsKey(@CompatibleWith("K") @CheckForNull Object key);
+  boolean containsKey(@CompatibleWith("K") @Nullable Object key);
 
   /**
    * Returns {@code true} if this multimap contains at least one key-value pair with the value
    * {@code value}.
    */
-  boolean containsValue(@CompatibleWith("V") @CheckForNull Object value);
+  boolean containsValue(@CompatibleWith("V") @Nullable Object value);
 
   /**
    * Returns {@code true} if this multimap contains at least one key-value pair with the key {@code
    * key} and the value {@code value}.
    */
   boolean containsEntry(
-      @CompatibleWith("K") @CheckForNull Object key,
-      @CompatibleWith("V") @CheckForNull Object value);
+      @CompatibleWith("K") @Nullable Object key, @CompatibleWith("V") @Nullable Object value);
 
   // Modification Operations
 
@@ -224,8 +221,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    */
   @CanIgnoreReturnValue
   boolean remove(
-      @CompatibleWith("K") @CheckForNull Object key,
-      @CompatibleWith("V") @CheckForNull Object value);
+      @CompatibleWith("K") @Nullable Object key, @CompatibleWith("V") @Nullable Object value);
 
   // Bulk Operations
 
@@ -233,11 +229,11 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * Stores a key-value pair in this multimap for each of {@code values}, all using the same key,
    * {@code key}. Equivalent to (but expected to be more efficient than):
    *
-   * <pre>{@code
+   * {@snippet :
    * for (V value : values) {
    *   put(key, value);
    * }
-   * }</pre>
+   * }
    *
    * <p>In particular, this is a no-op if {@code values} is empty.
    *
@@ -277,7 +273,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    *     modifiable, but updating it will have no effect on the multimap.
    */
   @CanIgnoreReturnValue
-  Collection<V> removeAll(@CompatibleWith("K") @CheckForNull Object key);
+  Collection<V> removeAll(@CompatibleWith("K") @Nullable Object key);
 
   /** Removes all key-value pairs from the multimap, leaving it {@linkplain #isEmpty empty}. */
   void clear();
@@ -358,7 +354,7 @@ public interface Multimap<K extends @Nullable Object, V extends @Nullable Object
    * multimaps are equal, because they both have empty {@link #asMap} views.
    */
   @Override
-  boolean equals(@CheckForNull Object obj);
+  boolean equals(@Nullable Object obj);
 
   /**
    * Returns the hash code for this multimap.

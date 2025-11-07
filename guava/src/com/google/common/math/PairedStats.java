@@ -24,11 +24,11 @@ import static java.lang.Double.isNaN;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import javax.annotation.CheckForNull;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An immutable value object capturing some basic statistics about a collection of paired double
@@ -39,7 +39,6 @@ import javax.annotation.CheckForNull;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class PairedStats implements Serializable {
 
   private final Stats xStats;
@@ -214,7 +213,7 @@ public final class PairedStats implements Serializable {
    * guarantees {@code strictfp}-like semantics.)
    */
   @Override
-  public boolean equals(@CheckForNull Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (obj == null) {
       return false;
     }
@@ -235,7 +234,7 @@ public final class PairedStats implements Serializable {
    */
   @Override
   public int hashCode() {
-    return Objects.hashCode(xStats, yStats, sumOfProductsOfDeltas);
+    return Objects.hash(xStats, yStats, sumOfProductsOfDeltas);
   }
 
   @Override

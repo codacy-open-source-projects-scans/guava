@@ -16,25 +16,25 @@
 
 package com.google.common.collect;
 
+import static com.google.common.collect.RegularImmutableMap.createHashTableOrThrow;
+
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Bimap with zero or more mappings.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(serializable = true, emulated = true)
+@GwtCompatible
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
-@ElementTypesAreNonnullByDefault
 final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
   static final RegularImmutableBiMap<Object, Object> EMPTY = new RegularImmutableBiMap<>();
 
-  @CheckForNull private final transient Object keyHashTable;
+  private final transient @Nullable Object keyHashTable;
   @VisibleForTesting final transient @Nullable Object[] alternatingKeysAndValues;
   private final transient int keyOffset; // 0 for K-to-V, 1 for V-to-K
   private final transient int size;
@@ -56,17 +56,15 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
     this.size = size;
     this.keyOffset = 0;
     int tableSize = (size >= 2) ? ImmutableSet.chooseTableSize(size) : 0;
-    this.keyHashTable =
-        RegularImmutableMap.createHashTableOrThrow(alternatingKeysAndValues, size, tableSize, 0);
-    Object valueHashTable =
-        RegularImmutableMap.createHashTableOrThrow(alternatingKeysAndValues, size, tableSize, 1);
+    this.keyHashTable = createHashTableOrThrow(alternatingKeysAndValues, size, tableSize, 0);
+    Object valueHashTable = createHashTableOrThrow(alternatingKeysAndValues, size, tableSize, 1);
     this.inverse =
-        new RegularImmutableBiMap<V, K>(valueHashTable, alternatingKeysAndValues, size, this);
+        new RegularImmutableBiMap<>(valueHashTable, alternatingKeysAndValues, size, this);
   }
 
   /** V-to-K constructor. */
   private RegularImmutableBiMap(
-      @CheckForNull Object valueHashTable,
+      @Nullable Object valueHashTable,
       @Nullable Object[] alternatingKeysAndValues,
       int size,
       RegularImmutableBiMap<V, K> inverse) {
@@ -89,8 +87,7 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
 
   @SuppressWarnings("unchecked")
   @Override
-  @CheckForNull
-  public V get(@CheckForNull Object key) {
+  public @Nullable V get(@Nullable Object key) {
     Object result =
         RegularImmutableMap.get(keyHashTable, alternatingKeysAndValues, size, keyOffset, key);
     /*
@@ -126,9 +123,9 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
   // redeclare to help optimizers with b/310253115
   @SuppressWarnings("RedundantOverride")
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return super.writeReplace();
   }
 }

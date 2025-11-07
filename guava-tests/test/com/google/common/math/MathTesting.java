@@ -36,6 +36,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.primitives.Doubles;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Exhaustive input sets for every integral type.
@@ -43,7 +44,8 @@ import java.math.RoundingMode;
  * @author Louis Wasserman
  */
 @GwtCompatible
-public class MathTesting {
+@NullUnmarked
+public final class MathTesting {
   static final ImmutableSet<RoundingMode> ALL_ROUNDING_MODES =
       ImmutableSet.copyOf(RoundingMode.values());
 
@@ -299,4 +301,6 @@ public class MathTesting {
     DOUBLE_CANDIDATES_EXCEPT_NAN = Iterables.concat(FINITE_DOUBLE_CANDIDATES, INFINITIES);
     ALL_DOUBLE_CANDIDATES = Iterables.concat(DOUBLE_CANDIDATES_EXCEPT_NAN, asList(Double.NaN));
   }
+
+  private MathTesting() {}
 }

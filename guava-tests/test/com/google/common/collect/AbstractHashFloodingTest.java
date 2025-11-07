@@ -24,6 +24,7 @@ import static java.util.Collections.nCopies;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,13 +32,15 @@ import java.util.function.BiConsumer;
 import java.util.function.IntToDoubleFunction;
 import java.util.function.Supplier;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Abstract superclass for tests that hash flooding a collection has controlled worst-case
  * performance.
  */
 @GwtIncompatible
+@NullUnmarked
 public abstract class AbstractHashFloodingTest<T> extends TestCase {
   private final List<Construction<T>> constructions;
   private final IntToDoubleFunction constructionAsymptotics;
@@ -110,7 +113,7 @@ public abstract class AbstractHashFloodingTest<T> extends TestCase {
   @FunctionalInterface
   interface Construction<T> {
     @CanIgnoreReturnValue
-    abstract T create(List<?> keys);
+    T create(List<?> keys);
 
     static Construction<Map<Object, Object>> mapFromKeys(
         Supplier<Map<Object, Object>> mutableSupplier) {
@@ -154,11 +157,20 @@ public abstract class AbstractHashFloodingTest<T> extends TestCase {
     }
 
     static final QueryOp<Map<Object, Object>> MAP_GET =
-        QueryOp.create("Map.get", Map::get, Math::log);
+        QueryOp.create(
+            "Map.get",
+            (map, key) -> {
+              Object unused = map.get(key);
+            },
+            Math::log);
 
-    @SuppressWarnings("ReturnValueIgnored")
     static final QueryOp<Set<Object>> SET_CONTAINS =
-        QueryOp.create("Set.contains", Set::contains, Math::log);
+        QueryOp.create(
+            "Set.contains",
+            (set, key) -> {
+              boolean unused = set.contains(key);
+            },
+            Math::log);
 
     abstract void apply(T collection, Object query);
 
@@ -175,7 +187,7 @@ public abstract class AbstractHashFloodingTest<T> extends TestCase {
     assertEquals(str1.hashCode(), str2.hashCode());
     List<String> haveSameHashes2 = asList(str1, str2);
     List<CountsHashCodeAndEquals> result =
-        Lists.newArrayList(
+        new ArrayList<>(
             transform(
                 cartesianProduct(nCopies(power, haveSameHashes2)),
                 strs ->

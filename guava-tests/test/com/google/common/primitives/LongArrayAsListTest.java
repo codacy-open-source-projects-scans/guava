@@ -32,13 +32,16 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test suite covering {@link Longs#asList(long[])}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
+@AndroidIncompatible // test-suite builders
 public class LongArrayAsListTest extends TestCase {
 
   private static List<Long> asList(Long[] values) {
@@ -98,7 +101,7 @@ public class LongArrayAsListTest extends TestCase {
   public static final class LongsAsListTailSubListGenerator extends TestLongListGenerator {
     @Override
     protected List<Long> create(Long[] elements) {
-      Long[] prefix = {(long) 86, (long) 99};
+      Long[] prefix = {86L, 99L};
       Long[] all = concat(prefix, elements);
       return asList(all).subList(2, elements.length + 2);
     }
@@ -108,7 +111,7 @@ public class LongArrayAsListTest extends TestCase {
     @Override
     protected List<Long> create(Long[] elements) {
       Long[] prefix = {Long.MIN_VALUE, Long.MAX_VALUE};
-      Long[] suffix = {(long) 86, (long) 99};
+      Long[] suffix = {86L, 99L};
       Long[] all = concat(concat(prefix, elements), suffix);
       return asList(all).subList(2, elements.length + 2);
     }
@@ -157,7 +160,7 @@ public class LongArrayAsListTest extends TestCase {
 
   public static class SampleLongs extends SampleElements<Long> {
     public SampleLongs() {
-      super((long) 0, (long) 1, (long) 2, (long) 3, (long) 4);
+      super(0L, 1L, 2L, 3L, 4L);
     }
   }
 }

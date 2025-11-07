@@ -24,17 +24,16 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@link ImmutableList} backed by a simple array.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(serializable = true, emulated = true)
+@GwtCompatible
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
-@ElementTypesAreNonnullByDefault
-class RegularImmutableList<E> extends ImmutableList<E> {
+final class RegularImmutableList<E> extends ImmutableList<E> {
   static final ImmutableList<Object> EMPTY = new RegularImmutableList<>(new Object[0], 0);
 
   // The first `size` elements are non-null.
@@ -57,8 +56,7 @@ class RegularImmutableList<E> extends ImmutableList<E> {
   }
 
   @Override
-  @Nullable
-  Object[] internalArray() {
+  @Nullable Object[] internalArray() {
     return array;
   }
 
@@ -92,9 +90,9 @@ class RegularImmutableList<E> extends ImmutableList<E> {
   // redeclare to help optimizers with b/310253115
   @SuppressWarnings("RedundantOverride")
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return super.writeReplace();
   }
 }

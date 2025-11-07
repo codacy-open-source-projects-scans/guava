@@ -19,7 +19,8 @@ package com.google.common.collect.testing;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Collections;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A utility for testing an Iterator implementation by comparing its behavior to that of a "known
@@ -57,7 +58,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>For example, to test {@link java.util.Collections#unmodifiableList(java.util.List)
  * Collections.unmodifiableList}'s iterator:
  *
- * <pre>{@code
+ * {@snippet :
  * List<String> expectedElements =
  *     Arrays.asList("a", "b", "c", "d", "e");
  * List<String> actualElements =
@@ -76,7 +77,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     };
  * iteratorTester.test();
  * iteratorTester.testForEachRemaining();
- * }</pre>
+ * }
  *
  * <p><b>Note</b>: It is necessary to use {@code IteratorTester.KnownOrder} as shown above, rather
  * than {@code KnownOrder} directly, because otherwise the code cannot be compiled.
@@ -85,7 +86,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Chris Povirk
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class IteratorTester<E extends @Nullable Object>
     extends AbstractIteratorTester<E, Iterator<E>> {
   /**
@@ -99,7 +100,7 @@ public abstract class IteratorTester<E extends @Nullable Object>
       Iterable<? extends IteratorFeature> features,
       Iterable<E> expectedElements,
       KnownOrder knownOrder) {
-    super(steps, Collections.<E>singleton(null), features, expectedElements, knownOrder, 0);
+    super(steps, Collections.singleton(null), features, expectedElements, knownOrder, 0);
   }
 
   @Override

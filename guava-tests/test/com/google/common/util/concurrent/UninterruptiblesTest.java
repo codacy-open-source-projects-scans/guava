@@ -16,6 +16,7 @@
 
 package com.google.common.util.concurrent;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.InterruptionUtil.repeatedlyInterruptTestThread;
 import static com.google.common.util.concurrent.Uninterruptibles.awaitTerminationUninterruptibly;
 import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
@@ -25,6 +26,7 @@ import static com.google.common.util.concurrent.Uninterruptibles.takeUninterrupt
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 import static com.google.common.util.concurrent.Uninterruptibles.tryLockUninterruptibly;
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -40,7 +42,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -49,12 +50,14 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link Uninterruptibles}.
  *
  * @author Anthony Zana
  */
+@NullUnmarked
 public class UninterruptiblesTest extends TestCase {
   private static final String EXPECTED_TAKE = "expectedTake";
 
@@ -74,6 +77,19 @@ public class UninterruptiblesTest extends TestCase {
           "Thread interrupted on test entry. "
               + "Some test probably didn't clear the interrupt state");
     }
+
+    /*
+     * b/456222735: Initialize Truth up front. Android Marshmallow appears to sometimes clear the
+     * interrupt bit when requesting class initialization, breaking our tests that check that the
+     * interrupt bit is set when appropriate.
+     *
+     * Merely calling assert_(), while apparently enough to clear the interrupt in my experiments,
+     * is not enough to make the test reliably pass. (Presumably it leaves more classes to be
+     * initialized later, at which point they cause more clearing of the interrupt?) It's not
+     * obvious that the following assertion is necessarily enough, either, but in practice, it seems
+     * to work, at least with the current set of Truth classes that this test uses.
+     */
+    assertThat(1L).isGreaterThan(0);
 
     tearDownStack.addTearDown(
         new TearDown() {
@@ -690,7 +706,7 @@ public class UninterruptiblesTest extends TestCase {
   private abstract static class DelayedActionRunnable implements Runnable {
     private final long tMinus;
 
-    protected DelayedActionRunnable(long tMinus) {
+    DelayedActionRunnable(long tMinus) {
       this.tMinus = tMinus;
     }
 
@@ -704,13 +720,13 @@ public class UninterruptiblesTest extends TestCase {
       doAction();
     }
 
-    protected abstract void doAction();
+    abstract void doAction();
   }
 
   private static class CountDown extends DelayedActionRunnable {
     private final CountDownLatch latch;
 
-    public CountDown(CountDownLatch latch, long tMinus) {
+    CountDown(CountDownLatch latch, long tMinus) {
       super(tMinus);
       this.latch = latch;
     }
@@ -724,7 +740,7 @@ public class UninterruptiblesTest extends TestCase {
   private static class EnableWrites extends DelayedActionRunnable {
     private final BlockingQueue<String> queue;
 
-    public EnableWrites(BlockingQueue<String> queue, long tMinus) {
+    EnableWrites(BlockingQueue<String> queue, long tMinus) {
       super(tMinus);
       assertFalse(queue.isEmpty());
       assertFalse(queue.offer("shouldBeRejected"));
@@ -733,14 +749,14 @@ public class UninterruptiblesTest extends TestCase {
 
     @Override
     protected void doAction() {
-      assertNotNull(queue.remove());
+      assertThat(queue.remove()).isNotNull();
     }
   }
 
   private static class EnableReads extends DelayedActionRunnable {
     private final BlockingQueue<String> queue;
 
-    public EnableReads(BlockingQueue<String> queue, long tMinus) {
+    EnableReads(BlockingQueue<String> queue, long tMinus) {
       super(tMinus);
       assertTrue(queue.isEmpty());
       this.queue = queue;
@@ -781,12 +797,12 @@ public class UninterruptiblesTest extends TestCase {
     void joinUnsuccessfully(long timeoutMillis) {
       Uninterruptibles.joinUninterruptibly(thread, timeoutMillis, MILLISECONDS);
       completed.assertCompletionNotExpected(timeoutMillis);
-      assertFalse(Thread.State.TERMINATED.equals(thread.getState()));
+      assertThat(thread.getState()).isNotEqualTo(Thread.State.TERMINATED);
     }
   }
 
   private static class JoinTarget extends DelayedActionRunnable {
-    public JoinTarget(long tMinus) {
+    JoinTarget(long tMinus) {
       super(tMinus);
     }
 
@@ -797,7 +813,7 @@ public class UninterruptiblesTest extends TestCase {
   private static class Release extends DelayedActionRunnable {
     private final Semaphore semaphore;
 
-    public Release(Semaphore semaphore, long tMinus) {
+    Release(Semaphore semaphore, long tMinus) {
       super(tMinus);
       this.semaphore = semaphore;
     }
@@ -825,7 +841,7 @@ public class UninterruptiblesTest extends TestCase {
 
   private static void assertTimeNotPassed(Stopwatch stopwatch, long timelimitMillis) {
     long elapsedMillis = stopwatch.elapsed(MILLISECONDS);
-    assertTrue(elapsedMillis < timelimitMillis);
+    assertThat(elapsedMillis).isLessThan(timelimitMillis);
   }
 
   /**
@@ -853,8 +869,8 @@ public class UninterruptiblesTest extends TestCase {
   }
 
   @CanIgnoreReturnValue
-  private static Thread acquireFor(final Lock lock, final long duration, final TimeUnit unit) {
-    final CountDownLatch latch = new CountDownLatch(1);
+  private static Thread acquireFor(Lock lock, long duration, TimeUnit unit) {
+    CountDownLatch latch = new CountDownLatch(1);
     Thread thread =
         new Thread() {
           @Override
@@ -886,9 +902,9 @@ public class UninterruptiblesTest extends TestCase {
     }
 
     static TestCondition createAndSignalAfter(long delay, TimeUnit unit) {
-      final TestCondition testCondition = create();
+      TestCondition testCondition = create();
 
-      ScheduledExecutorService scheduledPool = Executors.newScheduledThreadPool(1);
+      ScheduledExecutorService scheduledPool = newScheduledThreadPool(1);
       // If signal() fails somehow, we should see a failed test, even without looking at the Future.
       Future<?> unused =
           scheduledPool.schedule(

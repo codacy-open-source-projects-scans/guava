@@ -22,25 +22,29 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.util.concurrent.InterruptibleTask.Blocker;
 import java.nio.channels.spi.AbstractInterruptibleChannel;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.LockSupport;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
+@NullUnmarked
 public final class InterruptibleTaskTest extends TestCase {
 
   // Regression test for a deadlock where a task could be stuck busy waiting for the task to
   // transition to DONE
   public void testInterruptThrows() throws Exception {
-    final CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
-    InterruptibleTask<@Nullable Void> task =
-        new InterruptibleTask<@Nullable Void>() {
+    CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
+    SettableFuture<String> taskResult = SettableFuture.create();
+    InterruptibleTask<String> task =
+        new InterruptibleTask<String>() {
           @Override
-          @Nullable Void runInterruptibly() throws Exception {
+          String runInterruptibly() throws Exception {
             BrokenChannel bc = new BrokenChannel();
             bc.doBegin();
             isInterruptibleRegistered.countDown();
             new CountDownLatch(1).await(); // the interrupt will wake us up
-            return null;
+            return "impossible!";
           }
 
           @Override
@@ -54,10 +58,14 @@ public final class InterruptibleTaskTest extends TestCase {
           }
 
           @Override
-          void afterRanInterruptiblySuccess(@Nullable Void result) {}
+          void afterRanInterruptiblySuccess(String result) {
+            taskResult.set(result);
+          }
 
           @Override
-          void afterRanInterruptiblyFailure(Throwable error) {}
+          void afterRanInterruptiblyFailure(Throwable error) {
+            taskResult.setException(error);
+          }
         };
     Thread runner = new Thread(task);
     runner.start();
@@ -66,9 +74,15 @@ public final class InterruptibleTaskTest extends TestCase {
     assertThat(expected)
         .hasMessageThat()
         .isEqualTo("I bet you didn't think Thread.interrupt could throw");
-    // We need to wait for the runner to exit.  It used to be that the runner would get stuck in the
-    // busy loop when interrupt threw.
-    runner.join(SECONDS.toMillis(10));
+    /*
+     * We need to wait for the runner to exit. It used to be that the runner would get stuck in the
+     * busy loop when interrupt threw.
+     *
+     * While we're at it, we confirm that the interrupt happened as expected.
+     */
+    ExecutionException fromRunInterruptibly =
+        assertThrows(ExecutionException.class, () -> taskResult.get(10, SECONDS));
+    assertThat(fromRunInterruptibly).hasCauseThat().isInstanceOf(InterruptedException.class);
   }
 
   static final class BrokenChannel extends AbstractInterruptibleChannel {
@@ -96,9 +110,9 @@ public final class InterruptibleTaskTest extends TestCase {
    */
   @AndroidIncompatible
   public void testInterruptIsSlow() throws Exception {
-    final CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
-    final SlowChannel slowChannel = new SlowChannel();
-    final InterruptibleTask<@Nullable Void> task =
+    CountDownLatch isInterruptibleRegistered = new CountDownLatch(1);
+    SlowChannel slowChannel = new SlowChannel();
+    InterruptibleTask<@Nullable Void> task =
         new InterruptibleTask<@Nullable Void>() {
           @Override
           @Nullable Void runInterruptibly() throws Exception {

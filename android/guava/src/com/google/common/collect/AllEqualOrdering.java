@@ -17,24 +17,24 @@
 package com.google.common.collect;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import java.io.Serializable;
 import java.util.List;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An ordering that treats all references as equals, even nulls.
  *
  * @author Emily Soldal
  */
-@GwtCompatible(serializable = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 final class AllEqualOrdering extends Ordering<@Nullable Object> implements Serializable {
   static final AllEqualOrdering INSTANCE = new AllEqualOrdering();
 
   @Override
   @SuppressWarnings("UnusedVariable") // intentionally weird Comparator
-  public int compare(@CheckForNull Object left, @CheckForNull Object right) {
+  public int compare(@Nullable Object left, @Nullable Object right) {
     return 0;
   }
 
@@ -63,5 +63,5 @@ final class AllEqualOrdering extends Ordering<@Nullable Object> implements Seria
     return "Ordering.allEqual()";
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

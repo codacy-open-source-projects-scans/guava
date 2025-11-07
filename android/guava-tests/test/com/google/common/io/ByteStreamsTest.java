@@ -37,12 +37,14 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link ByteStreams}.
  *
  * @author Chris Nokleberg
  */
+@NullUnmarked
 public class ByteStreamsTest extends IoTestCase {
 
   public void testCopyChannel() throws IOException {
@@ -57,7 +59,7 @@ public class ByteStreamsTest extends IoTestCase {
 
 
   public void testCopyFileChannel() throws IOException {
-    final int chunkSize = 14407; // Random prime, unlikely to match any internal chunk size
+    int chunkSize = 14407; // Random prime, unlikely to match any internal chunk size
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     WritableByteChannel outChannel = Channels.newChannel(out);
 
@@ -266,7 +268,7 @@ public class ByteStreamsTest extends IoTestCase {
 
   public void testNewDataOutput_empty() {
     ByteArrayDataOutput out = ByteStreams.newDataOutput();
-    assertEquals(0, out.toByteArray().length);
+    assertThat(out.toByteArray()).isEmpty();
   }
 
   public void testNewDataOutput_writeInt() {
@@ -391,7 +393,7 @@ public class ByteStreamsTest extends IoTestCase {
   public void testToByteArray_emptyStream() throws IOException {
     InputStream in = newTestStream(0);
     byte[] b = ByteStreams.toByteArray(in);
-    assertThat(b).isEqualTo(new byte[0]);
+    assertThat(b).isEmpty();
   }
 
   public void testToByteArray_largeStream() throws IOException {
@@ -470,7 +472,7 @@ public class ByteStreamsTest extends IoTestCase {
   }
 
   public void testReadBytes() throws IOException {
-    final byte[] array = newPreFilledByteArray(1000);
+    byte[] array = newPreFilledByteArray(1000);
     assertThat(ByteStreams.readBytes(new ByteArrayInputStream(array), new TestByteProcessor()))
         .isEqualTo(array);
   }

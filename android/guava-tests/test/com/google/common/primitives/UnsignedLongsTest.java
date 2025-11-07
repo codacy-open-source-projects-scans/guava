@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for UnsignedLongs
@@ -38,7 +39,8 @@ import junit.framework.TestCase;
  * @author Brian Milch
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class UnsignedLongsTest extends TestCase {
   private static final long LEAST = 0L;
   private static final long GREATEST = 0xffffffffffffffffL;
@@ -92,10 +94,10 @@ public class UnsignedLongsTest extends TestCase {
             new long[] {},
             new long[] {LEAST},
             new long[] {LEAST, LEAST},
-            new long[] {LEAST, (long) 1},
-            new long[] {(long) 1},
-            new long[] {(long) 1, LEAST},
-            new long[] {GREATEST, GREATEST - (long) 1},
+            new long[] {LEAST, 1L},
+            new long[] {1L},
+            new long[] {1L, LEAST},
+            new long[] {GREATEST, GREATEST - 1L},
             new long[] {GREATEST, GREATEST},
             new long[] {GREATEST, GREATEST, GREATEST});
 
@@ -255,7 +257,7 @@ public class UnsignedLongsTest extends TestCase {
     BigInteger max = BigInteger.ZERO.setBit(64).subtract(ONE);
     // loops through all legal radix values.
     for (int r = Character.MIN_RADIX; r <= Character.MAX_RADIX; r++) {
-      final int radix = r;
+      int radix = r;
       // tests can successfully parse a number string with this radix.
       String maxAsString = max.toString(radix);
       assertThat(UnsignedLongs.parseUnsignedLong(maxAsString, radix)).isEqualTo(max.longValue());

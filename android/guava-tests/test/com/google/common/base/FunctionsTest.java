@@ -17,20 +17,22 @@
 package com.google.common.base;
 
 import static com.google.common.base.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.testing.ClassSanityTester;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link Functions}.
@@ -38,13 +40,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  * @author Vlad Patryshev
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class FunctionsTest extends TestCase {
 
   public void testIdentity_same() {
     Function<@Nullable String, @Nullable String> identity = Functions.identity();
-    assertNull(identity.apply(null));
+    assertThat(identity.apply(null)).isNull();
     assertSame("foo", identity.apply("foo"));
   }
 
@@ -89,7 +91,7 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testForMapWithoutDefault() {
-    Map<String, @Nullable Integer> map = Maps.newHashMap();
+    Map<String, @Nullable Integer> map = new HashMap<>();
     map.put("One", 1);
     map.put("Three", 3);
     map.put("Null", null);
@@ -97,7 +99,7 @@ public class FunctionsTest extends TestCase {
 
     assertEquals(1, function.apply("One").intValue());
     assertEquals(3, function.apply("Three").intValue());
-    assertNull(function.apply("Null"));
+    assertThat(function.apply("Null")).isNull();
 
     assertThrows(IllegalArgumentException.class, () -> function.apply("Two"));
 
@@ -114,7 +116,7 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testForMapWithDefault() {
-    Map<String, @Nullable Integer> map = Maps.newHashMap();
+    Map<String, @Nullable Integer> map = new HashMap<>();
     map.put("One", 1);
     map.put("Three", 3);
     map.put("Null", null);
@@ -123,7 +125,7 @@ public class FunctionsTest extends TestCase {
     assertEquals(1, function.apply("One").intValue());
     assertEquals(42, function.apply("Two").intValue());
     assertEquals(3, function.apply("Three").intValue());
-    assertNull(function.apply("Null"));
+    assertThat(function.apply("Null")).isNull();
 
     new EqualsTester()
         .addEqualityGroup(function, Functions.forMap(map, 42))
@@ -136,7 +138,7 @@ public class FunctionsTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapWithDefault_includeSerializable() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("One", 1);
     map.put("Three", 3);
     Function<String, Integer> function = Functions.forMap(map, 42);
@@ -165,7 +167,7 @@ public class FunctionsTest extends TestCase {
     Function<String, @Nullable Integer> function = Functions.forMap(map, null);
 
     assertEquals((Integer) 1, function.apply("One"));
-    assertNull(function.apply("Two"));
+    assertThat(function.apply("Two")).isNull();
 
     // check basic sanity of equals and hashCode
     new EqualsTester()
@@ -181,7 +183,7 @@ public class FunctionsTest extends TestCase {
     Function<String, Integer> function = Functions.forMap(map, null);
 
     assertEquals((Integer) 1, function.apply("One"));
-    assertNull(function.apply("Two"));
+    assertThat(function.apply("Two")).isNull();
 
     // check basic sanity of equals and hashCode
     new EqualsTester()
@@ -191,7 +193,7 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testForMapWildCardWithDefault() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("One", 1);
     map.put("Three", 3);
     Number number = Double.valueOf(42);
@@ -203,13 +205,13 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testComposition() {
-    Map<String, Integer> mJapaneseToInteger = Maps.newHashMap();
+    Map<String, Integer> mJapaneseToInteger = new HashMap<>();
     mJapaneseToInteger.put("Ichi", 1);
     mJapaneseToInteger.put("Ni", 2);
     mJapaneseToInteger.put("San", 3);
     Function<String, Integer> japaneseToInteger = Functions.forMap(mJapaneseToInteger);
 
-    Map<Integer, String> mIntegerToSpanish = Maps.newHashMap();
+    Map<Integer, String> mIntegerToSpanish = new HashMap<>();
     mIntegerToSpanish.put(1, "Uno");
     mIntegerToSpanish.put(3, "Tres");
     mIntegerToSpanish.put(4, "Cuatro");
@@ -234,13 +236,13 @@ public class FunctionsTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testComposition_includeReserializabled() {
-    Map<String, Integer> mJapaneseToInteger = Maps.newHashMap();
+    Map<String, Integer> mJapaneseToInteger = new HashMap<>();
     mJapaneseToInteger.put("Ichi", 1);
     mJapaneseToInteger.put("Ni", 2);
     mJapaneseToInteger.put("San", 3);
     Function<String, Integer> japaneseToInteger = Functions.forMap(mJapaneseToInteger);
 
-    Map<Integer, String> mIntegerToSpanish = Maps.newHashMap();
+    Map<Integer, String> mIntegerToSpanish = new HashMap<>();
     mIntegerToSpanish.put(1, "Uno");
     mIntegerToSpanish.put(3, "Tres");
     mIntegerToSpanish.put(4, "Cuatro");
@@ -261,7 +263,7 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testCompositionWildcard() {
-    Map<String, Integer> mapJapaneseToInteger = Maps.newHashMap();
+    Map<String, Integer> mapJapaneseToInteger = new HashMap<>();
     Function<String, Integer> japaneseToInteger = Functions.forMap(mapJapaneseToInteger);
 
     Function<Object, String> numberToSpanish = Functions.constant("Yo no se");
@@ -367,7 +369,7 @@ public class FunctionsTest extends TestCase {
 
   private static class CountingSupplier implements Supplier<Integer>, Serializable {
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 
     private int value;
 

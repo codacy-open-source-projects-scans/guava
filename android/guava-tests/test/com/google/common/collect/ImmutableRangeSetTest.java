@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link ImmutableRangeSet}.
@@ -36,8 +37,10 @@ import junit.framework.TestSuite;
  * @author Louis Wasserman
  */
 @GwtIncompatible // ImmutableRangeSet
+@NullUnmarked
 public class ImmutableRangeSetTest extends AbstractRangeSetTest {
 
+  @AndroidIncompatible // test-suite builders
   static final class ImmutableRangeSetIntegerAsSetGenerator implements TestSetGenerator<Integer> {
     @Override
     public SampleElements<Integer> samples() {
@@ -65,6 +68,7 @@ public class ImmutableRangeSetTest extends AbstractRangeSetTest {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   static final class ImmutableRangeSetBigIntegerAsSetGenerator
       implements TestSetGenerator<BigInteger> {
     @Override
@@ -98,6 +102,7 @@ public class ImmutableRangeSetTest extends AbstractRangeSetTest {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ImmutableRangeSetTest.class);

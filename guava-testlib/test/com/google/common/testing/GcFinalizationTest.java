@@ -26,7 +26,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link GcFinalization}.
@@ -36,6 +37,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @AndroidIncompatible // depends on details of gc
 
+@NullUnmarked
 public class GcFinalizationTest extends TestCase {
 
   // ----------------------------------------------------------------
@@ -43,7 +45,7 @@ public class GcFinalizationTest extends TestCase {
   // ----------------------------------------------------------------
 
   public void testAwait_countDownLatch() {
-    final CountDownLatch latch = new CountDownLatch(1);
+    CountDownLatch latch = new CountDownLatch(1);
     Object unused =
         new Object() {
           @SuppressWarnings({"removal", "Finalize"}) // b/260137033
@@ -58,7 +60,7 @@ public class GcFinalizationTest extends TestCase {
   }
 
   public void testAwaitDone_future() {
-    final SettableFuture<@Nullable Void> future = SettableFuture.create();
+    SettableFuture<@Nullable Void> future = SettableFuture.create();
     Object unused =
         new Object() {
           @SuppressWarnings({"removal", "Finalize"}) // b/260137033
@@ -74,7 +76,7 @@ public class GcFinalizationTest extends TestCase {
   }
 
   public void testAwaitDone_future_cancel() {
-    final SettableFuture<@Nullable Void> future = SettableFuture.create();
+    SettableFuture<@Nullable Void> future = SettableFuture.create();
     Object unused =
         new Object() {
           @SuppressWarnings({"removal", "Finalize"}) // b/260137033
@@ -90,13 +92,13 @@ public class GcFinalizationTest extends TestCase {
   }
 
   public void testAwaitClear() {
-    final WeakReference<Object> ref = new WeakReference<>(new Object());
+    WeakReference<Object> ref = new WeakReference<>(new Object());
     GcFinalization.awaitClear(ref);
-    assertNull(ref.get());
+    assertThat(ref.get()).isNull();
   }
 
   public void testAwaitDone_finalizationPredicate() {
-    final WeakHashMap<Object, Object> map = new WeakHashMap<>();
+    WeakHashMap<Object, Object> map = new WeakHashMap<>();
     map.put(new Object(), Boolean.TRUE);
     GcFinalization.awaitDone(
         new FinalizationPredicate() {
@@ -116,12 +118,12 @@ public class GcFinalizationTest extends TestCase {
   class Interruptenator extends Thread {
     final AtomicBoolean shutdown;
 
-    Interruptenator(final Thread interruptee) {
+    Interruptenator(Thread interruptee) {
       this(interruptee, new AtomicBoolean(false));
     }
 
     @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
-    Interruptenator(final Thread interruptee, final AtomicBoolean shutdown) {
+    Interruptenator(Thread interruptee, AtomicBoolean shutdown) {
       super(
           new Runnable() {
             @Override
@@ -153,7 +155,7 @@ public class GcFinalizationTest extends TestCase {
   public void testAwait_countDownLatch_interrupted() {
     Interruptenator interruptenator = new Interruptenator(Thread.currentThread());
     try {
-      final CountDownLatch latch = new CountDownLatch(1);
+      CountDownLatch latch = new CountDownLatch(1);
       RuntimeException expected =
           assertThrows(RuntimeException.class, () -> GcFinalization.await(latch));
       assertWrapsInterruptedException(expected);
@@ -166,7 +168,7 @@ public class GcFinalizationTest extends TestCase {
   public void testAwaitDone_future_interrupted_interrupted() {
     Interruptenator interruptenator = new Interruptenator(Thread.currentThread());
     try {
-      final SettableFuture<@Nullable Void> future = SettableFuture.create();
+      SettableFuture<@Nullable Void> future = SettableFuture.create();
       RuntimeException expected =
           assertThrows(RuntimeException.class, () -> GcFinalization.awaitDone(future));
       assertWrapsInterruptedException(expected);
@@ -179,7 +181,7 @@ public class GcFinalizationTest extends TestCase {
   public void testAwaitClear_interrupted() {
     Interruptenator interruptenator = new Interruptenator(Thread.currentThread());
     try {
-      final WeakReference<Object> ref = new WeakReference<Object>(Boolean.TRUE);
+      WeakReference<Object> ref = new WeakReference<Object>(Boolean.TRUE);
       RuntimeException expected =
           assertThrows(RuntimeException.class, () -> GcFinalization.awaitClear(ref));
       assertWrapsInterruptedException(expected);
@@ -216,8 +218,8 @@ public class GcFinalizationTest extends TestCase {
    * this test. (And if it isn't, we'd like to know about it first!)
    */
   public void testAwaitFullGc() {
-    final CountDownLatch finalizerRan = new CountDownLatch(1);
-    final WeakReference<Object> ref =
+    CountDownLatch finalizerRan = new CountDownLatch(1);
+    WeakReference<Object> ref =
         new WeakReference<Object>(
             new Object() {
               @SuppressWarnings({"removal", "Finalize"}) // b/260137033
@@ -231,10 +233,10 @@ public class GcFinalizationTest extends TestCase {
     // Use e.g. awaitClear or await(CountDownLatch) instead.
     GcFinalization.awaitFullGc();
 
-    // If this test turns out to be flaky, add a second call to awaitFullGc()
-    // GcFinalization.awaitFullGc();
+    // Attempt to help with some flakiness that we've seen: b/387521512.
+    GcFinalization.awaitFullGc();
 
     assertEquals(0, finalizerRan.getCount());
-    assertNull(ref.get());
+    assertThat(ref.get()).isNull();
   }
 }

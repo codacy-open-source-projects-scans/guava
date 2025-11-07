@@ -17,7 +17,6 @@
 package com.google.common.collect;
 
 import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Sets.newHashSet;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
@@ -26,6 +25,7 @@ import com.google.common.base.Predicates;
 import com.google.common.testing.EqualsTester;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableSet;
@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Class that contains nested abstract tests for filtered collection views, along with their
@@ -44,6 +45,7 @@ import junit.framework.TestCase;
  * TODO(cpovirk): Should all the tests for filtered collections run under GWT, too? Currently, they
  * don't.
  */
+@NullUnmarked
 public final class FilteredCollectionsTestUtil {
   private static final Predicate<Integer> EVEN =
       new Predicate<Integer>() {
@@ -118,7 +120,7 @@ public final class FilteredCollectionsTestUtil {
         C filterThenAdd = filter(unfiltered, EVEN);
         unfiltered.add(4);
 
-        List<Integer> target = Lists.newArrayList(contents);
+        List<Integer> target = new ArrayList<>(contents);
         target.add(4);
         C addThenFilter = filter(createUnfiltered(target), EVEN);
 
@@ -213,7 +215,7 @@ public final class FilteredCollectionsTestUtil {
       extends AbstractFilteredCollectionTest<C> {
     public void testEqualsAndHashCode() {
       for (List<Integer> contents : SAMPLE_INPUTS) {
-        Set<Integer> expected = newHashSet();
+        Set<Integer> expected = new HashSet<>();
         for (Integer i : contents) {
           if (EVEN.apply(i)) {
             expected.add(i);

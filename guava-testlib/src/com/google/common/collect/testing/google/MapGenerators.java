@@ -37,9 +37,12 @@ import com.google.common.collect.testing.TestUnhashableCollectionGenerator;
 import com.google.common.collect.testing.UnhashableObject;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Generators of different types of map and related collections, such as keys, entries and values.
@@ -47,7 +50,7 @@ import java.util.Map.Entry;
  * @author Hayward Chan
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class MapGenerators {
   public static class ImmutableMapGenerator extends TestStringMapGenerator {
     @Override
@@ -64,7 +67,7 @@ public class MapGenerators {
   public static class ImmutableMapCopyOfGenerator extends TestStringMapGenerator {
     @Override
     protected Map<String, String> create(Entry<String, String>[] entries) {
-      Map<String, String> builder = Maps.newLinkedHashMap();
+      Map<String, String> builder = new LinkedHashMap<>();
       for (Entry<String, String> entry : entries) {
         builder.put(entry.getKey(), entry.getValue());
       }
@@ -154,7 +157,7 @@ public class MapGenerators {
   public static class ImmutableEnumMapGenerator extends TestEnumMapGenerator {
     @Override
     protected Map<AnEnum, String> create(Entry<AnEnum, String>[] entries) {
-      Map<AnEnum, String> map = Maps.newHashMap();
+      Map<AnEnum, String> map = new HashMap<>();
       for (Entry<AnEnum, String> entry : entries) {
         checkNotNull(entry);
         map.put(entry.getKey(), entry.getValue());
@@ -191,16 +194,11 @@ public class MapGenerators {
     @Override
     public SampleElements<Entry<String, Collection<Integer>>> samples() {
       return new SampleElements<>(
-          mapEntry("one", collectionOf(10000)),
-          mapEntry("two", collectionOf(-2000)),
-          mapEntry("three", collectionOf(300)),
-          mapEntry("four", collectionOf(-40)),
-          mapEntry("five", collectionOf(5)));
-    }
-
-    // javac7 can't infer the type parameters correctly in samples()
-    private static Collection<Integer> collectionOf(int item) {
-      return ImmutableSet.of(item);
+          mapEntry("one", ImmutableSet.of(10000)),
+          mapEntry("two", ImmutableSet.of(-2000)),
+          mapEntry("three", ImmutableSet.of(300)),
+          mapEntry("four", ImmutableSet.of(-40)),
+          mapEntry("five", ImmutableSet.of(5)));
     }
 
     @Override
@@ -239,4 +237,12 @@ public class MapGenerators {
       return new ImmutableSet[length];
     }
   }
+
+  /**
+   * Useless constructor for a class of static utility methods.
+   *
+   * @deprecated Do not instantiate this utility class.
+   */
+  @Deprecated
+  public MapGenerators() {}
 }

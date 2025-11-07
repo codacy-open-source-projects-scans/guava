@@ -29,15 +29,13 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * GWT emulation of {@link com.google.common.collect.ImmutableSortedSet}.
  *
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
 public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     implements SortedSet<E>, SortedIterable<E> {
   // TODO(cpovirk): split into ImmutableSortedSet/ForwardingImmutableSortedSet?
@@ -258,6 +256,7 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     this.sortedDelegate = Collections.unmodifiableSortedSet(sortedDelegate);
   }
 
+  @Override
   public Comparator<? super E> comparator() {
     return sortedDelegate.comparator();
   }
@@ -312,10 +311,12 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     }
   }
 
+  @Override
   public E first() {
     return sortedDelegate.first();
   }
 
+  @Override
   public ImmutableSortedSet<E> headSet(E toElement) {
     checkNotNull(toElement);
     try {
@@ -325,8 +326,7 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     }
   }
 
-  @CheckForNull
-  E higher(E e) {
+  @Nullable E higher(E e) {
     checkNotNull(e);
     Iterator<E> iterator = tailSet(e).iterator();
     while (iterator.hasNext()) {
@@ -338,14 +338,12 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     return null;
   }
 
-  @CheckForNull
-  public E ceiling(E e) {
+  public @Nullable E ceiling(E e) {
     ImmutableSortedSet<E> set = tailSet(e, true);
     return !set.isEmpty() ? set.first() : null;
   }
 
-  @CheckForNull
-  public E floor(E e) {
+  public @Nullable E floor(E e) {
     ImmutableSortedSet<E> set = headSet(e, true);
     return !set.isEmpty() ? set.last() : null;
   }
@@ -362,10 +360,12 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     return headSet(toElement);
   }
 
+  @Override
   public E last() {
     return sortedDelegate.last();
   }
 
+  @Override
   public ImmutableSortedSet<E> subSet(E fromElement, E toElement) {
     return subSet(fromElement, true, toElement, false);
   }
@@ -382,6 +382,7 @@ public abstract class ImmutableSortedSet<E> extends ForwardingImmutableSet<E>
     return tailSet(fromElement, fromInclusive).headSet(toElement, toInclusive);
   }
 
+  @Override
   public ImmutableSortedSet<E> tailSet(E fromElement) {
     checkNotNull(fromElement);
     try {

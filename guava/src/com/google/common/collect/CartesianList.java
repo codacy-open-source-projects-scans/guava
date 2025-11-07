@@ -19,12 +19,11 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.math.IntMath;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@link Lists#cartesianProduct(List)}.
@@ -32,7 +31,6 @@ import javax.annotation.CheckForNull;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 final class CartesianList<E> extends AbstractList<List<E>> implements RandomAccess {
 
   private final transient ImmutableList<List<E>> axes;
@@ -56,7 +54,7 @@ final class CartesianList<E> extends AbstractList<List<E>> implements RandomAcce
     axesSizeProduct[axes.size()] = 1;
     try {
       for (int i = axes.size() - 1; i >= 0; i--) {
-        axesSizeProduct[i] = IntMath.checkedMultiply(axesSizeProduct[i + 1], axes.get(i).size());
+        axesSizeProduct[i] = Math.multiplyExact(axesSizeProduct[i + 1], axes.get(i).size());
       }
     } catch (ArithmeticException e) {
       throw new IllegalArgumentException(
@@ -70,7 +68,7 @@ final class CartesianList<E> extends AbstractList<List<E>> implements RandomAcce
   }
 
   @Override
-  public int indexOf(@CheckForNull Object o) {
+  public int indexOf(@Nullable Object o) {
     if (!(o instanceof List)) {
       return -1;
     }
@@ -92,7 +90,7 @@ final class CartesianList<E> extends AbstractList<List<E>> implements RandomAcce
   }
 
   @Override
-  public int lastIndexOf(@CheckForNull Object o) {
+  public int lastIndexOf(@Nullable Object o) {
     if (!(o instanceof List)) {
       return -1;
     }
@@ -152,7 +150,7 @@ final class CartesianList<E> extends AbstractList<List<E>> implements RandomAcce
   }
 
   @Override
-  public boolean contains(@CheckForNull Object object) {
+  public boolean contains(@Nullable Object object) {
     if (!(object instanceof List)) {
       return false;
     }

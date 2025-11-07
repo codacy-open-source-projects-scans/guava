@@ -39,6 +39,7 @@ import com.google.common.collect.testing.google.SortedMapGenerators.ImmutableSor
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -50,7 +51,8 @@ import java.util.TreeMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ImmutableSortedMap}.
@@ -59,14 +61,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jesse Wilson
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @SuppressWarnings("AlwaysThrows")
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class ImmutableSortedMapTest extends TestCase {
   // TODO: Avoid duplicating code in ImmutableMapTest
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ImmutableSortedMapTest.class);
@@ -177,7 +180,7 @@ public class ImmutableSortedMapTest extends TestCase {
 
   public void testBuilder_withMutableEntry() {
     ImmutableSortedMap.Builder<String, Integer> builder = ImmutableSortedMap.naturalOrder();
-    final StringHolder holder = new StringHolder();
+    StringHolder holder = new StringHolder();
     holder.string = "one";
     Entry<String, Integer> entry =
         new AbstractMapEntry<String, Integer>() {
@@ -605,7 +608,7 @@ public class ImmutableSortedMapTest extends TestCase {
 
   public void testNullGet() {
     ImmutableSortedMap<String, Integer> map = ImmutableSortedMap.of("one", 1);
-    assertNull(map.get(null));
+    assertThat(map.get(null)).isNull();
   }
 
   @J2ktIncompatible
@@ -658,9 +661,9 @@ public class ImmutableSortedMapTest extends TestCase {
   }
 
   private static class IntHolder implements Serializable {
-    public int value;
+    private int value;
 
-    public IntHolder(int value) {
+    IntHolder(int value) {
       this.value = value;
     }
 
@@ -674,7 +677,7 @@ public class ImmutableSortedMapTest extends TestCase {
       return value;
     }
 
-    private static final long serialVersionUID = 5;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 5;
   }
 
   public void testMutableValues() {
@@ -695,8 +698,8 @@ public class ImmutableSortedMapTest extends TestCase {
     SerializableTester.reserializeAndAssert(map.entrySet());
     SerializableTester.reserializeAndAssert(map.keySet());
     assertEquals(
-        Lists.newArrayList(map.values()),
-        Lists.newArrayList(SerializableTester.reserialize(map.values())));
+        new ArrayList<>(map.values()),
+        new ArrayList<>(SerializableTester.reserialize(map.values())));
   }
 
   public void testHeadMapInclusive() {

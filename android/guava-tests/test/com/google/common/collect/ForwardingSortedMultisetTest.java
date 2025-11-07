@@ -31,13 +31,15 @@ import java.util.NavigableSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ForwardingSortedMultiset}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingSortedMultisetTest extends TestCase {
   static class StandardImplForwardingSortedMultiset<E> extends ForwardingSortedMultiset<E> {
     private final SortedMultiset<E> backingMultiset;
@@ -174,6 +176,7 @@ public class ForwardingSortedMultisetTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -225,7 +228,7 @@ public class ForwardingSortedMultisetTest extends TestCase {
         .testEquals();
   }
 
-  private static <T> SortedMultiset<T> wrap(final SortedMultiset<T> delegate) {
+  private static <T> SortedMultiset<T> wrap(SortedMultiset<T> delegate) {
     return new ForwardingSortedMultiset<T>() {
       @Override
       protected SortedMultiset<T> delegate() {

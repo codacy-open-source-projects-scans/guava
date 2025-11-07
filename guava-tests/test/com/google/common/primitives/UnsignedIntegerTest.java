@@ -27,13 +27,15 @@ import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.SerializableTester;
 import java.math.BigInteger;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code UnsignedInteger}.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class UnsignedIntegerTest extends TestCase {
   private static final ImmutableSet<Integer> TEST_INTS;
   private static final ImmutableSet<Long> TEST_LONGS;
@@ -272,9 +274,9 @@ public class UnsignedIntegerTest extends TestCase {
     }
   }
 
+  @GwtIncompatible
   @J2ktIncompatible
-  @GwtIncompatible // serialization
-  public void testSerialization() {
+    public void testSerialization() {
     for (int a : TEST_INTS) {
       SerializableTester.reserializeAndAssert(UnsignedInteger.fromIntBits(a));
     }

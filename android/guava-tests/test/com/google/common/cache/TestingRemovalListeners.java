@@ -18,14 +18,16 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Utility {@link RemovalListener} implementations intended for use in testing.
  *
  * @author mike nonemacher
  */
-@GwtCompatible(emulated = true)
-class TestingRemovalListeners {
+@GwtCompatible
+@NullUnmarked
+final class TestingRemovalListeners {
 
   /** Returns a new no-op {@code RemovalListener}. */
   static <K, V> NullRemovalListener<K, V> nullRemovalListener() {
@@ -90,4 +92,6 @@ class TestingRemovalListeners {
     @Override
     public void onRemoval(RemovalNotification<K, V> notification) {}
   }
+
+  private TestingRemovalListeners() {}
 }

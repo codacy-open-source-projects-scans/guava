@@ -19,18 +19,18 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import java.io.Serializable;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An ordering that orders elements by applying an order to the result of a function on those
  * elements.
  */
-@GwtCompatible(serializable = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 final class ByFunctionOrdering<F extends @Nullable Object, T extends @Nullable Object>
     extends Ordering<F> implements Serializable {
   final Function<F, ? extends T> function;
@@ -47,7 +47,7 @@ final class ByFunctionOrdering<F extends @Nullable Object, T extends @Nullable O
   }
 
   @Override
-  public boolean equals(@CheckForNull Object object) {
+  public boolean equals(@Nullable Object object) {
     if (object == this) {
       return true;
     }
@@ -60,7 +60,7 @@ final class ByFunctionOrdering<F extends @Nullable Object, T extends @Nullable O
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(function, ordering);
+    return Objects.hash(function, ordering);
   }
 
   @Override
@@ -68,5 +68,5 @@ final class ByFunctionOrdering<F extends @Nullable Object, T extends @Nullable O
     return ordering + ".onResultOf(" + function + ")";
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

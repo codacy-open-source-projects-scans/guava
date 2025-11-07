@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtIncompatible;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link Defaults}.
@@ -27,6 +28,7 @@ import junit.framework.TestCase;
  * @author Jige Yu
  */
 @GwtIncompatible
+@NullUnmarked
 public class DefaultsTest extends TestCase {
   public void testGetDefaultValue() {
     assertEquals(false, Defaults.defaultValue(boolean.class).booleanValue());
@@ -37,7 +39,7 @@ public class DefaultsTest extends TestCase {
     assertEquals(0, Defaults.defaultValue(long.class).longValue());
     assertEquals(0.0f, Defaults.defaultValue(float.class).floatValue());
     assertThat(Defaults.defaultValue(double.class).doubleValue()).isEqualTo(0.0d);
-    assertNull(Defaults.defaultValue(void.class));
-    assertNull(Defaults.defaultValue(String.class));
+    assertThat(Defaults.defaultValue(void.class)).isNull();
+    assertThat(Defaults.defaultValue(String.class)).isNull();
   }
 }

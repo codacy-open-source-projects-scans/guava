@@ -26,6 +26,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +37,8 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Most of the logic for {@link IteratorTester} and {@link ListIteratorTester}.
@@ -46,9 +49,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Chris Povirk
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iterator<E>> {
-  private Stimulus<E, ? super I>[] stimuli;
+  private final Stimulus<E, ? super I>[] stimuli;
   private final Iterator<E> elementsToInsert;
   private final Set<IteratorFeature> features;
   private final List<E> expectedElements;
@@ -107,7 +110,7 @@ abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iter
       }
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   private static final class UnknownElementException extends RuntimeException {
@@ -115,7 +118,7 @@ abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iter
       super("Returned value '" + actual + "' not found. Remaining elements: " + expected);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -382,7 +385,7 @@ abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iter
   }
 
   private static List<Object> subListCopy(Object[] source, int size) {
-    final Object[] copy = new Object[size];
+    Object[] copy = new Object[size];
     arraycopy(source, 0, copy, 0, size);
     return asList(copy);
   }
@@ -493,7 +496,7 @@ abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iter
       };
 
   private final IteratorOperation newAddMethod() {
-    final Object toInsert = elementsToInsert.next();
+    Object toInsert = elementsToInsert.next();
     return new IteratorOperation() {
       @Override
       public @Nullable Object execute(Iterator<?> iterator) {
@@ -506,7 +509,7 @@ abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iter
   }
 
   private final IteratorOperation newSetMethod() {
-    final E toInsert = elementsToInsert.next();
+    E toInsert = elementsToInsert.next();
     return new IteratorOperation() {
       @Override
       public @Nullable Object execute(Iterator<?> iterator) {

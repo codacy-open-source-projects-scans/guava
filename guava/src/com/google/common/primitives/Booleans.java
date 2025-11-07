@@ -18,9 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
-import static java.lang.Math.min;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
 import java.util.AbstractList;
@@ -30,7 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.RandomAccess;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code boolean} primitives, that are not already found in
@@ -43,7 +44,6 @@ import javax.annotation.CheckForNull;
  * @since 1.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class Booleans {
   private Booleans() {}
 
@@ -98,16 +98,15 @@ public final class Booleans {
   }
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Boolean)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Boolean#hashCode(boolean)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link
+   * Boolean#hashCode(boolean)}.
    *
    * @param value a primitive {@code boolean} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Boolean.hashCode(value)")
   public static int hashCode(boolean value) {
-    return value ? 1231 : 1237;
+    return Boolean.hashCode(value);
   }
 
   /**
@@ -321,7 +320,9 @@ public final class Booleans {
 
     @Override
     public int compare(boolean[] left, boolean[] right) {
-      int minLength = min(left.length, right.length);
+      // do not static import Math.min due to https://bugs.openjdk.org/browse/JDK-8357219
+      @SuppressWarnings("StaticImportPreferred")
+      int minLength = Math.min(left.length, right.length);
       for (int i = 0; i < minLength; i++) {
         int result = Boolean.compare(left[i], right[i]);
         if (result != 0) {
@@ -386,8 +387,7 @@ public final class Booleans {
     return new BooleanArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class BooleanArrayAsList extends AbstractList<Boolean>
+  private static final class BooleanArrayAsList extends AbstractList<Boolean>
       implements RandomAccess, Serializable {
     final boolean[] array;
     final int start;
@@ -420,14 +420,14 @@ public final class Booleans {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Boolean)
           && Booleans.indexOf(array, (Boolean) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Boolean) {
         int i = Booleans.indexOf(array, (Boolean) target, start, end);
@@ -439,7 +439,7 @@ public final class Booleans {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Boolean) {
         int i = Booleans.lastIndexOf(array, (Boolean) target, start, end);
@@ -470,7 +470,7 @@ public final class Booleans {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -494,7 +494,7 @@ public final class Booleans {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Booleans.hashCode(array[i]);
+        result = 31 * result + Boolean.hashCode(array[i]);
       }
       return result;
     }
@@ -513,7 +513,7 @@ public final class Booleans {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**

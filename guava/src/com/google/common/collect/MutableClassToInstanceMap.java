@@ -31,9 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A mutable class-to-instance map backed by an arbitrary user-provided map. See also {@link
@@ -49,7 +48,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @J2ktIncompatible
 @GwtIncompatible
 @SuppressWarnings("serial") // using writeReplace instead of standard serialization
-@ElementTypesAreNonnullByDefault
 public final class MutableClassToInstanceMap<B extends @Nullable Object>
     extends ForwardingMap<Class<? extends @NonNull B>, B>
     implements ClassToInstanceMap<B>, Serializable {
@@ -87,7 +85,7 @@ public final class MutableClassToInstanceMap<B extends @Nullable Object>
    * Wraps the {@code setValue} implementation of an {@code Entry} to enforce the class constraint.
    */
   private static <B extends @Nullable Object> Entry<Class<? extends @NonNull B>, B> checkedEntry(
-      final Entry<Class<? extends @NonNull B>, B> entry) {
+      Entry<Class<? extends @NonNull B>, B> entry) {
     return new ForwardingMapEntry<Class<? extends @NonNull B>, B>() {
       @Override
       protected Entry<Class<? extends @NonNull B>, B> delegate() {
@@ -154,8 +152,7 @@ public final class MutableClassToInstanceMap<B extends @Nullable Object>
 
   @Override
   @CanIgnoreReturnValue
-  @CheckForNull
-  public B put(Class<? extends @NonNull B> key, @ParametricNullness B value) {
+  public @Nullable B put(Class<? extends @NonNull B> key, @ParametricNullness B value) {
     cast(key, value);
     return super.put(key, value);
   }
@@ -171,28 +168,26 @@ public final class MutableClassToInstanceMap<B extends @Nullable Object>
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public <T extends B> T putInstance(Class<@NonNull T> type, @ParametricNullness T value) {
+  public <T extends B> @Nullable T putInstance(
+      Class<@NonNull T> type, @ParametricNullness T value) {
     return cast(type, put(type, value));
   }
 
   @Override
-  @CheckForNull
-  public <T extends @NonNull B> T getInstance(Class<T> type) {
+  public <T extends @NonNull B> @Nullable T getInstance(Class<T> type) {
     return cast(type, get(type));
   }
 
   @CanIgnoreReturnValue
-  @CheckForNull
-  private static <T> T cast(Class<T> type, @CheckForNull Object value) {
+  private static <T> @Nullable T cast(Class<T> type, @Nullable Object value) {
     return Primitives.wrap(type).cast(value);
   }
 
-  private Object writeReplace() {
+    private Object writeReplace() {
     return new SerializedForm<>(delegate());
   }
 
-  private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
 

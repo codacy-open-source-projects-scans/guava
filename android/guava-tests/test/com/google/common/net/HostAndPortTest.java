@@ -17,12 +17,14 @@
 package com.google.common.net;
 
 import static com.google.common.net.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.SerializableTester;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link HostAndPort}
@@ -30,6 +32,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Paul Marks
  */
 @GwtCompatible
+@NullUnmarked
 public class HostAndPortTest extends TestCase {
 
   public void testFromStringWellFormed() {
@@ -113,13 +116,13 @@ public class HostAndPortTest extends TestCase {
       hp = HostAndPort.fromString(hpString);
     } catch (IllegalArgumentException e) {
       // Make sure we expected this.
-      assertNull(expectHost);
+      assertThat(expectHost).isNull();
       return;
     }
-    assertNotNull(expectHost);
+    assertThat(expectHost).isNotNull();
 
     // Apply withDefaultPort(), yielding hp2.
-    final boolean badDefaultPort = (defaultPort < 0 || defaultPort > 65535);
+    boolean badDefaultPort = defaultPort < 0 || defaultPort > 65535;
     HostAndPort hp2 = null;
     try {
       hp2 = hp.withDefaultPort(defaultPort);

@@ -17,6 +17,8 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertThrows;
 
@@ -27,16 +29,17 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link AbstractExecutionThreadService}.
  *
  * @author Jesse Wilson
  */
+@NullUnmarked
 public class AbstractExecutionThreadServiceTest extends TestCase {
 
   private final TearDownStack tearDownStack = new TearDownStack(true);
@@ -64,9 +67,9 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
   @Override
   protected final void tearDown() {
     tearDownStack.runTearDown();
-    assertNull(
-        "exceptions should not be propagated to uncaught exception handlers",
-        thrownByExecutionThread);
+    assertWithMessage("exceptions should not be propagated to uncaught exception handlers")
+        .that(thrownByExecutionThread)
+        .isNull();
   }
 
   public void testServiceStartStop() throws Exception {
@@ -315,7 +318,7 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
   }
 
   public void testStopWhileStarting_runNotCalled() throws Exception {
-    final CountDownLatch started = new CountDownLatch(1);
+    CountDownLatch started = new CountDownLatch(1);
     FakeService service =
         new FakeService() {
           @Override
@@ -377,7 +380,7 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
 
   private class FakeService extends AbstractExecutionThreadService implements TearDown {
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = newSingleThreadExecutor();
 
     FakeService() {
       tearDownStack.addTearDown(this);

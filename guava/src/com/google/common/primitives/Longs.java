@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
@@ -32,7 +34,7 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code long} primitives, that are not already found in
@@ -45,16 +47,15 @@ import javax.annotation.CheckForNull;
  * @since 1.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class Longs {
   private Longs() {}
 
   /**
    * The number of bytes required to represent a primitive {@code long} value.
    *
-   * <p><b>Java 8+ users:</b> use {@link Long#BYTES} instead.
+   * <p>Prefer {@link Long#BYTES} instead.
    */
-  public static final int BYTES = Long.SIZE / Byte.SIZE;
+  public static final int BYTES = Long.BYTES;
 
   /**
    * The largest power of two that can be represented as a {@code long}.
@@ -64,20 +65,14 @@ public final class Longs {
   public static final long MAX_POWER_OF_TWO = 1L << (Long.SIZE - 2);
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Long)
-   * value).hashCode()}.
-   *
-   * <p>This method always return the value specified by {@link Long#hashCode()} in java, which
-   * might be different from {@code ((Long) value).hashCode()} in GWT because {@link
-   * Long#hashCode()} in GWT does not obey the JRE contract.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Long#hashCode(long)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Long#hashCode(long)}.
    *
    * @param value a primitive {@code long} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Long.hashCode(value)")
   public static int hashCode(long value) {
-    return (int) (value ^ (value >>> 32));
+    return Long.hashCode(value);
   }
 
   /**
@@ -376,8 +371,7 @@ public final class Longs {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 14.0
    */
-  @CheckForNull
-  public static Long tryParse(String string) {
+  public static @Nullable Long tryParse(String string) {
     return tryParse(string, 10);
   }
 
@@ -401,8 +395,7 @@ public final class Longs {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 19.0
    */
-  @CheckForNull
-  public static Long tryParse(String string, int radix) {
+  public static @Nullable Long tryParse(String string, int radix) {
     if (checkNotNull(string).isEmpty()) {
       return null;
     }
@@ -466,7 +459,7 @@ public final class Longs {
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   /**
@@ -720,8 +713,7 @@ public final class Longs {
     return new LongArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class LongArrayAsList extends AbstractList<Long>
+  private static final class LongArrayAsList extends AbstractList<Long>
       implements RandomAccess, Serializable {
     final long[] array;
     final int start;
@@ -759,13 +751,13 @@ public final class Longs {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Long) && Longs.indexOf(array, (Long) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Long) {
         int i = Longs.indexOf(array, (Long) target, start, end);
@@ -777,7 +769,7 @@ public final class Longs {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Long) {
         int i = Longs.lastIndexOf(array, (Long) target, start, end);
@@ -808,7 +800,7 @@ public final class Longs {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -832,7 +824,7 @@ public final class Longs {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Longs.hashCode(array[i]);
+        result = 31 * result + Long.hashCode(array[i]);
       }
       return result;
     }
@@ -851,6 +843,6 @@ public final class Longs {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 }

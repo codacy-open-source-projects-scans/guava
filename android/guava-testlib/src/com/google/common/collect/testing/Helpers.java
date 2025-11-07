@@ -16,7 +16,6 @@
 
 package com.google.common.collect.testing;
 
-import static com.google.common.collect.testing.Helpers.entryComparator;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
@@ -44,12 +43,13 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class Helpers {
-  // Clone of Objects.equal
+  // Clone of Objects.equals
   static boolean equal(@Nullable Object a, @Nullable Object b) {
     return a == b || (a != null && a.equals(b));
   }
@@ -199,11 +199,10 @@ public class Helpers {
   }
 
   static <T extends @Nullable Object> Iterable<T> reverse(List<T> list) {
-    return new Iterable<T>() {
-      @Override
-      public Iterator<T> iterator() {
-        ListIterator<T> listIter = list.listIterator(list.size());
-        return new Iterator<T>() {
+    return () ->
+        new Iterator<T>() {
+          private final ListIterator<T> listIter = list.listIterator(list.size());
+
           @Override
           public boolean hasNext() {
             return listIter.hasPrevious();
@@ -219,8 +218,6 @@ public class Helpers {
             listIter.remove();
           }
         };
-      }
-    };
   }
 
   static <T extends @Nullable Object> Iterator<T> cycle(Iterable<T> iterable) {
@@ -254,11 +251,11 @@ public class Helpers {
     return iterator.next();
   }
 
-  private static class EntryComparator<K extends @Nullable Object, V extends @Nullable Object>
+  private static final class EntryComparator<K extends @Nullable Object, V extends @Nullable Object>
       implements Comparator<Entry<K, V>> {
     final @Nullable Comparator<? super K> keyComparator;
 
-    public EntryComparator(@Nullable Comparator<? super K> keyComparator) {
+    EntryComparator(@Nullable Comparator<? super K> keyComparator) {
       this.keyComparator = keyComparator;
     }
 
@@ -364,7 +361,7 @@ public class Helpers {
     // iteration would work, but that would not be GWT-compatible.
     // We are not "just" inheriting from ArrayList here as this doesn't work for J2kt.
     return new AbstractList<T>() {
-      ArrayList<T> data = new ArrayList<>();
+      final ArrayList<T> data = new ArrayList<>();
 
       @Override
       public int size() {
@@ -468,16 +465,10 @@ public class Helpers {
   public static <K extends Comparable, V extends @Nullable Object>
       Iterable<Entry<K, V>> orderEntriesByKey(List<Entry<K, V>> insertionOrder) {
     @SuppressWarnings("unchecked") // assume any Comparable is Comparable<Self>
-    Comparator<? super K> keyComparator = (Comparator<? super K>) Comparable::compareTo;
+    Comparator<? super K> keyComparator = (Comparator<? super K>) (o1, o2) -> o1.compareTo(o2);
     sort(insertionOrder, entryComparator(keyComparator));
     return insertionOrder;
   }
-
-  /**
-   * Private replacement for {@link com.google.gwt.user.client.rpc.GwtTransient} to work around
-   * build-system quirks.
-   */
-  private @interface GwtTransient {}
 
   /**
    * Compares strings in natural order except that null comes immediately before a given value. This
@@ -486,11 +477,7 @@ public class Helpers {
    * exercise null handling fail on those subcollections.
    */
   public abstract static class NullsBefore implements Comparator<@Nullable String>, Serializable {
-    /*
-     * We don't serialize this class in GWT, so we don't care about whether GWT will serialize this
-     * field.
-     */
-    @GwtTransient private final String justAfterNull;
+    private final String justAfterNull;
 
     protected NullsBefore(String justAfterNull) {
       if (justAfterNull == null) {
@@ -564,4 +551,12 @@ public class Helpers {
       throw new IllegalArgumentException(e);
     }
   }
+
+  /**
+   * Useless constructor for a class of static utility methods.
+   *
+   * @deprecated Do not instantiate this utility class.
+   */
+  @Deprecated
+  public Helpers() {}
 }

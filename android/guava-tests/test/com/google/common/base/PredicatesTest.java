@@ -17,12 +17,13 @@
 package com.google.common.base;
 
 import static com.google.common.base.CharMatcher.whitespace;
-import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.ClassSanityTester;
 import com.google.common.testing.EqualsTester;
@@ -32,21 +33,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Predicates}.
  *
  * @author Kevin Bourrillion
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class PredicatesTest extends TestCase {
   private static final Predicate<@Nullable Integer> TRUE = Predicates.alwaysTrue();
   private static final Predicate<@Nullable Integer> FALSE = Predicates.alwaysFalse();
@@ -60,7 +61,7 @@ public class PredicatesTest extends TestCase {
 
   /** Instantiable predicate with reasonable hashCode() and equals() methods. */
   static class IsOdd implements Predicate<@Nullable Integer>, Serializable {
-    private static final long serialVersionUID = 0x150ddL;
+    @GwtIncompatible @J2ktIncompatible     private static final long serialVersionUID = 0x150ddL;
 
     @Override
     public boolean apply(@Nullable Integer i) {
@@ -310,7 +311,7 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testAnd_listDefensivelyCopied() {
-    List<Predicate<Object>> list = newArrayList();
+    List<Predicate<Object>> list = new ArrayList<>();
     Predicate<Object> predicate = Predicates.and(list);
     assertTrue(predicate.apply(1));
     list.add(Predicates.alwaysFalse());
@@ -318,7 +319,7 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testAnd_iterableDefensivelyCopied() {
-    final List<Predicate<Object>> list = newArrayList();
+    List<Predicate<Object>> list = new ArrayList<>();
     Iterable<Predicate<Object>> iterable =
         new Iterable<Predicate<Object>>() {
           @Override
@@ -424,14 +425,9 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testOr_applyIterable() {
-    Predicate<@Nullable Integer> vacuouslyFalse =
-        Predicates.or(Collections.<Predicate<@Nullable Integer>>emptyList());
-    Predicate<@Nullable Integer> troo = Predicates.or(Collections.singletonList(TRUE));
-    /*
-     * newLinkedList() takes varargs. TRUE and FALSE are both instances of
-     * Predicate<Integer>, so the call is safe.
-     */
-    Predicate<@Nullable Integer> trueAndFalse = Predicates.or(Arrays.asList(TRUE, FALSE));
+    Predicate<@Nullable Integer> vacuouslyFalse = Predicates.or(ImmutableList.of());
+    Predicate<@Nullable Integer> troo = Predicates.or(ImmutableList.of(TRUE));
+    Predicate<@Nullable Integer> trueAndFalse = Predicates.or(ImmutableList.of(TRUE, FALSE));
 
     assertEvalsToFalse(vacuouslyFalse);
     assertEvalsToTrue(troo);
@@ -467,7 +463,7 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testOr_listDefensivelyCopied() {
-    List<Predicate<Object>> list = newArrayList();
+    List<Predicate<Object>> list = new ArrayList<>();
     Predicate<Object> predicate = Predicates.or(list);
     assertFalse(predicate.apply(1));
     list.add(Predicates.alwaysTrue());
@@ -475,7 +471,7 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testOr_iterableDefensivelyCopied() {
-    final List<Predicate<Object>> list = newArrayList();
+    List<Predicate<Object>> list = new ArrayList<>();
     Iterable<Predicate<Object>> iterable =
         new Iterable<Predicate<Object>>() {
           @Override
@@ -716,9 +712,8 @@ public class PredicatesTest extends TestCase {
   }
 
   public void testIn_handlesNullPointerException() {
-    class CollectionThatThrowsNPE<T> extends ArrayList<T> {
-      @J2ktIncompatible // Kotlin doesn't support companions for inner classes
-      private static final long serialVersionUID = 1L;
+    class CollectionThatThrowsNullPointerException<T> extends ArrayList<T> {
+      @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1L;
 
       @Override
       public boolean contains(@Nullable Object element) {
@@ -726,22 +721,21 @@ public class PredicatesTest extends TestCase {
         return super.contains(element);
       }
     }
-    Collection<Integer> nums = new CollectionThatThrowsNPE<>();
+    Collection<Integer> nums = new CollectionThatThrowsNullPointerException<>();
     Predicate<@Nullable Integer> isFalse = Predicates.in(nums);
     assertFalse(isFalse.apply(null));
   }
 
   public void testIn_handlesClassCastException() {
-    class CollectionThatThrowsCCE<T> extends ArrayList<T> {
-      @J2ktIncompatible // Kotlin doesn't support companions for inner classes
-      private static final long serialVersionUID = 1L;
+    class CollectionThatThrowsClassCastException<T> extends ArrayList<T> {
+      @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1L;
 
       @Override
       public boolean contains(@Nullable Object element) {
         throw new ClassCastException("");
       }
     }
-    Collection<Integer> nums = new CollectionThatThrowsCCE<>();
+    Collection<Integer> nums = new CollectionThatThrowsClassCastException<>();
     nums.add(3);
     Predicate<Integer> isThree = Predicates.in(nums);
     assertFalse(isThree.apply(3));
@@ -961,7 +955,7 @@ public class PredicatesTest extends TestCase {
 
     assertEquals(expectedResult, actualResult);
     if (expectedRuntimeException != null) {
-      assertNotNull(actualRuntimeException);
+      assertThat(actualRuntimeException).isNotNull();
       assertEquals(expectedRuntimeException.getClass(), actualRuntimeException.getClass());
     }
   }

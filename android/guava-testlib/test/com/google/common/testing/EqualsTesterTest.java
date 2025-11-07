@@ -22,11 +22,13 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.HashSet;
 import java.util.Set;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@link EqualsTester}.
@@ -35,6 +37,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @SuppressWarnings("MissingTestCall")
+@NullUnmarked
 public class EqualsTesterTest extends TestCase {
   private ValidTestObject reference;
   private EqualsTester equalsTester;
@@ -282,8 +285,8 @@ public class EqualsTesterTest extends TestCase {
    * should always pass.
    */
   private static class ValidTestObject {
-    private int aspect1;
-    private int aspect2;
+    private final int aspect1;
+    private final int aspect2;
 
     ValidTestObject(int aspect1, int aspect2) {
       this.aspect1 = aspect1;
@@ -316,8 +319,8 @@ public class EqualsTesterTest extends TestCase {
 
   /** Test class with invalid hashCode method. */
   private static class InvalidHashCodeObject {
-    private int aspect1;
-    private int aspect2;
+    private final int aspect1;
+    private final int aspect2;
 
     InvalidHashCodeObject(int aspect1, int aspect2) {
       this.aspect1 = aspect1;
@@ -388,7 +391,7 @@ public class EqualsTesterTest extends TestCase {
   }
 
   private static class NamedObject {
-    private final Set<String> peerNames = Sets.newHashSet();
+    private final Set<String> peerNames = new HashSet<>();
 
     private final String name;
 
@@ -396,6 +399,7 @@ public class EqualsTesterTest extends TestCase {
       this.name = Preconditions.checkNotNull(name);
     }
 
+    @CanIgnoreReturnValue
     NamedObject addPeers(String... names) {
       peerNames.addAll(ImmutableList.copyOf(names));
       return this;

@@ -17,7 +17,6 @@ package com.google.common.util.concurrent;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.GwtCompatible;
-import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -29,7 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A map containing {@code long} values that can be atomically updated. While writes to a
@@ -57,8 +56,6 @@ import javax.annotation.CheckForNull;
  * @since 11.0
  */
 @GwtCompatible
-@J2ktIncompatible
-@ElementTypesAreNonnullByDefault
 public final class AtomicLongMap<K> implements Serializable {
   private final ConcurrentHashMap<K, AtomicLong> map;
 
@@ -329,7 +326,7 @@ public final class AtomicLongMap<K> implements Serializable {
     return sum;
   }
 
-  @LazyInit @CheckForNull private transient Map<K, Long> asMap;
+  @LazyInit private transient @Nullable Map<K, Long> asMap;
 
   /** Returns a live, read-only view of the map backing this {@code AtomicLongMap}. */
   public Map<K, Long> asMap() {

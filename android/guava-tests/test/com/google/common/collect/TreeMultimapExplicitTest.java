@@ -30,15 +30,16 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.SortedSet;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@code TreeMultimap} with explicit comparators.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class TreeMultimapExplicitTest extends TestCase {
 
   /**

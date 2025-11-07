@@ -17,6 +17,7 @@
 package com.google.common.testing;
 
 import static com.google.common.testing.ReflectionFreeAssertThrows.assertThrows;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -27,20 +28,21 @@ import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link FakeTicker}.
  *
  * @author Jige Yu
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 // We also want to test the TimeUnit overload (especially under GWT, where it's the only option).
 @SuppressWarnings("SetAutoIncrementStep_Nanos")
+@NullUnmarked
 public class FakeTickerTest extends TestCase {
 
   @GwtIncompatible // NullPointerTester
@@ -121,7 +123,7 @@ public class FakeTickerTest extends TestCase {
   @GwtIncompatible // concurrency
 
   public void testConcurrentAdvance() throws Exception {
-    final FakeTicker ticker = new FakeTicker();
+    FakeTicker ticker = new FakeTicker();
 
     int numberOfThreads = 64;
     runConcurrentTest(
@@ -144,7 +146,7 @@ public class FakeTickerTest extends TestCase {
 
   public void testConcurrentAutoIncrementStep() throws Exception {
     int incrementByNanos = 3;
-    final FakeTicker ticker = new FakeTicker().setAutoIncrementStep(incrementByNanos, NANOSECONDS);
+    FakeTicker ticker = new FakeTicker().setAutoIncrementStep(incrementByNanos, NANOSECONDS);
 
     int numberOfThreads = 64;
     runConcurrentTest(
@@ -162,11 +164,11 @@ public class FakeTickerTest extends TestCase {
 
   /** Runs {@code callable} concurrently {@code numberOfThreads} times. */
   @GwtIncompatible // concurrency
-  private void runConcurrentTest(int numberOfThreads, final Callable<@Nullable Void> callable)
+  private void runConcurrentTest(int numberOfThreads, Callable<@Nullable Void> callable)
       throws Exception {
-    ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
-    final CountDownLatch startLatch = new CountDownLatch(numberOfThreads);
-    final CountDownLatch doneLatch = new CountDownLatch(numberOfThreads);
+    ExecutorService executorService = newFixedThreadPool(numberOfThreads);
+    CountDownLatch startLatch = new CountDownLatch(numberOfThreads);
+    CountDownLatch doneLatch = new CountDownLatch(numberOfThreads);
     for (int i = numberOfThreads; i > 0; i--) {
       @SuppressWarnings("unused") // https://errorprone.info/bugpattern/FutureReturnValueIgnored
       Future<?> possiblyIgnoredError =

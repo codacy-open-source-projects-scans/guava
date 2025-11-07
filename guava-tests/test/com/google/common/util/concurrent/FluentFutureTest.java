@@ -34,21 +34,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for {@link FluentFuture}. The tests cover only the basics for the API. The actual logic is
  * tested in {@link FuturesTest}.
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class FluentFutureTest extends TestCase {
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testFromFluentFuture() {
-    FluentFuture<String> f = FluentFuture.from(SettableFuture.<String>create());
+    FluentFuture<String> f = FluentFuture.from(SettableFuture.create());
     assertThat(FluentFuture.from(f)).isSameInstanceAs(f);
   }
 
   public void testFromFluentFuturePassingAsNonFluent() {
-    ListenableFuture<String> f = FluentFuture.from(SettableFuture.<String>create());
+    ListenableFuture<String> f = FluentFuture.from(SettableFuture.create());
     assertThat(FluentFuture.from(f)).isSameInstanceAs(f);
   }
 
@@ -62,7 +64,7 @@ public class FluentFutureTest extends TestCase {
 
   public void testAddCallback() {
     FluentFuture<String> f = FluentFuture.from(immediateFuture("a"));
-    final boolean[] called = new boolean[1];
+    boolean[] called = new boolean[1];
     f.addCallback(
         new FutureCallback<String>() {
           @Override
@@ -103,7 +105,7 @@ public class FluentFutureTest extends TestCase {
                 new AsyncFunction<Throwable, Class<?>>() {
                   @Override
                   public ListenableFuture<Class<?>> apply(Throwable input) {
-                    return Futures.<Class<?>>immediateFuture(input.getClass());
+                    return immediateFuture(input.getClass());
                   }
                 },
                 directExecutor());

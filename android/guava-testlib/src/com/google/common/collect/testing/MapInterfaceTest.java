@@ -33,7 +33,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests representing the contract of {@link Map}. Concrete subclasses of this base class test
@@ -48,7 +49,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 // check the order if so.
 // TODO: Refactor to share code with SetTestBuilder etc.
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nullable Object>
     extends TestCase {
 
@@ -151,6 +152,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
     }
   }
 
+  @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
   protected final boolean supportsValuesHashCode(Map<K, V> map) {
     // get the first non-null value
     Collection<V> values = map.values();
@@ -158,7 +160,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       if (value != null) {
         try {
           int unused = value.hashCode();
-        } catch (Exception e) {
+        } catch (Exception e) { // sneaky checked exception
           return false;
         }
         return true;
@@ -284,7 +286,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       map.clear();
       assertTrue(map.isEmpty());
     } else {
-      assertThrows(UnsupportedOperationException.class, () -> map.clear());
+      assertThrows(UnsupportedOperationException.class, map::clear);
     }
     assertInvariants(map);
   }
@@ -475,10 +477,10 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       // iterator.remove().
       assertFalse(entrySet.contains(entryCopy));
       assertInvariants(map);
-      assertThrows(IllegalStateException.class, () -> iterator.remove());
+      assertThrows(IllegalStateException.class, iterator::remove);
     } else {
       iterator.next();
-      assertThrows(UnsupportedOperationException.class, () -> iterator.remove());
+      assertThrows(UnsupportedOperationException.class, iterator::remove);
     }
     assertInvariants(map);
   }
@@ -685,7 +687,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
     Set<Entry<K, V>> entriesToRetain =
         singleton(mapEntry(originalEntry.getKey(), originalEntry.getValue()));
     if (supportsRemove) {
-      boolean shouldRemove = (entrySet.size() > entriesToRetain.size());
+      boolean shouldRemove = entrySet.size() > entriesToRetain.size();
       boolean didRemove = entrySet.retainAll(entriesToRetain);
       assertEquals(shouldRemove, didRemove);
       assertEquals(entriesToRetain.size(), map.size());
@@ -737,7 +739,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       entrySet.clear();
       assertTrue(entrySet.isEmpty());
     } else {
-      assertThrows(UnsupportedOperationException.class, () -> entrySet.clear());
+      assertThrows(UnsupportedOperationException.class, entrySet::clear);
     }
     assertInvariants(map);
   }
@@ -926,7 +928,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       }
     } else {
       try {
-        map.get(null);
+        V unused = map.get(null);
       } catch (NullPointerException optional) {
       }
     }
@@ -1244,7 +1246,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       keySet.clear();
       assertTrue(keySet.isEmpty());
     } else {
-      assertThrows(UnsupportedOperationException.class, () -> keySet.clear());
+      assertThrows(UnsupportedOperationException.class, keySet::clear);
     }
     assertInvariants(map);
   }
@@ -1337,10 +1339,10 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       // removed value, because the underlying map can have multiple mappings
       // to the same value.)
       assertInvariants(map);
-      assertThrows(IllegalStateException.class, () -> iterator.remove());
+      assertThrows(IllegalStateException.class, iterator::remove);
     } else {
       iterator.next();
-      assertThrows(UnsupportedOperationException.class, () -> iterator.remove());
+      assertThrows(UnsupportedOperationException.class, iterator::remove);
     }
     assertInvariants(map);
   }
@@ -1509,7 +1511,7 @@ public abstract class MapInterfaceTest<K extends @Nullable Object, V extends @Nu
       valueCollection.clear();
       assertTrue(valueCollection.isEmpty());
     } else {
-      assertThrows(UnsupportedOperationException.class, () -> valueCollection.clear());
+      assertThrows(UnsupportedOperationException.class, valueCollection::clear);
     }
     assertInvariants(map);
   }

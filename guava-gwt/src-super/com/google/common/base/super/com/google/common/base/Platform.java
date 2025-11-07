@@ -18,9 +18,11 @@ package com.google.common.base;
 
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
-/** @author Jesse Wilson */
+/**
+ * @author Jesse Wilson
+ */
 final class Platform {
   static CharMatcher precomputeCharMatcher(CharMatcher matcher) {
     // CharMatcher.precomputed() produces CharMatchers that are maybe a little
@@ -58,6 +60,14 @@ final class Platform {
 
   static boolean patternCompilerIsPcreLike() {
     throw new UnsupportedOperationException();
+  }
+
+  static String lenientFormat(@Nullable String template, @Nullable Object @Nullable ... args) {
+    return Strings.lenientFormat(template, args);
+  }
+
+  static String stringValueOf(@Nullable Object o) {
+    return String.valueOf(o);
   }
 
   private Platform() {}

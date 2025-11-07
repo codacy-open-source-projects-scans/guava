@@ -27,6 +27,7 @@ import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code TopKSelector}.
@@ -34,6 +35,7 @@ import junit.framework.TestCase;
  * @author Louis Wasserman
  */
 @GwtCompatible
+@NullUnmarked
 public class TopKSelectorTest extends TestCase {
 
   public void testNegativeK() {
@@ -90,7 +92,7 @@ public class TopKSelectorTest extends TestCase {
   public void testWorstCase() {
     int n = 2000000;
     int k = 200000;
-    final long[] compareCalls = {0};
+    long[] compareCalls = {0};
     Comparator<Integer> cmp =
         new Comparator<Integer>() {
           @Override

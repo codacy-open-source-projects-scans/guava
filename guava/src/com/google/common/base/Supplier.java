@@ -15,7 +15,7 @@
 package com.google.common.base;
 
 import com.google.common.annotations.GwtCompatible;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Legacy version of {@link java.util.function.Supplier java.util.function.Supplier}. Semantically,
@@ -37,7 +37,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible
 @FunctionalInterface
-@ElementTypesAreNonnullByDefault
 public interface Supplier<T extends @Nullable Object> extends java.util.function.Supplier<T> {
   /**
    * Retrieves an instance of the appropriate type. The returned object may or may not be a new
@@ -48,4 +47,18 @@ public interface Supplier<T extends @Nullable Object> extends java.util.function
   @Override
   @ParametricNullness
   T get();
+
+  /**
+   * <i>May</i> return {@code true} if {@code object} is a {@code Supplier} that behaves identically
+   * to this supplier.
+   *
+   * <p><b>Warning: do not depend</b> on the behavior of this method.
+   *
+   * <p>Historically, {@code Supplier} instances in this library have implemented this method to
+   * recognize certain cases where distinct {@code Supplier} instances would in fact behave
+   * identically. However, as code migrates to {@code java.util.function}, that behavior will
+   * disappear. It is best not to depend on it.
+   */
+  @Override
+  boolean equals(@Nullable Object object);
 }

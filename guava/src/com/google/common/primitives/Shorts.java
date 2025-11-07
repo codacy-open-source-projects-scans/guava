@@ -21,8 +21,10 @@ import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.errorprone.annotations.InlineMe;
+import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Arrays;
@@ -31,7 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.RandomAccess;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code short} primitives, that are not already found in
@@ -43,17 +45,16 @@ import javax.annotation.CheckForNull;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Shorts extends ShortsMethodsForWeb {
   private Shorts() {}
 
   /**
    * The number of bytes required to represent a primitive {@code short} value.
    *
-   * <p><b>Java 8+ users:</b> use {@link Short#BYTES} instead.
+   * <p>Prefer {@link Short#BYTES} instead.
    */
-  public static final int BYTES = Short.SIZE / Byte.SIZE;
+  public static final int BYTES = Short.BYTES;
 
   /**
    * The largest power of two that can be represented as a {@code short}.
@@ -63,14 +64,15 @@ public final class Shorts extends ShortsMethodsForWeb {
   public static final short MAX_POWER_OF_TWO = 1 << (Short.SIZE - 2);
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Short)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Short#hashCode(short)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Short#hashCode(short)}.
    *
    * @param value a primitive {@code short} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Short.hashCode(value)")
+  @InlineMeValidationDisabled(
+      "The hash code of a short is the int version of the short itself, so it's simplest to return"
+          + " that.")
   public static int hashCode(short value) {
     return value;
   }
@@ -368,7 +370,7 @@ public final class Shorts extends ShortsMethodsForWeb {
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   /**
@@ -620,8 +622,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     return new ShortArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class ShortArrayAsList extends AbstractList<Short>
+  private static final class ShortArrayAsList extends AbstractList<Short>
       implements RandomAccess, Serializable {
     final short[] array;
     final int start;
@@ -654,13 +655,13 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Short) && Shorts.indexOf(array, (Short) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Short) {
         int i = Shorts.indexOf(array, (Short) target, start, end);
@@ -672,7 +673,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Short) {
         int i = Shorts.lastIndexOf(array, (Short) target, start, end);
@@ -703,7 +704,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -727,7 +728,7 @@ public final class Shorts extends ShortsMethodsForWeb {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Shorts.hashCode(array[i]);
+        result = 31 * result + Short.hashCode(array[i]);
       }
       return result;
     }
@@ -746,6 +747,6 @@ public final class Shorts extends ShortsMethodsForWeb {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 }

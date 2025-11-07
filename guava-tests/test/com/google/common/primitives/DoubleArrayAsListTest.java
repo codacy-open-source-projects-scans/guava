@@ -32,13 +32,16 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test suite covering {@link Doubles#asList(double[])}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
+@AndroidIncompatible // test-suite builders
 public class DoubleArrayAsListTest extends TestCase {
 
   private static List<Double> asList(Double[] values) {
@@ -98,7 +101,7 @@ public class DoubleArrayAsListTest extends TestCase {
   public static final class DoublesAsListTailSubListGenerator extends TestDoubleListGenerator {
     @Override
     protected List<Double> create(Double[] elements) {
-      Double[] prefix = {(double) 86, (double) 99};
+      Double[] prefix = {86.0, 99.0};
       Double[] all = concat(prefix, elements);
       return asList(all).subList(2, elements.length + 2);
     }
@@ -108,7 +111,7 @@ public class DoubleArrayAsListTest extends TestCase {
     @Override
     protected List<Double> create(Double[] elements) {
       Double[] prefix = {Double.MIN_VALUE, Double.MAX_VALUE};
-      Double[] suffix = {(double) 86, (double) 99};
+      Double[] suffix = {86.0, 99.0};
       Double[] all = concat(concat(prefix, elements), suffix);
       return asList(all).subList(2, elements.length + 2);
     }
@@ -157,7 +160,7 @@ public class DoubleArrayAsListTest extends TestCase {
 
   public static class SampleDoubles extends SampleElements<Double> {
     public SampleDoubles() {
-      super((double) 0, (double) 1, (double) 2, (double) 3, (double) 4);
+      super(0.0, 1.0, 2.0, 3.0, 4.0);
     }
   }
 }

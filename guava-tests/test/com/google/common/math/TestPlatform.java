@@ -17,10 +17,14 @@
 package com.google.common.math;
 
 import com.google.common.annotations.GwtCompatible;
+import org.jspecify.annotations.NullUnmarked;
 
-/** @author Chris Povirk */
-@GwtCompatible(emulated = true)
-class TestPlatform {
+/**
+ * @author Chris Povirk
+ */
+@GwtCompatible
+@NullUnmarked
+final class TestPlatform {
   static boolean intsCanGoOutOfRange() {
     return false;
   }
@@ -28,4 +32,6 @@ class TestPlatform {
   static boolean isAndroid() {
     return System.getProperty("java.runtime.name", "").contains("Android");
   }
+
+  private TestPlatform() {}
 }

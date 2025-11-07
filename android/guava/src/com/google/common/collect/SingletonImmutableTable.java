@@ -29,8 +29,7 @@ import java.util.Map;
  * @author Gregory Kick
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
-class SingletonImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
+final class SingletonImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
   final R singleRowKey;
   final C singleColumnKey;
   final V singleValue;
@@ -50,7 +49,7 @@ class SingletonImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     checkNotNull(columnKey);
     return containsColumn(columnKey)
         ? ImmutableMap.of(singleRowKey, singleValue)
-        : ImmutableMap.<R, V>of();
+        : ImmutableMap.of();
   }
 
   @Override
@@ -79,9 +78,9 @@ class SingletonImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
   }
 
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return SerializedForm.create(this, new int[] {0}, new int[] {0});
   }
 }

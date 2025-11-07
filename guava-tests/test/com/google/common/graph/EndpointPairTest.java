@@ -24,12 +24,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.EqualsTester;
 import java.util.Collection;
 import java.util.Set;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link EndpointPair} and {@link Graph#edges()}. */
 @RunWith(JUnit4.class)
+@NullUnmarked
 public final class EndpointPairTest {
   private static final Integer N0 = 0;
   private static final Integer N1 = 1;
@@ -233,11 +235,13 @@ public final class EndpointPairTest {
     assertThat(edges).doesNotContain(EndpointPair.ordered(N3, N4)); // nodes not in graph
   }
 
+  // We are testing our implementations of methods on Collection.
+  @SuppressWarnings({"CollectionSizeTruth", "CollectionContainsTruth"})
   private static void containsExactlySanityCheck(Collection<?> collection, Object... varargs) {
-    assertThat(collection).hasSize(varargs.length);
+    assertThat(collection.size()).isEqualTo(varargs.length);
     for (Object obj : varargs) {
-      assertThat(collection).contains(obj);
+      assertThat(collection.contains(obj)).isTrue();
     }
-    assertThat(collection).containsExactly(varargs);
+    assertThat(ImmutableList.copyOf(collection.iterator())).containsExactlyElementsIn(varargs);
   }
 }

@@ -24,6 +24,7 @@ import com.google.common.collect.testing.AnEnum;
 import com.google.common.collect.testing.SampleElements;
 import com.google.common.collect.testing.SampleElements.Enums;
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * An abstract {@code TestMultisetGenerator} for generating multisets containing enum values.
@@ -31,7 +32,7 @@ import java.util.List;
  * @author Jared Levy
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class TestEnumMultisetGenerator implements TestMultisetGenerator<AnEnum> {
   @Override
   public SampleElements<AnEnum> samples() {
@@ -56,6 +57,12 @@ public abstract class TestEnumMultisetGenerator implements TestMultisetGenerator
   }
 
   /** Sorts the enums according to their natural ordering. */
+  /*
+   * While the current implementation returns `this`, that's not something we mean to guarantee.
+   * Callers of TestContainerGenerator.order need to be prepared for implementations to return a new
+   * collection.
+   */
+  @SuppressWarnings("CanIgnoreReturnValueSuggester")
   @Override
   public List<AnEnum> order(List<AnEnum> insertionOrder) {
     sort(insertionOrder);

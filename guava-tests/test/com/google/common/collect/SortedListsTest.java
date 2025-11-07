@@ -22,14 +22,15 @@ import com.google.common.collect.SortedLists.KeyPresentBehavior;
 import com.google.common.testing.NullPointerTester;
 import java.util.List;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for SortedLists.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class SortedListsTest extends TestCase {
   private static final ImmutableList<Integer> LIST_WITH_DUPS =
       ImmutableList.of(1, 1, 2, 4, 4, 4, 8);

@@ -27,6 +27,7 @@ import com.google.common.testing.ClassSanityTester.FactoryMethodReturnsNullExcep
 import com.google.common.testing.ClassSanityTester.ParameterHasNoDistinctValueException;
 import com.google.common.testing.ClassSanityTester.ParameterNotInstantiableException;
 import com.google.common.testing.NullPointerTester.Visibility;
+import com.google.errorprone.annotations.Keep;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractList;
@@ -38,13 +39,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@link ClassSanityTester}.
  *
  * @author Ben Yu
  */
+@NullUnmarked
 public class ClassSanityTesterTest extends TestCase {
 
   private final ClassSanityTester tester = new ClassSanityTester();
@@ -111,7 +114,7 @@ public class ClassSanityTesterTest extends TestCase {
 
   private static class BadEqualsFactory {
     /** oneConstantOnly matters now since it can be either null or the constant. */
-    @SuppressWarnings("unused") // Called by reflection
+    @Keep
     public static Object bad(String a, int b, @Nullable OneConstantEnum oneConstantOnly) {
       return new GoodEquals(a, b);
     }
@@ -122,7 +125,7 @@ public class ClassSanityTesterTest extends TestCase {
   }
 
   private static class GoodNullsFactory {
-    @SuppressWarnings("unused") // Called by reflection
+    @Keep
     public static Object good(String s) {
       return new GoodNulls(s);
     }
@@ -155,10 +158,12 @@ public class ClassSanityTesterTest extends TestCase {
     fail();
   }
 
-  public static class BadNullsFactory {
+  public static final class BadNullsFactory {
     public static Object bad(@SuppressWarnings("unused") String a) {
       return new BadNulls();
     }
+
+    private BadNullsFactory() {}
   }
 
   @AndroidIncompatible // TODO(cpovirk): ClassNotFoundException... ClassSanityTesterTest$AnInterface
@@ -166,7 +171,7 @@ public class ClassSanityTesterTest extends TestCase {
     tester.forAllPublicStaticMethods(GoodSerializableFactory.class).testSerializable();
   }
 
-  public static class GoodSerializableFactory {
+  public static final class GoodSerializableFactory {
     public static Object good(Runnable r) {
       return r;
     }
@@ -174,6 +179,8 @@ public class ClassSanityTesterTest extends TestCase {
     public static Object good(AnInterface i) {
       return i;
     }
+
+    private GoodSerializableFactory() {}
   }
 
   public void testSerializableOnReturnValues_bad() throws Exception {
@@ -185,13 +192,14 @@ public class ClassSanityTesterTest extends TestCase {
     fail();
   }
 
-  public static class BadSerializableFactory {
+  public static final class BadSerializableFactory {
     public static Object bad() {
       return new Serializable() {
-        @SuppressWarnings("unused")
-        private final Object notSerializable = new Object();
+        @Keep private final Object notSerializable = new Object();
       };
     }
+
+    private BadSerializableFactory() {}
   }
 
   public void testEqualsAndSerializableOnReturnValues_equalsIsGoodButNotSerializable()
@@ -220,10 +228,12 @@ public class ClassSanityTesterTest extends TestCase {
         .testEqualsAndSerializable();
   }
 
-  public static class GoodEqualsAndSerializableFactory {
+  public static final class GoodEqualsAndSerializableFactory {
     public static Object good(AnInterface s) {
       return Functions.constant(s);
     }
+
+    private GoodEqualsAndSerializableFactory() {}
   }
 
   public void testEqualsForReturnValues_factoryReturnsNullButNotAnnotated() throws Exception {
@@ -267,10 +277,12 @@ public class ClassSanityTesterTest extends TestCase {
     fail();
   }
 
-  public static class FactoryThatReturnsNullButNotAnnotated {
+  public static final class FactoryThatReturnsNullButNotAnnotated {
     public static Object bad() {
       return null;
     }
+
+    private FactoryThatReturnsNullButNotAnnotated() {}
   }
 
   public void testEqualsForReturnValues_factoryReturnsNullAndAnnotated() throws Exception {
@@ -292,10 +304,12 @@ public class ClassSanityTesterTest extends TestCase {
         .testEqualsAndSerializable();
   }
 
-  public static class FactoryThatReturnsNullAndAnnotated {
+  public static final class FactoryThatReturnsNullAndAnnotated {
     public static @Nullable Object bad() {
       return null;
     }
+
+    private FactoryThatReturnsNullAndAnnotated() {}
   }
 
   public void testGoodEquals() throws Exception {
@@ -491,27 +505,27 @@ public class ClassSanityTesterTest extends TestCase {
   }
 
   public void testInstantiate_factoryMethodAcceptsNull() throws Exception {
-    assertNull(tester.instantiate(FactoryMethodAcceptsNull.class).name);
+    assertThat(tester.instantiate(FactoryMethodAcceptsNull.class).name).isNull();
   }
 
   public void testInstantiate_factoryMethodDoesNotAcceptNull() throws Exception {
-    assertNotNull(tester.instantiate(FactoryMethodDoesNotAcceptNull.class).name);
+    assertThat(tester.instantiate(FactoryMethodDoesNotAcceptNull.class).name).isNotNull();
   }
 
   public void testInstantiate_constructorAcceptsNull() throws Exception {
-    assertNull(tester.instantiate(ConstructorAcceptsNull.class).name);
+    assertThat(tester.instantiate(ConstructorAcceptsNull.class).name).isNull();
   }
 
   public void testInstantiate_constructorDoesNotAcceptNull() throws Exception {
-    assertNotNull(tester.instantiate(ConstructorDoesNotAcceptNull.class).name);
+    assertThat(tester.instantiate(ConstructorDoesNotAcceptNull.class).name).isNotNull();
   }
 
   public void testInstantiate_notInstantiable() throws Exception {
-    assertNull(tester.instantiate(NotInstantiable.class));
+    assertThat(tester.instantiate(NotInstantiable.class)).isNull();
   }
 
   public void testInstantiate_noConstantEnum() throws Exception {
-    assertNull(tester.instantiate(NoConstantEnum.class));
+    assertThat(tester.instantiate(NoConstantEnum.class)).isNull();
   }
 
   public void testInstantiate_oneConstantEnum() throws Exception {
@@ -519,21 +533,21 @@ public class ClassSanityTesterTest extends TestCase {
   }
 
   public void testInstantiate_interface() throws Exception {
-    assertNull(tester.instantiate(Runnable.class));
+    assertThat(tester.instantiate(Runnable.class)).isNull();
   }
 
   public void testInstantiate_abstractClass() throws Exception {
-    assertNull(tester.instantiate(AbstractList.class));
+    assertThat(tester.instantiate(AbstractList.class)).isNull();
   }
 
   public void testInstantiate_annotation() throws Exception {
-    assertNull(tester.instantiate(MyAnnotation.class));
+    assertThat(tester.instantiate(MyAnnotation.class)).isNull();
   }
 
   public void testInstantiate_setDefault() throws Exception {
     NotInstantiable x = new NotInstantiable();
     tester.setDefault(NotInstantiable.class, x);
-    assertNotNull(tester.instantiate(ConstructorParameterNotInstantiable.class));
+    assertThat(tester.instantiate(ConstructorParameterNotInstantiable.class)).isNotNull();
   }
 
   public void testSetDistinctValues_equalInstances() {
@@ -545,7 +559,7 @@ public class ClassSanityTesterTest extends TestCase {
     NotInstantiable x = new NotInstantiable();
     NotInstantiable y = new NotInstantiable();
     tester.setDistinctValues(NotInstantiable.class, x, y);
-    assertNotNull(tester.instantiate(ConstructorParameterNotInstantiable.class));
+    assertThat(tester.instantiate(ConstructorParameterNotInstantiable.class)).isNotNull();
     tester.testEquals(ConstructorParameterMapOfNotInstantiable.class);
   }
 
@@ -586,7 +600,7 @@ public class ClassSanityTesterTest extends TestCase {
 
   /** String doesn't check nulls as we expect. But the framework should ignore. */
   private static class JdkObjectFactory {
-    @SuppressWarnings("unused") // Called by reflection
+    @Keep
     public static Object create() {
       return new ArrayList<>();
     }
@@ -677,6 +691,7 @@ public class ClassSanityTesterTest extends TestCase {
   }
 
   private static class SetWrapper extends Wrapper {
+    @Keep
     public SetWrapper(Set<NotInstantiable> wrapped) {
       super(wrapped);
     }
@@ -723,7 +738,7 @@ public class ClassSanityTesterTest extends TestCase {
     }
 
     // keep trying
-    @SuppressWarnings("unused")
+    @Keep
     static GoodEquals create(int a, int b) {
       throw new RuntimeException();
     }
@@ -734,7 +749,7 @@ public class ClassSanityTesterTest extends TestCase {
     }
 
     // keep trying
-    @SuppressWarnings("unused")
+    @Keep
     public static @Nullable GoodEquals createMayReturnNull(int a, int b) {
       return null;
     }
@@ -1145,15 +1160,15 @@ public class ClassSanityTesterTest extends TestCase {
       checkNotNull(x);
     }
 
-    @SuppressWarnings("unused") // reflected
+    @Keep
     void primitiveOnly(int i) {}
 
-    @SuppressWarnings("unused") // reflected
+    @Keep
     void nullableOnly(@Nullable String s) {}
 
     public void noParameter() {}
 
-    @SuppressWarnings("unused") // reflected
+    @Keep
     void primitiveAndNullable(@Nullable String s, int i) {}
   }
 
@@ -1317,22 +1332,22 @@ public class ClassSanityTesterTest extends TestCase {
   private enum EnumFailsToCheckNull {
     A;
 
-    @SuppressWarnings("unused")
+    @Keep
     public void failToCheckNull(String s) {}
   }
 
   private interface AnInterface {}
 
   private abstract static class AnAbstractClass {
-    @SuppressWarnings("unused")
+    @Keep
     public AnAbstractClass(String s) {}
 
-    @SuppressWarnings("unused")
+    @Keep
     public void failsToCheckNull(String s) {}
   }
 
   private static class NoPublicStaticMethods {
-    @SuppressWarnings("unused") // To test non-public factory isn't used.
+    @Keep // To test non-public factory isn't used.
     static String notPublic() {
       return "";
     }

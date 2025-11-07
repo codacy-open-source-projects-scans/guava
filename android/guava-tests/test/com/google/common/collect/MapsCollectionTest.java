@@ -41,24 +41,31 @@ import com.google.common.collect.testing.google.BiMapTestSuiteBuilder;
 import com.google.common.collect.testing.google.TestStringBiMapGenerator;
 import com.google.common.io.BaseEncoding;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Test suites for wrappers in {@code Maps}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
+@AndroidIncompatible // test-suite builders
 public class MapsCollectionTest extends TestCase {
   public static Test suite() {
     TestSuite suite = new TestSuite();
@@ -114,7 +121,7 @@ public class MapsCollectionTest extends TestCase {
 
                   @Override
                   public Map<String, Integer> create(Object... elements) {
-                    Set<String> set = Sets.newLinkedHashSet();
+                    Set<String> set = new LinkedHashSet<>();
                     for (Object e : elements) {
                       Entry<?, ?> entry = (Entry<?, ?>) e;
                       checkNotNull(entry.getValue());
@@ -313,7 +320,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newHashMap();
+                    Map<String, String> map = new HashMap<>();
                     putEntries(map, entries);
                     map.putAll(ENTRIES_TO_FILTER);
                     return Maps.filterKeys(map, FILTER_KEYS);
@@ -332,7 +339,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newHashMap();
+                    Map<String, String> map = new HashMap<>();
                     putEntries(map, entries);
                     map.putAll(ENTRIES_TO_FILTER);
                     return Maps.filterValues(map, FILTER_VALUES);
@@ -351,7 +358,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newHashMap();
+                    Map<String, String> map = new HashMap<>();
                     putEntries(map, entries);
                     map.putAll(ENTRIES_TO_FILTER);
                     return Maps.filterEntries(map, FILTER_ENTRIES);
@@ -370,7 +377,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newHashMap();
+                    Map<String, String> map = new HashMap<>();
                     putEntries(map, entries);
                     map.putAll(ENTRIES_TO_FILTER);
                     map = Maps.filterEntries(map, FILTER_ENTRIES_1);
@@ -562,7 +569,7 @@ public class MapsCollectionTest extends TestCase {
       new Predicate<String>() {
         @Override
         public boolean apply(@Nullable String string) {
-          return !"banana".equals(string) && !"eggplant".equals(string);
+          return !Objects.equals(string, "banana") && !Objects.equals(string, "eggplant");
         }
       };
 
@@ -570,7 +577,7 @@ public class MapsCollectionTest extends TestCase {
       new Predicate<String>() {
         @Override
         public boolean apply(@Nullable String string) {
-          return !"toast".equals(string) && !"spam".equals(string);
+          return !Objects.equals(string, "toast") && !Objects.equals(string, "spam");
         }
       };
 
@@ -665,7 +672,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newLinkedHashMap();
+                    Map<String, String> map = new LinkedHashMap<>();
                     for (Entry<String, String> entry : entries) {
                       map.put(entry.getKey(), encode(entry.getValue()));
                     }
@@ -686,7 +693,7 @@ public class MapsCollectionTest extends TestCase {
                 new TestStringMapGenerator() {
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newLinkedHashMap();
+                    Map<String, String> map = new LinkedHashMap<>();
                     for (Entry<String, String> entry : entries) {
                       map.put(entry.getKey(), encode(entry.getValue()));
                     }

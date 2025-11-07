@@ -31,8 +31,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An accumulator that selects the "top" {@code k} elements added to it, relative to a provided
@@ -56,7 +55,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 final class TopKSelector<
     T extends @Nullable Object> {
 
@@ -119,7 +117,7 @@ final class TopKSelector<
    * The largest of the lowest k elements we've seen so far relative to this comparator. If
    * bufferSize ≥ k, then we can ignore any elements greater than this value.
    */
-  @CheckForNull private T threshold;
+  private @Nullable T threshold;
 
   @SuppressWarnings("unchecked") // TODO(cpovirk): Consider storing Object[] instead of T[].
   private TopKSelector(Comparator<? super T> comparator, int k) {
@@ -127,7 +125,7 @@ final class TopKSelector<
     this.k = k;
     checkArgument(k >= 0, "k (%s) must be >= 0", k);
     checkArgument(k <= Integer.MAX_VALUE / 2, "k (%s) must be <= Integer.MAX_VALUE / 2", k);
-    this.buffer = (T[]) new Object[IntMath.checkedMultiply(k, 2)];
+    this.buffer = (T[]) new Object[Math.multiplyExact(k, 2)];
     this.bufferSize = 0;
     this.threshold = null;
   }
@@ -235,6 +233,12 @@ final class TopKSelector<
     buffer[j] = tmp;
   }
 
+  /*
+   * While the current implementation returns `this`, that's not something we mean to guarantee.
+   * Anyway, the purpose of this method is to implement a BinaryOperator combiner for a Collector,
+   * so its return value will get used naturally.
+   */
+  @SuppressWarnings("CanIgnoreReturnValueSuggester")
   TopKSelector<T> combine(TopKSelector<T> other) {
     for (int i = 0; i < other.bufferSize; i++) {
       this.offer(uncheckedCastNullableTToT(other.buffer[i]));

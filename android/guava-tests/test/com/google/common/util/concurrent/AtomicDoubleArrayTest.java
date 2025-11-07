@@ -19,8 +19,10 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
 import java.util.Arrays;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Unit test for {@link AtomicDoubleArray}. */
+@NullUnmarked
 public class AtomicDoubleArrayTest extends JSR166TestCase {
 
   private static final double[] VALUES = {
@@ -155,7 +157,7 @@ public class AtomicDoubleArrayTest extends JSR166TestCase {
 
   /** compareAndSet in one thread enables another waiting for value to succeed */
   public void testCompareAndSetInMultipleThreads() throws InterruptedException {
-    final AtomicDoubleArray a = new AtomicDoubleArray(1);
+    AtomicDoubleArray a = new AtomicDoubleArray(1);
     a.set(0, 1.0);
     Thread t =
         newStartedThread(
@@ -245,6 +247,7 @@ public class AtomicDoubleArrayTest extends JSR166TestCase {
       aa = a;
     }
 
+    @SuppressWarnings("DoubleAtLeastJUnit") // causes timeouts under Android
     @Override
     public void realRun() {
       for (; ; ) {
@@ -271,7 +274,7 @@ public class AtomicDoubleArrayTest extends JSR166TestCase {
    * total count
    */
   public void testCountingInMultipleThreads() throws InterruptedException {
-    final AtomicDoubleArray aa = new AtomicDoubleArray(SIZE);
+    AtomicDoubleArray aa = new AtomicDoubleArray(SIZE);
     for (int i = 0; i < SIZE; i++) {
       aa.set(i, (double) COUNTDOWN);
     }

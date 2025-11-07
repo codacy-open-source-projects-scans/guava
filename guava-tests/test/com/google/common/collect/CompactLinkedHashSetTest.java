@@ -33,6 +33,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for CompactLinkedHashSet.
@@ -40,7 +41,9 @@ import junit.framework.TestSuite;
  * @author Dimitris Andreou
  */
 @GwtIncompatible // java.util.Arrays#copyOf(Object[], int), java.lang.reflect.Array
+@NullUnmarked
 public class CompactLinkedHashSetTest extends TestCase {
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     List<Feature<?>> allFeatures =
         Arrays.<Feature<?>>asList(
@@ -106,5 +109,4 @@ public class CompactLinkedHashSetTest extends TestCase {
       assertThat(set.elements).hasLength(expectedSize);
     }
   }
-
 }

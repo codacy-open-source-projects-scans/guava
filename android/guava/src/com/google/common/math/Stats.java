@@ -19,24 +19,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.math.DoubleUtils.ensureNonNegative;
 import static com.google.common.math.StatsAccumulator.calculateNewMeanNonFinite;
-import static com.google.common.primitives.Doubles.isFinite;
 import static java.lang.Double.NaN;
 import static java.lang.Double.doubleToLongBits;
+import static java.lang.Double.isFinite;
 import static java.lang.Double.isNaN;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.stream.Collector;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A bundle of statistical summary values -- sum, count, mean/average, min and max, and several
@@ -64,7 +64,6 @@ import javax.annotation.CheckForNull;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class Stats implements Serializable {
 
   private final long count;
@@ -164,7 +163,6 @@ public final class Stats implements Serializable {
    * @param values a series of values
    * @since 33.4.0 (but since 28.2 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static Stats of(DoubleStream values) {
     return values
@@ -182,7 +180,6 @@ public final class Stats implements Serializable {
    * @param values a series of values
    * @since 33.4.0 (but since 28.2 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static Stats of(IntStream values) {
     return values
@@ -201,7 +198,6 @@ public final class Stats implements Serializable {
    *     cause loss of precision for longs of magnitude over 2^53 (slightly over 9e15))
    * @since 33.4.0 (but since 28.2 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static Stats of(LongStream values) {
     return values
@@ -220,7 +216,6 @@ public final class Stats implements Serializable {
    *
    * @since 33.4.0 (but since 28.2 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static Collector<Number, StatsAccumulator, Stats> toStats() {
     return Collector.of(
@@ -425,7 +420,7 @@ public final class Stats implements Serializable {
    * {@code strictfp}-like semantics.)
    */
   @Override
-  public boolean equals(@CheckForNull Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (obj == null) {
       return false;
     }
@@ -448,7 +443,7 @@ public final class Stats implements Serializable {
    */
   @Override
   public int hashCode() {
-    return Objects.hashCode(count, mean, sumOfSquaresOfDeltas, min, max);
+    return Objects.hash(count, mean, sumOfSquaresOfDeltas, min, max);
   }
 
   @Override

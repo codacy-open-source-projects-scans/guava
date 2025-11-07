@@ -24,18 +24,20 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link AbstractLoadingCache}.
  *
  * @author Charles Fry
  */
+@NullUnmarked
 public class AbstractLoadingCacheTest extends TestCase {
 
   public void testGetUnchecked_checked() {
-    final Exception cause = new Exception();
-    final AtomicReference<Object> valueRef = new AtomicReference<>();
+    Exception cause = new Exception();
+    AtomicReference<Object> valueRef = new AtomicReference<>();
     LoadingCache<Object, Object> cache =
         new AbstractLoadingCache<Object, Object>() {
           @Override
@@ -59,12 +61,12 @@ public class AbstractLoadingCacheTest extends TestCase {
 
     Object newValue = new Object();
     valueRef.set(newValue);
-    assertSame(newValue, cache.getUnchecked(new Object()));
+    assertThat(cache.getUnchecked(new Object())).isSameInstanceAs(newValue);
   }
 
   public void testGetUnchecked_unchecked() {
-    final RuntimeException cause = new RuntimeException();
-    final AtomicReference<Object> valueRef = new AtomicReference<>();
+    RuntimeException cause = new RuntimeException();
+    AtomicReference<Object> valueRef = new AtomicReference<>();
     LoadingCache<Object, Object> cache =
         new AbstractLoadingCache<Object, Object>() {
           @Override
@@ -88,12 +90,12 @@ public class AbstractLoadingCacheTest extends TestCase {
 
     Object newValue = new Object();
     valueRef.set(newValue);
-    assertSame(newValue, cache.getUnchecked(new Object()));
+    assertThat(cache.getUnchecked(new Object())).isSameInstanceAs(newValue);
   }
 
   public void testGetUnchecked_error() {
-    final Error cause = new Error();
-    final AtomicReference<Object> valueRef = new AtomicReference<>();
+    Error cause = new Error();
+    AtomicReference<Object> valueRef = new AtomicReference<>();
     LoadingCache<Object, Object> cache =
         new AbstractLoadingCache<Object, Object>() {
           @Override
@@ -117,12 +119,12 @@ public class AbstractLoadingCacheTest extends TestCase {
 
     Object newValue = new Object();
     valueRef.set(newValue);
-    assertSame(newValue, cache.getUnchecked(new Object()));
+    assertThat(cache.getUnchecked(new Object())).isSameInstanceAs(newValue);
   }
 
   public void testGetUnchecked_otherThrowable() {
-    final Throwable cause = new Throwable();
-    final AtomicReference<Object> valueRef = new AtomicReference<>();
+    Throwable cause = new Throwable();
+    AtomicReference<Object> valueRef = new AtomicReference<>();
     LoadingCache<Object, Object> cache =
         new AbstractLoadingCache<Object, Object>() {
           @Override
@@ -146,6 +148,6 @@ public class AbstractLoadingCacheTest extends TestCase {
 
     Object newValue = new Object();
     valueRef.set(newValue);
-    assertSame(newValue, cache.getUnchecked(new Object()));
+    assertThat(cache.getUnchecked(new Object())).isSameInstanceAs(newValue);
   }
 }

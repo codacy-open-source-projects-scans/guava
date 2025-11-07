@@ -45,11 +45,13 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * @author Gregory Kick
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class ContiguousSetTest extends TestCase {
   private static final DiscreteDomain<Integer> NOT_EQUAL_TO_INTEGERS =
       new DiscreteDomain<Integer>() {
@@ -278,6 +280,12 @@ public class ContiguousSetTest extends TestCase {
     assertTrue(set.contains(2));
     assertTrue(set.contains(3));
     assertFalse(set.contains(4));
+  }
+
+  // TODO: https://youtrack.jetbrains.com/issue/KT-71001/ - Enable when Kotlin throws expected CCE.
+  @J2ktIncompatible
+  public void testContains_typeMismatch() {
+    ImmutableSortedSet<Integer> set = ContiguousSet.create(Range.open(0, 4), integers());
     assertFalse(set.contains((Object) "blah"));
   }
 
@@ -289,6 +297,12 @@ public class ContiguousSetTest extends TestCase {
     for (Set<Integer> subset : Sets.powerSet(ImmutableSet.of(1, 2, 3))) {
       assertFalse(set.containsAll(Sets.union(subset, ImmutableSet.of(9))));
     }
+  }
+
+  // TODO: https://youtrack.jetbrains.com/issue/KT-71001/ - Enable when Kotlin throws expected CCE.
+  @J2ktIncompatible
+  public void testContainsAll_typeMismatch() {
+    ImmutableSortedSet<Integer> set = ContiguousSet.create(Range.closed(1, 3), integers());
     assertFalse(set.containsAll((Collection<?>) ImmutableSet.of("blah")));
   }
 
@@ -388,6 +402,7 @@ public class ContiguousSetTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static class BuiltTests extends TestCase {
     public static Test suite() {
       TestSuite suite = new TestSuite();

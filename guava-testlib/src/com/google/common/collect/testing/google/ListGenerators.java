@@ -30,6 +30,7 @@ import com.google.common.collect.testing.UnhashableObject;
 import com.google.common.primitives.Chars;
 import java.util.Collections;
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Common generators of different types of lists.
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Hayward Chan
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public final class ListGenerators {
 
   private ListGenerators() {}
@@ -52,7 +53,7 @@ public final class ListGenerators {
   public static class BuilderAddListGenerator extends TestStringListGenerator {
     @Override
     protected List<String> create(String[] elements) {
-      ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
+      ImmutableList.Builder<String> builder = ImmutableList.builder();
       for (String element : elements) {
         builder.add(element);
       }

@@ -17,14 +17,15 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.concurrent.Executors.defaultThreadFactory;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.testing.NullPointerTester;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Locale;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for ThreadFactoryBuilder.
@@ -32,6 +33,7 @@ import junit.framework.TestCase;
  * @author Kurt Alfred Kluever
  * @author Martin Buchholz
  */
+@NullUnmarked
 public class ThreadFactoryBuilderTest extends TestCase {
   private final Runnable monitoredRunnable =
       new Runnable() {
@@ -62,7 +64,7 @@ public class ThreadFactoryBuilderTest extends TestCase {
     Thread thread = threadFactory.newThread(monitoredRunnable);
     checkThreadPoolName(thread, 1);
 
-    Thread defaultThread = Executors.defaultThreadFactory().newThread(monitoredRunnable);
+    Thread defaultThread = defaultThreadFactory().newThread(monitoredRunnable);
     assertEquals(defaultThread.isDaemon(), thread.isDaemon());
     assertEquals(defaultThread.getPriority(), thread.getPriority());
     assertSame(defaultThread.getThreadGroup(), thread.getThreadGroup());
@@ -173,9 +175,9 @@ public class ThreadFactoryBuilderTest extends TestCase {
   }
 
   public void testThreadFactory() throws InterruptedException {
-    final String THREAD_NAME = "ludicrous speed";
-    final int THREAD_PRIORITY = 1;
-    final boolean THREAD_DAEMON = false;
+    String THREAD_NAME = "ludicrous speed";
+    int THREAD_PRIORITY = 1;
+    boolean THREAD_DAEMON = false;
     ThreadFactory backingThreadFactory =
         new ThreadFactory() {
           @Override

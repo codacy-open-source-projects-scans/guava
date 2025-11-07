@@ -24,6 +24,7 @@ import static com.google.common.io.TestOption.READ_THROWS;
 import static com.google.common.io.TestOption.SKIP_THROWS;
 import static com.google.common.io.TestOption.WRITE_THROWS;
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.Byte.toUnsignedInt;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.US_ASCII;
@@ -34,7 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
-import com.google.common.primitives.UnsignedBytes;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,13 +42,15 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.EnumSet;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for the default implementations of {@code ByteSource} methods.
  *
  * @author Colin Decker
  */
+@NullUnmarked
 public class ByteSourceTest extends IoTestCase {
 
   @AndroidIncompatible // Android doesn't understand suites whose tests lack default constructors.
@@ -129,7 +131,7 @@ public class ByteSourceTest extends IoTestCase {
   }
 
   public void testRead_withProcessor() throws IOException {
-    final byte[] processedBytes = new byte[bytes.length];
+    byte[] processedBytes = new byte[bytes.length];
     ByteProcessor<byte[]> processor =
         new ByteProcessor<byte[]>() {
           int pos;
@@ -248,7 +250,7 @@ public class ByteSourceTest extends IoTestCase {
   private static class AppendableByteSource extends ByteSource {
     private byte[] bytes;
 
-    public AppendableByteSource(byte[] initialBytes) {
+    AppendableByteSource(byte[] initialBytes) {
       this.bytes = initialBytes.clone();
     }
 
@@ -257,7 +259,7 @@ public class ByteSourceTest extends IoTestCase {
       return new In();
     }
 
-    public void append(byte[] b) {
+    void append(byte[] b) {
       byte[] newBytes = Arrays.copyOf(bytes, bytes.length + b.length);
       System.arraycopy(b, 0, newBytes, bytes.length, b.length);
       bytes = newBytes;
@@ -269,7 +271,7 @@ public class ByteSourceTest extends IoTestCase {
       @Override
       public int read() throws IOException {
         byte[] b = new byte[1];
-        return read(b) == -1 ? -1 : UnsignedBytes.toInt(b[0]);
+        return read(b) == -1 ? -1 : toUnsignedInt(b[0]);
       }
 
       @Override

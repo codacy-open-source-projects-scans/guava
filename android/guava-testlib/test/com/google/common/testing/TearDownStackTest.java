@@ -16,22 +16,28 @@
 
 package com.google.common.testing;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
-/** @author Luiz-Otavio "Z" Zorzella */
+/**
+ * @author Luiz-Otavio "Z" Zorzella
+ */
 @GwtCompatible
+@NullUnmarked
 public class TearDownStackTest extends TestCase {
 
-  private TearDownStack tearDownStack = new TearDownStack();
+  private final TearDownStack tearDownStack = new TearDownStack();
 
   public void testSingleTearDown() throws Exception {
-    final TearDownStack stack = buildTearDownStack();
+    TearDownStack stack = buildTearDownStack();
 
-    final SimpleTearDown tearDown = new SimpleTearDown();
+    SimpleTearDown tearDown = new SimpleTearDown();
     stack.addTearDown(tearDown);
 
     assertEquals(false, tearDown.ran);
@@ -42,12 +48,12 @@ public class TearDownStackTest extends TestCase {
   }
 
   public void testMultipleTearDownsHappenInOrder() throws Exception {
-    final TearDownStack stack = buildTearDownStack();
+    TearDownStack stack = buildTearDownStack();
 
-    final SimpleTearDown tearDownOne = new SimpleTearDown();
+    SimpleTearDown tearDownOne = new SimpleTearDown();
     stack.addTearDown(tearDownOne);
 
-    final Callback callback =
+    Callback callback =
         new Callback() {
           @Override
           public void run() {
@@ -56,7 +62,7 @@ public class TearDownStackTest extends TestCase {
           }
         };
 
-    final SimpleTearDown tearDownTwo = new SimpleTearDown(callback);
+    SimpleTearDown tearDownTwo = new SimpleTearDown(callback);
     stack.addTearDown(tearDownTwo);
 
     assertEquals(false, tearDownOne.ran);
@@ -69,12 +75,12 @@ public class TearDownStackTest extends TestCase {
   }
 
   public void testThrowingTearDown() throws Exception {
-    final TearDownStack stack = buildTearDownStack();
+    TearDownStack stack = buildTearDownStack();
 
-    final ThrowingTearDown tearDownOne = new ThrowingTearDown("one");
+    ThrowingTearDown tearDownOne = new ThrowingTearDown("one");
     stack.addTearDown(tearDownOne);
 
-    final ThrowingTearDown tearDownTwo = new ThrowingTearDown("two");
+    ThrowingTearDown tearDownTwo = new ThrowingTearDown("two");
     stack.addTearDown(tearDownTwo);
 
     assertEquals(false, tearDownOne.ran);
@@ -83,11 +89,11 @@ public class TearDownStackTest extends TestCase {
     try {
       stack.runTearDown();
       fail("runTearDown should have thrown an exception");
-    } catch (ClusterException expected) {
-      assertThat(expected).hasCauseThat().hasMessageThat().isEqualTo("two");
-    } catch (RuntimeException e) {
-      throw new RuntimeException(
-          "A ClusterException should have been thrown, rather than a " + e.getClass().getName(), e);
+    } catch (RuntimeException expected) {
+      assertThat(expected).hasMessageThat().isEqualTo("two");
+      assertThat(getOnlyElement(asList(expected.getSuppressed())))
+          .hasMessageThat()
+          .isEqualTo("one");
     }
 
     assertEquals(true, tearDownOne.ran);
@@ -111,7 +117,7 @@ public class TearDownStackTest extends TestCase {
 
   /** Builds a {@link TearDownStack} that makes sure it's clear by the end of this test. */
   private TearDownStack buildTearDownStack() {
-    final TearDownStack result = new TearDownStack();
+    TearDownStack result = new TearDownStack();
     tearDownStack.addTearDown(
         new TearDown() {
 
@@ -149,9 +155,9 @@ public class TearDownStackTest extends TestCase {
     boolean ran = false;
     @Nullable Callback callback = null;
 
-    public SimpleTearDown() {}
+    SimpleTearDown() {}
 
-    public SimpleTearDown(Callback callback) {
+    SimpleTearDown(Callback callback) {
       this.callback = callback;
     }
 

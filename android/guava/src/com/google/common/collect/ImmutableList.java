@@ -42,8 +42,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link List} whose contents will never change, with many other important properties detailed at
@@ -57,9 +56,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kevin Bourrillion
  * @since 2.0
  */
-@GwtCompatible(serializable = true, emulated = true)
+@GwtCompatible
 @SuppressWarnings("serial") // we're overriding default serialization
-@ElementTypesAreNonnullByDefault
 public abstract class ImmutableList<E> extends ImmutableCollection<E>
     implements List<E>, RandomAccess {
 
@@ -69,7 +67,6 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    *
    * @since 33.2.0 (available since 21.0 in guava-jre)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static <E> Collector<E, ?, ImmutableList<E>> toImmutableList() {
     return CollectCollectors.toImmutableList();
@@ -259,7 +256,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     if (elements instanceof ImmutableCollection) {
       @SuppressWarnings("unchecked") // all supported methods are covariant
       ImmutableList<E> list = ((ImmutableCollection<E>) elements).asList();
-      return list.isPartialView() ? ImmutableList.<E>asImmutableList(list.toArray()) : list;
+      return list.isPartialView() ? asImmutableList(list.toArray()) : list;
     }
     return construct(elements.toArray());
   }
@@ -395,7 +392,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   private static final UnmodifiableListIterator<Object> EMPTY_ITR =
       new Itr<Object>(RegularImmutableList.EMPTY, 0);
 
-  static class Itr<E> extends AbstractIndexedListIterator<E> {
+  private static final class Itr<E> extends AbstractIndexedListIterator<E> {
     private final ImmutableList<E> list;
 
     Itr(ImmutableList<E> list, int index) {
@@ -410,17 +407,17 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   }
 
   @Override
-  public int indexOf(@CheckForNull Object object) {
+  public int indexOf(@Nullable Object object) {
     return (object == null) ? -1 : Lists.indexOfImpl(this, object);
   }
 
   @Override
-  public int lastIndexOf(@CheckForNull Object object) {
+  public int lastIndexOf(@Nullable Object object) {
     return (object == null) ? -1 : Lists.lastIndexOfImpl(this, object);
   }
 
   @Override
-  public boolean contains(@CheckForNull Object object) {
+  public boolean contains(@Nullable Object object) {
     return indexOf(object) >= 0;
   }
 
@@ -458,7 +455,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     return new SubList(fromIndex, toIndex - fromIndex);
   }
 
-  class SubList extends ImmutableList<E> {
+  private final class SubList extends ImmutableList<E> {
     final transient int offset;
     final transient int length;
 
@@ -473,9 +470,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     }
 
     @Override
-    @CheckForNull
-    @Nullable
-    Object[] internalArray() {
+    @Nullable Object @Nullable [] internalArray() {
       return ImmutableList.this.internalArray();
     }
 
@@ -509,9 +504,9 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     // redeclare to help optimizers with b/310253115
     @SuppressWarnings("RedundantOverride")
     @Override
-    @J2ktIncompatible // serialization
-    @GwtIncompatible // serialization
-    Object writeReplace() {
+    @J2ktIncompatible
+    @GwtIncompatible
+        Object writeReplace() {
       return super.writeReplace();
     }
   }
@@ -605,7 +600,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     return (size() <= 1) ? this : new ReverseImmutableList<E>(this);
   }
 
-  private static class ReverseImmutableList<E> extends ImmutableList<E> {
+  private static final class ReverseImmutableList<E> extends ImmutableList<E> {
     private final transient ImmutableList<E> forwardList;
 
     ReverseImmutableList(ImmutableList<E> backingList) {
@@ -626,18 +621,18 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     }
 
     @Override
-    public boolean contains(@CheckForNull Object object) {
+    public boolean contains(@Nullable Object object) {
       return forwardList.contains(object);
     }
 
     @Override
-    public int indexOf(@CheckForNull Object object) {
+    public int indexOf(@Nullable Object object) {
       int index = forwardList.lastIndexOf(object);
       return (index >= 0) ? reverseIndex(index) : -1;
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object object) {
+    public int lastIndexOf(@Nullable Object object) {
       int index = forwardList.indexOf(object);
       return (index >= 0) ? reverseIndex(index) : -1;
     }
@@ -667,15 +662,15 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     // redeclare to help optimizers with b/310253115
     @SuppressWarnings("RedundantOverride")
     @Override
-    @J2ktIncompatible // serialization
-    @GwtIncompatible // serialization
-    Object writeReplace() {
+    @J2ktIncompatible
+    @GwtIncompatible
+        Object writeReplace() {
       return super.writeReplace();
     }
   }
 
   @Override
-  public boolean equals(@CheckForNull Object obj) {
+  public boolean equals(@Nullable Object obj) {
     return Lists.equalsImpl(this, obj);
   }
 
@@ -697,7 +692,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * implementation types do not leak into the serialized representation.
    */
   @J2ktIncompatible // serialization
-  static class SerializedForm implements Serializable {
+  static final class SerializedForm implements Serializable {
     final Object[] elements;
 
     SerializedForm(Object[] elements) {
@@ -708,7 +703,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
       return copyOf(elements);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   @J2ktIncompatible // serialization
@@ -717,9 +712,9 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   }
 
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return new SerializedForm(toArray());
   }
 
@@ -752,13 +747,13 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * A builder for creating immutable list instances, especially {@code public static final} lists
    * ("constant lists"). Example:
    *
-   * <pre>{@code
-   * public static final ImmutableList<Color> GOOGLE_COLORS
-   *     = new ImmutableList.Builder<Color>()
+   * {@snippet :
+   * public static final ImmutableList<Color> GOOGLE_COLORS =
+   *     new ImmutableList.Builder<Color>()
    *         .addAll(WEBSAFE_COLORS)
    *         .add(new Color(0, 191, 255))
    *         .build();
-   * }</pre>
+   * }
    *
    * <p>Elements appear in the resulting list in the same order they were added to the builder.
    *
@@ -868,5 +863,5 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     }
   }
 
-  private static final long serialVersionUID = 0xcafebabe;
+  @GwtIncompatible @J2ktIncompatible   private static final long serialVersionUID = 0xcafebabe;
 }

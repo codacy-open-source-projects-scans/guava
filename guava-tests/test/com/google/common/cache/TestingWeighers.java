@@ -14,12 +14,15 @@
 
 package com.google.common.cache;
 
+import org.jspecify.annotations.NullUnmarked;
+
 /**
  * Utility {@link Weigher} implementations intended for use in testing.
  *
  * @author Charles Fry
  */
-public class TestingWeighers {
+@NullUnmarked
+public final class TestingWeighers {
 
   /** Returns a {@link Weigher} that returns the given {@code constant} for every request. */
   static Weigher<Object, Object> constantWeigher(int constant) {
@@ -62,4 +65,6 @@ public class TestingWeighers {
       return value;
     }
   }
+
+  private TestingWeighers() {}
 }

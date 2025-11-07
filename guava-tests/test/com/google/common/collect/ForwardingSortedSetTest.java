@@ -26,19 +26,22 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.ForwardingWrapperTester;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code ForwardingSortedSet}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingSortedSetTest extends TestCase {
   static class StandardImplForwardingSortedSet<T> extends ForwardingSortedSet<T> {
     private final SortedSet<T> backingSortedSet;
@@ -118,6 +121,7 @@ public class ForwardingSortedSetTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -133,7 +137,7 @@ public class ForwardingSortedSetTest extends TestCase {
 
                   @Override
                   public List<String> order(List<String> insertionOrder) {
-                    return Lists.newArrayList(Sets.newTreeSet(insertionOrder));
+                    return new ArrayList<>(Sets.newTreeSet(insertionOrder));
                   }
                 })
             .named("ForwardingSortedSet[SafeTreeSet] with standard implementations")
@@ -168,7 +172,7 @@ public class ForwardingSortedSetTest extends TestCase {
         .testEquals();
   }
 
-  private static <T> SortedSet<T> wrap(final SortedSet<T> delegate) {
+  private static <T> SortedSet<T> wrap(SortedSet<T> delegate) {
     return new ForwardingSortedSet<T>() {
       @Override
       protected SortedSet<T> delegate() {

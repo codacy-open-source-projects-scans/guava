@@ -17,6 +17,7 @@ package com.google.common.io;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.FileWriteMode.APPEND;
+import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
@@ -27,7 +28,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.graph.SuccessorsFunction;
 import com.google.common.graph.Traverser;
 import com.google.common.hash.HashCode;
@@ -53,10 +53,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Provides utility methods for working with {@linkplain File files}.
@@ -70,7 +68,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class Files {
 
   private Files() {}
@@ -355,8 +352,7 @@ public final class Files {
    * @param charset the charset used to encode the output stream; see {@link StandardCharsets} for
    *     helpful predefined constants
    * @throws IOException if an I/O error occurs
-   * @deprecated Prefer {@code asCharSink(to, charset, FileWriteMode.APPEND).write(from)}. This
-   *     method is scheduled to be removed in October 2019.
+   * @deprecated Prefer {@code asCharSink(to, charset, FileWriteMode.APPEND).write(from)}.
    */
   @Deprecated
   @InlineMe(
@@ -523,9 +519,8 @@ public final class Files {
   @InlineMe(
       replacement = "Files.asCharSource(file, charset).readFirstLine()",
       imports = "com.google.common.io.Files")
-  @CheckForNull
   public
-  static String readFirstLine(File file, Charset charset) throws IOException {
+  static @Nullable String readFirstLine(File file, Charset charset) throws IOException {
     return asCharSource(file, charset).readFirstLine();
   }
 
@@ -551,7 +546,7 @@ public final class Files {
     return asCharSource(file, charset)
         .readLines(
             new LineProcessor<List<String>>() {
-              final List<String> result = Lists.newArrayList();
+              final List<String> result = new ArrayList<>();
 
               @Override
               public boolean processLine(String line) {
@@ -774,7 +769,7 @@ public final class Files {
     }
     if (result.equals("/..")) {
       result = "/";
-    } else if ("".equals(result)) {
+    } else if (result.isEmpty()) {
       result = ".";
     }
 
@@ -848,19 +843,16 @@ public final class Files {
   }
 
   private static final SuccessorsFunction<File> FILE_TREE =
-      new SuccessorsFunction<File>() {
-        @Override
-        public Iterable<File> successors(File file) {
-          // check isDirectory() just because it may be faster than listFiles() on a non-directory
-          if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files != null) {
-              return Collections.unmodifiableList(Arrays.asList(files));
-            }
+      file -> {
+        // check isDirectory() just because it may be faster than listFiles() on a non-directory
+        if (file.isDirectory()) {
+          File[] files = file.listFiles();
+          if (files != null) {
+            return unmodifiableList(Arrays.asList(files));
           }
-
-          return ImmutableList.of();
         }
+
+        return ImmutableList.of();
       };
 
   /**

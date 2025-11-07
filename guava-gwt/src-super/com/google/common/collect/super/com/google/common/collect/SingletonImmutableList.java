@@ -26,14 +26,9 @@ import java.util.List;
  *
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
 final class SingletonImmutableList<E> extends ForwardingImmutableList<E> {
-
-  final transient List<E> delegate;
-  // This reference is used both by the custom field serializer, and by the
-  // GWT compiler to infer the elements of the lists that needs to be
-  // serialized.
-  E element;
+  private final transient List<E> delegate;
+  private final E element;
 
   SingletonImmutableList(E element) {
     this.delegate = singletonList(checkNotNull(element));

@@ -39,7 +39,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -49,7 +51,8 @@ import java.util.function.Predicate;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link ForwardingMap}.
@@ -57,6 +60,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Hayward Chan
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingMapTest extends TestCase {
   static class StandardImplForwardingMap<K, V> extends ForwardingMap<K, V> {
     private final Map<K, V> backingMap;
@@ -136,6 +140,7 @@ public class ForwardingMapTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -146,7 +151,7 @@ public class ForwardingMapTest extends TestCase {
 
                   @Override
                   protected Map<String, String> create(Entry<String, String>[] entries) {
-                    Map<String, String> map = Maps.newLinkedHashMap();
+                    Map<String, String> map = new LinkedHashMap<>();
                     for (Entry<String, String> entry : entries) {
                       map.put(entry.getKey(), entry.getValue());
                     }
@@ -211,7 +216,7 @@ public class ForwardingMapTest extends TestCase {
 
   public void testStandardEntrySet() throws InvocationTargetException {
     @SuppressWarnings("unchecked")
-    final Map<String, Boolean> map = mock(Map.class);
+    Map<String, Boolean> map = mock(Map.class);
 
     Map<String, Boolean> forward =
         new ForwardingMap<String, Boolean>() {
@@ -244,7 +249,7 @@ public class ForwardingMapTest extends TestCase {
 
   public void testStandardKeySet() throws InvocationTargetException {
     @SuppressWarnings("unchecked")
-    final Map<String, Boolean> map = mock(Map.class);
+    Map<String, Boolean> map = mock(Map.class);
 
     Map<String, Boolean> forward =
         new ForwardingMap<String, Boolean>() {
@@ -272,7 +277,7 @@ public class ForwardingMapTest extends TestCase {
 
   public void testStandardValues() throws InvocationTargetException {
     @SuppressWarnings("unchecked")
-    final Map<String, Boolean> map = mock(Map.class);
+    Map<String, Boolean> map = mock(Map.class);
 
     Map<String, Boolean> forward =
         new ForwardingMap<String, Boolean>() {
@@ -298,12 +303,12 @@ public class ForwardingMapTest extends TestCase {
   }
 
   public void testToStringWithNullKeys() throws Exception {
-    Map<String, String> hashmap = Maps.newHashMap();
+    Map<String, String> hashmap = new HashMap<>();
     hashmap.put("foo", "bar");
     hashmap.put(null, "baz");
 
     StandardImplForwardingMap<String, String> forwardingMap =
-        new StandardImplForwardingMap<>(Maps.<String, String>newHashMap());
+        new StandardImplForwardingMap<>(new HashMap<>());
     forwardingMap.put("foo", "bar");
     forwardingMap.put(null, "baz");
 
@@ -311,19 +316,19 @@ public class ForwardingMapTest extends TestCase {
   }
 
   public void testToStringWithNullValues() throws Exception {
-    Map<String, String> hashmap = Maps.newHashMap();
+    Map<String, String> hashmap = new HashMap<>();
     hashmap.put("foo", "bar");
     hashmap.put("baz", null);
 
     StandardImplForwardingMap<String, String> forwardingMap =
-        new StandardImplForwardingMap<>(Maps.<String, String>newHashMap());
+        new StandardImplForwardingMap<>(new HashMap<>());
     forwardingMap.put("foo", "bar");
     forwardingMap.put("baz", null);
 
     assertEquals(hashmap.toString(), forwardingMap.toString());
   }
 
-  private static <K, V> Map<K, V> wrap(final Map<K, V> delegate) {
+  private static <K, V> Map<K, V> wrap(Map<K, V> delegate) {
     return new ForwardingMap<K, V>() {
       @Override
       protected Map<K, V> delegate() {
@@ -332,7 +337,7 @@ public class ForwardingMapTest extends TestCase {
     };
   }
 
-  private static @Nullable Object getDefaultValue(final TypeToken<?> type) {
+  private static @Nullable Object getDefaultValue(TypeToken<?> type) {
     Class<?> rawType = type.getRawType();
     Object defaultValue = ArbitraryInstances.get(rawType);
     if (defaultValue != null) {

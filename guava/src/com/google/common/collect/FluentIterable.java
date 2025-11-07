@@ -32,9 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A discouraged (but not deprecated) precursor to Java's superior {@link Stream} library.
@@ -84,18 +83,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * transforms it by invoking {@code toString()} on each element, and returns the first 10 elements
  * as a {@code List}:
  *
- * <pre>{@code
+ * {@snippet :
  * ImmutableList<String> results =
  *     FluentIterable.from(database.getClientList())
  *         .filter(Client::isActiveInLastMonth)
  *         .transform(Object::toString)
  *         .limit(10)
  *         .toList();
- * }</pre>
+ * }
  *
  * The approximate stream equivalent is:
  *
- * <pre>{@code
+ * {@snippet :
  * List<String> results =
  *     database.getClientList()
  *         .stream()
@@ -103,13 +102,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         .map(Object::toString)
  *         .limit(10)
  *         .collect(Collectors.toList());
- * }</pre>
+ * }
  *
  * @author Marcin Mikosik
  * @since 12.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class FluentIterable<E extends @Nullable Object> implements Iterable<E> {
   // We store 'iterable' and use it instead of 'this' to allow Iterables to perform instanceof
   // checks on the _original_ iterable when FluentIterable.from is used.
@@ -138,7 +136,7 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    * <p><b>{@code Stream} equivalent:</b> {@link Collection#stream} if {@code iterable} is a {@link
    * Collection}; {@link Streams#stream(Iterable)} otherwise.
    */
-  public static <E extends @Nullable Object> FluentIterable<E> from(final Iterable<E> iterable) {
+  public static <E extends @Nullable Object> FluentIterable<E> from(Iterable<E> iterable) {
     return (iterable instanceof FluentIterable)
         ? (FluentIterable<E>) iterable
         : new FluentIterable<E>(iterable) {
@@ -272,7 +270,7 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    * @since 20.0
    */
   public static <T extends @Nullable Object> FluentIterable<T> concat(
-      final Iterable<? extends Iterable<? extends T>> inputs) {
+      Iterable<? extends Iterable<? extends T>> inputs) {
     checkNotNull(inputs);
     return new FluentIterable<T>() {
       @Override
@@ -284,7 +282,7 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
 
   /** Concatenates a varargs array of iterables without making a defensive copy of the array. */
   private static <T extends @Nullable Object> FluentIterable<T> concatNoDefensiveCopy(
-      final Iterable<? extends T>... inputs) {
+      Iterable<? extends T>... inputs) {
     for (Iterable<? extends T> input : inputs) {
       checkNotNull(input);
     }
@@ -310,8 +308,9 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    *
    * @since 20.0
    */
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   public static <E extends @Nullable Object> FluentIterable<E> of() {
-    return FluentIterable.from(Collections.<E>emptyList());
+    return FluentIterable.from(Collections.emptyList());
   }
 
   /**
@@ -354,7 +353,7 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    *
    * <p><b>{@code Stream} equivalent:</b> {@code stream.anyMatch(Predicate.isEqual(target))}.
    */
-  public final boolean contains(@CheckForNull Object target) {
+  public final boolean contains(@Nullable Object target) {
     return Iterables.contains(getDelegate(), target);
   }
 
@@ -423,11 +422,11 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    * This does perform a little more work than necessary, so another option is to insert an
    * unchecked cast at some later point:
    *
-   * <pre>
-   * {@code @SuppressWarnings("unchecked") // safe because of ::isInstance check
+   * {@snippet :
+   * @SuppressWarnings("unchecked") // safe because of ::isInstance check
    * ImmutableList<NewType> result =
-   *     (ImmutableList) stream.filter(NewType.class::isInstance).collect(toImmutableList());}
-   * </pre>
+   *     (ImmutableList) stream.filter(NewType.class::isInstance).collect(toImmutableList());
+   * }
    */
   @GwtIncompatible // Class.isInstance
   public final <T> FluentIterable<T> filter(Class<T> type) {
@@ -716,9 +715,8 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    * In the returned multimap, keys appear in the order they are first encountered, and the values
    * corresponding to each key appear in the same order as they are encountered.
    *
-   * <p><b>{@code Stream} equivalent:</b> {@code stream.collect(Collectors.groupingBy(keyFunction))}
-   * behaves similarly, but returns a mutable {@code Map<K, List<E>>} instead, and may not preserve
-   * the order of entries.
+   * <p><b>{@code Stream} equivalent:</b> {@code
+   * stream.collect(ImmutableListMultimap.toImmutableListMultimap(keyFunction, v -> v))}.
    *
    * @param keyFunction the function used to produce the key for each value
    * @throws NullPointerException if any element of this iterable is {@code null}, or if {@code
@@ -736,14 +734,14 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    * map whose key is the result of applying {@code keyFunction} to that value. These entries appear
    * in the same order as they appeared in this fluent iterable. Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * Color red = new Color("red", 255, 0, 0);
    * ...
    * FluentIterable<Color> allColors = FluentIterable.from(ImmutableSet.of(red, green, blue));
    *
    * Map<String, Color> colorForName = allColors.uniqueIndex(toStringFunction());
    * assertThat(colorForName).containsEntry("red", red);
-   * }</pre>
+   * }
    *
    * <p>If your index may associate multiple values with each key, use {@link #index(Function)
    * index}.
@@ -850,14 +848,5 @@ public abstract class FluentIterable<E extends @Nullable Object> implements Iter
    */
   public final Stream<E> stream() {
     return Streams.stream(getDelegate());
-  }
-
-  /** Function that transforms {@code Iterable<E>} into a fluent iterable. */
-  private static class FromIterableFunction<E extends @Nullable Object>
-      implements Function<Iterable<E>, FluentIterable<E>> {
-    @Override
-    public FluentIterable<E> apply(Iterable<E> fromObject) {
-      return FluentIterable.from(fromObject);
-    }
   }
 }

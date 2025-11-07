@@ -18,6 +18,7 @@ package com.google.common.util.concurrent;
 
 import static com.google.common.util.concurrent.InterruptionUtil.repeatedlyInterruptTestThread;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -28,11 +29,11 @@ import com.google.common.testing.TearDownStack;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 // TODO(cpovirk): Should this be merged into UninterruptiblesTest?
 /**
@@ -41,6 +42,7 @@ import junit.framework.TestCase;
  * @author Kevin Bourrillion
  * @author Chris Povirk
  */
+@NullUnmarked
 public class UninterruptibleFutureTest extends TestCase {
   private SleepingRunnable sleeper;
   private Future<Boolean> delayedFuture;
@@ -49,7 +51,7 @@ public class UninterruptibleFutureTest extends TestCase {
 
   @Override
   protected void setUp() {
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorService executor = newSingleThreadExecutor();
     tearDownStack.addTearDown(
         new TearDown() {
           @Override
@@ -136,7 +138,7 @@ public class UninterruptibleFutureTest extends TestCase {
     final int millis;
     volatile boolean completed;
 
-    public SleepingRunnable(int millis) {
+    SleepingRunnable(int millis) {
       this.millis = millis;
     }
 
@@ -245,7 +247,7 @@ public class UninterruptibleFutureTest extends TestCase {
   }
 
   private static FutureTask<Boolean> untimedInterruptReporter(
-      final Future<?> future, final boolean allowInterruption) {
+      Future<?> future, boolean allowInterruption) {
     return new FutureTask<>(
         new Callable<Boolean>() {
           @Override
@@ -262,7 +264,7 @@ public class UninterruptibleFutureTest extends TestCase {
         });
   }
 
-  private static FutureTask<Boolean> timedInterruptReporter(final Future<?> future) {
+  private static FutureTask<Boolean> timedInterruptReporter(Future<?> future) {
     return new FutureTask<>(
         new Callable<Boolean>() {
           @Override

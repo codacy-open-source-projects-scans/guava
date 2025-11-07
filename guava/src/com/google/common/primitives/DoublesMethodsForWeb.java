@@ -20,6 +20,5 @@ import com.google.common.annotations.GwtCompatible;
  * Holder for web specializations of methods of {@code Doubles}. Intended to be empty for regular
  * version.
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 abstract class DoublesMethodsForWeb {}

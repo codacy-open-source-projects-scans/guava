@@ -18,6 +18,7 @@ package com.google.common.util.concurrent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -29,14 +30,15 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Used to test listenable future implementations.
  *
  * @author Sven Mawson
  */
+@NullUnmarked
 public class ListenableFutureTester {
 
   private final ExecutorService exec;
@@ -44,7 +46,7 @@ public class ListenableFutureTester {
   private final CountDownLatch latch;
 
   public ListenableFutureTester(ListenableFuture<?> future) {
-    this.exec = Executors.newCachedThreadPool();
+    this.exec = newCachedThreadPool();
     this.future = checkNotNull(future);
     this.latch = new CountDownLatch(1);
   }

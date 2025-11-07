@@ -25,7 +25,6 @@ import com.google.j2objc.annotations.ReflectionSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
@@ -42,13 +41,13 @@ import java.util.function.DoubleUnaryOperator;
  * Double#doubleToRawLongBits}, which differs from both the primitive double {@code ==} operator and
  * from {@link Double#equals}, as if implemented by:
  *
- * <pre>{@code
+ * {@snippet :
  * static boolean bitEquals(double x, double y) {
  *   long xBits = Double.doubleToRawLongBits(x);
  *   long yBits = Double.doubleToRawLongBits(y);
  *   return xBits == yBits;
  * }
- * }</pre>
+ * }
  *
  * <p>It is possible to write a more scalable updater, at the cost of giving up strict atomicity.
  * See for example <a
@@ -62,8 +61,7 @@ import java.util.function.DoubleUnaryOperator;
 @GwtIncompatible
 @J2ktIncompatible
 @ReflectionSupport(value = ReflectionSupport.Level.FULL)
-@ElementTypesAreNonnullByDefault
-public class AtomicDouble extends Number implements Serializable {
+public class AtomicDouble extends Number {
   private static final long serialVersionUID = 0L;
 
   private transient volatile long value;

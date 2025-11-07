@@ -26,6 +26,7 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.ForwardingWrapperTester;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,13 +36,15 @@ import java.util.SortedSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code ForwardingNavigableSet}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingNavigableSetTest extends TestCase {
   static class StandardImplForwardingNavigableSet<T> extends ForwardingNavigableSet<T> {
     private final NavigableSet<T> backingSet;
@@ -161,6 +164,7 @@ public class ForwardingNavigableSetTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -176,7 +180,7 @@ public class ForwardingNavigableSetTest extends TestCase {
 
                   @Override
                   public List<String> order(List<String> insertionOrder) {
-                    return Lists.newArrayList(Sets.newTreeSet(insertionOrder));
+                    return new ArrayList<>(Sets.newTreeSet(insertionOrder));
                   }
                 })
             .named("ForwardingNavigableSet[SafeTreeSet] with standard implementations")
@@ -197,7 +201,7 @@ public class ForwardingNavigableSetTest extends TestCase {
 
                   @Override
                   public List<String> order(List<String> insertionOrder) {
-                    return Lists.newArrayList(Sets.newTreeSet(insertionOrder));
+                    return new ArrayList<>(Sets.newTreeSet(insertionOrder));
                   }
                 })
             .named(
@@ -235,7 +239,7 @@ public class ForwardingNavigableSetTest extends TestCase {
         .testEquals();
   }
 
-  private static <T> NavigableSet<T> wrap(final NavigableSet<T> delegate) {
+  private static <T> NavigableSet<T> wrap(NavigableSet<T> delegate) {
     return new ForwardingNavigableSet<T>() {
       @Override
       protected NavigableSet<T> delegate() {

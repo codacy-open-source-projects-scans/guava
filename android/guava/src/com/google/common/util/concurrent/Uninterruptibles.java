@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Utilities for treating interruptible operations as uninterruptible. In all cases, if a thread is
@@ -45,8 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Anthony Zana
  * @since 10.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Uninterruptibles {
 
   // Implementation Note: As of 3-7-11, the logic for each blocking/timeout
@@ -81,7 +80,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean awaitUninterruptibly(CountDownLatch latch, Duration timeout) {
     return awaitUninterruptibly(latch, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -124,7 +122,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean awaitUninterruptibly(Condition condition, Duration timeout) {
     return awaitUninterruptibly(condition, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -189,7 +186,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static void joinUninterruptibly(Thread toJoin, Duration timeout) {
     joinUninterruptibly(toJoin, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -285,7 +281,6 @@ public final class Uninterruptibles {
   @J2ktIncompatible
   @GwtIncompatible // java.time.Duration
   @ParametricNullness
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static <V extends @Nullable Object> V getUninterruptibly(
       Future<V> future, Duration timeout) throws ExecutionException, TimeoutException {
@@ -394,7 +389,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static void sleepUninterruptibly(Duration sleepFor) {
     sleepUninterruptibly(toNanosSaturated(sleepFor), TimeUnit.NANOSECONDS);
@@ -435,7 +429,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean tryAcquireUninterruptibly(Semaphore semaphore, Duration timeout) {
     return tryAcquireUninterruptibly(semaphore, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -463,7 +456,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean tryAcquireUninterruptibly(
       Semaphore semaphore, int permits, Duration timeout) {
@@ -511,7 +503,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean tryLockUninterruptibly(Lock lock, Duration timeout) {
     return tryLockUninterruptibly(lock, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -568,7 +559,6 @@ public final class Uninterruptibles {
    */
   @J2ktIncompatible
   @GwtIncompatible // concurrency
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static boolean awaitTerminationUninterruptibly(
       ExecutorService executor, Duration timeout) {

@@ -35,8 +35,7 @@ import com.google.common.annotations.GwtCompatible;
  * @author Clément Roux
  * @since 16.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Utf8 {
   /**
    * Returns the number of bytes in the UTF-8-encoded form of {@code sequence}. For a string, this
@@ -61,7 +60,7 @@ public final class Utf8 {
     for (; i < utf16Length; i++) {
       char c = sequence.charAt(i);
       if (c < 0x800) {
-        utf8Length += ((0x7f - c) >>> 31); // branch free!
+        utf8Length += (0x7f - c) >>> 31; // branch free!
       } else {
         utf8Length += encodedLengthGeneral(sequence, i);
         break;
@@ -165,7 +164,7 @@ public final class Utf8 {
             // Overlong? 5 most significant bits must not all be zero.
             || (byte1 == (byte) 0xE0 && byte2 < (byte) 0xA0)
             // Check for illegal surrogate codepoints.
-            || (byte1 == (byte) 0xED && (byte) 0xA0 <= byte2)
+            || (byte1 == (byte) 0xED && byte2 >= (byte) 0xA0)
             // Third byte trailing-byte test.
             || bytes[index++] > (byte) 0xBF) {
           return false;

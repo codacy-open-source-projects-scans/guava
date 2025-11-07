@@ -54,7 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Stream;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utilities for use with {@link Path} instances, intended to complement {@link Files}.
@@ -69,7 +69,6 @@ import javax.annotation.CheckForNull;
 @J2ktIncompatible
 @GwtIncompatible
 @J2ObjCIncompatible // java.nio.file
-@ElementTypesAreNonnullByDefault
 @IgnoreJRERequirement // Users will use this only if they're already using Path.
 public final class MoreFiles {
 
@@ -175,16 +174,7 @@ public final class MoreFiles {
         // overload taking OpenOptions, meaning we can't guarantee the same behavior w.r.t. things
         // like following/not following symlinks.)
         return new AsCharSource(charset) {
-          @SuppressWarnings({
-            "FilesLinesLeak", // the user needs to close it in this case
-            /*
-             * If users use this when they shouldn't, we hope that NewApi will catch subsequent
-             * Stream calls.
-             *
-             * Anyway, this is just an override that is no more dangerous than the supermethod.
-             */
-            "Java7ApiChecker",
-          })
+          @SuppressWarnings("FilesLinesLeak") // the user needs to close it in this case
           @Override
           public Stream<String> lines() throws IOException {
             return Files.lines(path, charset);
@@ -325,7 +315,7 @@ public final class MoreFiles {
    * LinkOption...)} on input paths with the given link options.
    */
   public static Predicate<Path> isDirectory(LinkOption... options) {
-    final LinkOption[] optionsCopy = options.clone();
+    LinkOption[] optionsCopy = options.clone();
     return new Predicate<Path>() {
       @Override
       public boolean apply(Path input) {
@@ -352,7 +342,7 @@ public final class MoreFiles {
    * LinkOption...)} on input paths with the given link options.
    */
   public static Predicate<Path> isRegularFile(LinkOption... options) {
-    final LinkOption[] optionsCopy = options.clone();
+    LinkOption[] optionsCopy = options.clone();
     return new Predicate<Path>() {
       @Override
       public boolean apply(Path input) {
@@ -628,8 +618,7 @@ public final class MoreFiles {
    * Secure recursive delete using {@code SecureDirectoryStream}. Returns a collection of exceptions
    * that occurred or null if no exceptions were thrown.
    */
-  @CheckForNull
-  private static Collection<IOException> deleteRecursivelySecure(
+  private static @Nullable Collection<IOException> deleteRecursivelySecure(
       SecureDirectoryStream<Path> dir, Path path) {
     Collection<IOException> exceptions = null;
     try {
@@ -657,8 +646,7 @@ public final class MoreFiles {
    * Secure method for deleting the contents of a directory using {@code SecureDirectoryStream}.
    * Returns a collection of exceptions that occurred or null if no exceptions were thrown.
    */
-  @CheckForNull
-  private static Collection<IOException> deleteDirectoryContentsSecure(
+  private static @Nullable Collection<IOException> deleteDirectoryContentsSecure(
       SecureDirectoryStream<Path> dir) {
     Collection<IOException> exceptions = null;
     try {
@@ -676,8 +664,7 @@ public final class MoreFiles {
    * Insecure recursive delete for file systems that don't support {@code SecureDirectoryStream}.
    * Returns a collection of exceptions that occurred or null if no exceptions were thrown.
    */
-  @CheckForNull
-  private static Collection<IOException> deleteRecursivelyInsecure(Path path) {
+  private static @Nullable Collection<IOException> deleteRecursivelyInsecure(Path path) {
     Collection<IOException> exceptions = null;
     try {
       if (Files.isDirectory(path, NOFOLLOW_LINKS)) {
@@ -703,8 +690,7 @@ public final class MoreFiles {
    * support {@code SecureDirectoryStream}. Returns a collection of exceptions that occurred or null
    * if no exceptions were thrown.
    */
-  @CheckForNull
-  private static Collection<IOException> deleteDirectoryContentsInsecure(
+  private static @Nullable Collection<IOException> deleteDirectoryContentsInsecure(
       DirectoryStream<Path> dir) {
     Collection<IOException> exceptions = null;
     try {
@@ -723,8 +709,7 @@ public final class MoreFiles {
    * path, this is simple. Otherwise, we need to do some trickier things. Returns null if the path
    * is a root or is the empty path.
    */
-  @CheckForNull
-  private static Path getParentPath(Path path) {
+  private static @Nullable Path getParentPath(Path path) {
     Path parent = path.getParent();
 
     // Paths that have a parent:
@@ -770,7 +755,7 @@ public final class MoreFiles {
    * the collection.
    */
   private static Collection<IOException> addException(
-      @CheckForNull Collection<IOException> exceptions, IOException e) {
+      @Nullable Collection<IOException> exceptions, IOException e) {
     if (exceptions == null) {
       exceptions = new ArrayList<>(); // don't need Set semantics
     }
@@ -783,10 +768,8 @@ public final class MoreFiles {
    * null, the other collection is returned. Otherwise, the elements of {@code other} are added to
    * {@code exceptions} and {@code exceptions} is returned.
    */
-  @CheckForNull
-  private static Collection<IOException> concat(
-      @CheckForNull Collection<IOException> exceptions,
-      @CheckForNull Collection<IOException> other) {
+  private static @Nullable Collection<IOException> concat(
+      @Nullable Collection<IOException> exceptions, @Nullable Collection<IOException> other) {
     if (exceptions == null) {
       return other;
     } else if (other != null) {
@@ -823,8 +806,8 @@ public final class MoreFiles {
     throw deleteFailed;
   }
 
-  @CheckForNull
-  private static NoSuchFileException pathNotFound(Path path, Collection<IOException> exceptions) {
+  private static @Nullable NoSuchFileException pathNotFound(
+      Path path, Collection<IOException> exceptions) {
     if (exceptions.size() != 1) {
       return null;
     }

@@ -16,22 +16,26 @@
 
 package com.google.common.eventbus;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test case for {@link EventBus}.
  *
  * @author Cliff Biffle
  */
+@NullUnmarked
 public class EventBusTest extends TestCase {
   private static final String EVENT = "Hello";
   private static final String BUS_IDENTIFIER = "test-bus";
@@ -67,20 +71,18 @@ public class EventBusTest extends TestCase {
     // Comparable<?> isa Object
     StringCatcher stringCatcher = new StringCatcher();
 
-    final List<Object> objectEvents = Lists.newArrayList();
+    List<Object> objectEvents = new ArrayList<>();
     Object objCatcher =
         new Object() {
-          @SuppressWarnings("unused")
           @Subscribe
           public void eat(Object food) {
             objectEvents.add(food);
           }
         };
 
-    final List<Comparable<?>> compEvents = Lists.newArrayList();
+    List<Comparable<?>> compEvents = new ArrayList<>();
     Object compCatcher =
         new Object() {
-          @SuppressWarnings("unused")
           @Subscribe
           public void eat(Comparable<?> food) {
             compEvents.add(food);
@@ -118,11 +120,10 @@ public class EventBusTest extends TestCase {
   }
 
   public void testSubscriberThrowsException() throws Exception {
-    final RecordingSubscriberExceptionHandler handler = new RecordingSubscriberExceptionHandler();
-    final EventBus eventBus = new EventBus(handler);
-    final RuntimeException exception =
-        new RuntimeException("but culottes have a tendency to ride up!");
-    final Object subscriber =
+    RecordingSubscriberExceptionHandler handler = new RecordingSubscriberExceptionHandler();
+    EventBus eventBus = new EventBus(handler);
+    RuntimeException exception = new RuntimeException("but culottes have a tendency to ride up!");
+    Object subscriber =
         new Object() {
           @Subscribe
           public void throwExceptionOn(String message) {
@@ -143,7 +144,7 @@ public class EventBusTest extends TestCase {
   }
 
   public void testSubscriberThrowsExceptionHandlerThrowsException() throws Exception {
-    final EventBus eventBus =
+    EventBus eventBus =
         new EventBus(
             new SubscriberExceptionHandler() {
               @Override
@@ -151,7 +152,7 @@ public class EventBusTest extends TestCase {
                 throw new RuntimeException();
               }
             });
-    final Object subscriber =
+    Object subscriber =
         new Object() {
           @Subscribe
           public void throwExceptionOn(String message) {
@@ -199,7 +200,7 @@ public class EventBusTest extends TestCase {
     bus.register(catcher2);
     bus.post(EVENT);
 
-    List<String> expectedEvents = Lists.newArrayList();
+    List<String> expectedEvents = new ArrayList<>();
     expectedEvents.add(EVENT);
     expectedEvents.add(EVENT);
 
@@ -228,9 +229,9 @@ public class EventBusTest extends TestCase {
   // NOTE: This test will always pass if register() is thread-safe but may also
   // pass if it isn't, though this is unlikely.
   public void testRegisterThreadSafety() throws Exception {
-    List<StringCatcher> catchers = Lists.newCopyOnWriteArrayList();
-    List<Future<?>> futures = Lists.newArrayList();
-    ExecutorService executor = Executors.newFixedThreadPool(10);
+    List<StringCatcher> catchers = new CopyOnWriteArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
+    ExecutorService executor = newFixedThreadPool(10);
     int numberOfCatchers = 10000;
     for (int i = 0; i < numberOfCatchers; i++) {
       futures.add(executor.submit(new Registrator(bus, catchers)));
@@ -260,8 +261,10 @@ public class EventBusTest extends TestCase {
    * methods to be subscribed (since both are annotated @Subscribe) without specifically checking
    * for bridge methods.
    */
+  // We use an anonymous class to be sure that we generate two methods (bridge and original).
+  @SuppressWarnings("AnonymousToLambda")
   public void testRegistrationWithBridgeMethod() {
-    final AtomicInteger calls = new AtomicInteger();
+    AtomicInteger calls = new AtomicInteger();
     bus.register(
         new Callback<String>() {
           @Subscribe
@@ -287,9 +290,8 @@ public class EventBusTest extends TestCase {
   /** Records thrown exception information. */
   private static final class RecordingSubscriberExceptionHandler
       implements SubscriberExceptionHandler {
-
-    public SubscriberExceptionContext context;
-    public Throwable exception;
+    private SubscriberExceptionContext context;
+    private Throwable exception;
 
     @Override
     public void handleException(Throwable exception, SubscriberExceptionContext context) {
@@ -322,7 +324,7 @@ public class EventBusTest extends TestCase {
    * @author cbiffle
    */
   public static class GhostCatcher {
-    private List<DeadEvent> events = Lists.newArrayList();
+    private final List<DeadEvent> events = new ArrayList<>();
 
     @Subscribe
     public void ohNoesIHaveDied(DeadEvent event) {

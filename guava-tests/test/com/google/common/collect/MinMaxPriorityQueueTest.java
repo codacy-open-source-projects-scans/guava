@@ -16,7 +16,6 @@
 
 package com.google.common.collect;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Platform.reduceExponentIfGwt;
 import static com.google.common.collect.Platform.reduceIterationsIfGwt;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
@@ -40,10 +39,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
@@ -52,7 +54,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link MinMaxPriorityQueue}.
@@ -60,13 +63,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Alexei Stolboushkin
  * @author Sverre Sundsdal
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class MinMaxPriorityQueueTest extends TestCase {
   private static final Ordering<Integer> SOME_COMPARATOR = Ordering.<Integer>natural().reverse();
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(MinMaxPriorityQueueTest.class);
@@ -265,9 +269,9 @@ public class MinMaxPriorityQueueTest extends TestCase {
     assertEquals(1, (int) mmHeap.peek());
     assertEquals(1, (int) mmHeap.peekLast());
     assertEquals(1, (int) mmHeap.pollLast());
-    assertNull(mmHeap.peek());
-    assertNull(mmHeap.peekLast());
-    assertNull(mmHeap.pollLast());
+    assertThat(mmHeap.peek()).isNull();
+    assertThat(mmHeap.peekLast()).isNull();
+    assertThat(mmHeap.pollLast()).isNull();
   }
 
   public void testSmallMinHeap() {
@@ -283,9 +287,9 @@ public class MinMaxPriorityQueueTest extends TestCase {
     assertEquals(3, (int) mmHeap.peekLast());
     assertEquals(3, (int) mmHeap.peek());
     assertEquals(3, (int) mmHeap.poll());
-    assertNull(mmHeap.peekLast());
-    assertNull(mmHeap.peek());
-    assertNull(mmHeap.poll());
+    assertThat(mmHeap.peekLast()).isNull();
+    assertThat(mmHeap.peek()).isNull();
+    assertThat(mmHeap.poll()).isNull();
   }
 
   public void testRemove() {
@@ -346,7 +350,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
 
   /** Tests a failure caused by fix to childless uncle issue. */
   public void testIteratorRegressionChildlessUncle() {
-    final ArrayList<Integer> initial = Lists.newArrayList(1, 15, 13, 8, 9, 10, 11, 14);
+    ArrayList<Integer> initial = Lists.newArrayList(1, 15, 13, 8, 9, 10, 11, 14);
     MinMaxPriorityQueue<Integer> q = MinMaxPriorityQueue.create(initial);
     assertIntact(q);
     q.remove(9);
@@ -509,13 +513,12 @@ public class MinMaxPriorityQueueTest extends TestCase {
     assertEquals(0, (int) mmHeap.peekLast());
   }
 
-  private <T extends Comparable<T>> void runIterator(final List<T> values, int steps)
-      throws Exception {
+  private <T extends Comparable<T>> void runIterator(List<T> values, int steps) throws Exception {
     IteratorTester<T> tester =
         new IteratorTester<T>(
             steps,
             IteratorFeature.MODIFIABLE,
-            Lists.newLinkedList(values),
+            new LinkedList<>(values),
             IteratorTester.KnownOrder.UNKNOWN_ORDER) {
           private @Nullable MinMaxPriorityQueue<T> mmHeap;
 
@@ -527,7 +530,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
 
           @Override
           protected void verify(List<T> elements) {
-            assertEquals(newHashSet(elements), newHashSet(mmHeap.iterator()));
+            assertEquals(new HashSet<>(elements), newHashSet(mmHeap.iterator()));
             assertIntact(mmHeap);
           }
         };
@@ -536,7 +539,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
 
   public void testIteratorTester() throws Exception {
     Random random = new Random(0);
-    List<Integer> list = Lists.newArrayList();
+    List<Integer> list = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
       list.add(random.nextInt());
     }
@@ -713,7 +716,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
     int size = 8;
     List<Integer> expected = createOrderedList(size);
     MinMaxPriorityQueue<Integer> q = MinMaxPriorityQueue.create(expected);
-    List<Integer> contents = Lists.newArrayList(expected);
+    List<Integer> contents = new ArrayList<>(expected);
     List<Integer> elements = Lists.newArrayListWithCapacity(size);
     while (!q.isEmpty()) {
       assertThat(q).containsExactlyElementsIn(contents);
@@ -942,7 +945,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
 
   private static void assertEqualsUsingSeed(
       long seed, @Nullable Object expected, @Nullable Object actual) {
-    if (!equal(actual, expected)) {
+    if (!Objects.equals(actual, expected)) {
       // fail(), but with the JUnit-supplied message.
       assertEquals("Using seed " + seed, expected, actual);
     }
@@ -950,7 +953,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
 
   private static void assertEqualsUsingStartedWith(
       Collection<?> startedWith, @Nullable Object expected, @Nullable Object actual) {
-    if (!equal(actual, expected)) {
+    if (!Objects.equals(actual, expected)) {
       // fail(), but with the JUnit-supplied message.
       assertEquals("Started with " + startedWith, expected, actual);
     }

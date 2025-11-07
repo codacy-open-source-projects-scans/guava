@@ -18,7 +18,7 @@ import com.google.common.annotations.Beta;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link PrimitiveSink} that can compute a hash code after reading the input. Each hasher should
@@ -38,11 +38,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * were inserted, not how those bytes were chunked into discrete put() operations. For example, the
  * following three expressions all generate colliding hash codes:
  *
- * <pre>{@code
+ * {@snippet :
  * newHasher().putByte(b1).putByte(b2).putByte(b3).hash()
  * newHasher().putByte(b1).putBytes(new byte[] { b2, b3 }).hash()
  * newHasher().putBytes(new byte[] { b1, b2, b3 }).hash()
- * }</pre>
+ * }
  *
  * <p>If you wish to avoid this, you should either prepend or append the size of each chunk. Keep in
  * mind that when dealing with char sequences, the encoded form of two concatenated char sequences
@@ -54,7 +54,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 11.0
  */
 @Beta
-@ElementTypesAreNonnullByDefault
 public interface Hasher extends PrimitiveSink {
   @CanIgnoreReturnValue
   @Override

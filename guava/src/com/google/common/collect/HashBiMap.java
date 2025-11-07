@@ -23,7 +23,6 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Objects;
 import com.google.common.collect.Maps.IteratorBasedAbstractMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -34,16 +33,17 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link BiMap} backed by two hash tables. This implementation allows null keys and values. A
@@ -58,8 +58,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  * @since 2.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Object>
     extends IteratorBasedAbstractMap<K, V> implements BiMap<K, V>, Serializable {
 
@@ -91,7 +90,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   static final class BiEntry<K extends @Nullable Object, V extends @Nullable Object>
-      extends ImmutableEntry<K, V> {
+      extends SimpleImmutableEntry<K, V> {
     final int keyHash;
     final int valueHash;
 
@@ -101,11 +100,11 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     // Using @Weak is necessary to avoid retain-cycles between BiEntry instances on iOS,
     // which would cause memory leaks when non-empty HashBiMap with cyclic BiEntry
     // instances is deallocated.
-    @CheckForNull BiEntry<K, V> nextInKToVBucket;
-    @Weak @CheckForNull BiEntry<K, V> nextInVToKBucket;
+    @Nullable BiEntry<K, V> nextInKToVBucket;
+    @Weak @Nullable BiEntry<K, V> nextInVToKBucket;
 
-    @Weak @CheckForNull BiEntry<K, V> nextInKeyInsertionOrder;
-    @Weak @CheckForNull BiEntry<K, V> prevInKeyInsertionOrder;
+    @Weak @Nullable BiEntry<K, V> nextInKeyInsertionOrder;
+    @Weak @Nullable BiEntry<K, V> prevInKeyInsertionOrder;
 
     BiEntry(@ParametricNullness K key, int keyHash, @ParametricNullness V value, int valueHash) {
       super(key, value);
@@ -127,8 +126,8 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   @SuppressWarnings("nullness:initialization.field.uninitialized") // For J2KT (see above)
   private transient @Nullable BiEntry<K, V>[] hashTableVToK;
 
-  @Weak @CheckForNull private transient BiEntry<K, V> firstInKeyInsertionOrder;
-  @Weak @CheckForNull private transient BiEntry<K, V> lastInKeyInsertionOrder;
+  @Weak private transient @Nullable BiEntry<K, V> firstInKeyInsertionOrder;
+  @Weak private transient @Nullable BiEntry<K, V> lastInKeyInsertionOrder;
   private transient int size;
   private transient int mask;
   private transient int modCount;
@@ -202,7 +201,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     modCount++;
   }
 
-  private void insert(BiEntry<K, V> entry, @CheckForNull BiEntry<K, V> oldEntryForKey) {
+  private void insert(BiEntry<K, V> entry, @Nullable BiEntry<K, V> oldEntryForKey) {
     int keyBucket = entry.keyHash & mask;
     entry.nextInKToVBucket = hashTableKToV[keyBucket];
     hashTableKToV[keyBucket] = entry;
@@ -239,24 +238,22 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     modCount++;
   }
 
-  @CheckForNull
-  private BiEntry<K, V> seekByKey(@CheckForNull Object key, int keyHash) {
+  private @Nullable BiEntry<K, V> seekByKey(@Nullable Object key, int keyHash) {
     for (BiEntry<K, V> entry = hashTableKToV[keyHash & mask];
         entry != null;
         entry = entry.nextInKToVBucket) {
-      if (keyHash == entry.keyHash && Objects.equal(key, entry.key)) {
+      if (keyHash == entry.keyHash && Objects.equals(key, entry.getKey())) {
         return entry;
       }
     }
     return null;
   }
 
-  @CheckForNull
-  private BiEntry<K, V> seekByValue(@CheckForNull Object value, int valueHash) {
+  private @Nullable BiEntry<K, V> seekByValue(@Nullable Object value, int valueHash) {
     for (BiEntry<K, V> entry = hashTableVToK[valueHash & mask];
         entry != null;
         entry = entry.nextInVToKBucket) {
-      if (valueHash == entry.valueHash && Objects.equal(value, entry.value)) {
+      if (valueHash == entry.valueHash && Objects.equals(value, entry.getValue())) {
         return entry;
       }
     }
@@ -264,7 +261,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   @Override
-  public boolean containsKey(@CheckForNull Object key) {
+  public boolean containsKey(@Nullable Object key) {
     return seekByKey(key, smearedHash(key)) != null;
   }
 
@@ -279,32 +276,29 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
    * @return true if a mapping exists from a key to the specified value
    */
   @Override
-  public boolean containsValue(@CheckForNull Object value) {
+  public boolean containsValue(@Nullable Object value) {
     return seekByValue(value, smearedHash(value)) != null;
   }
 
   @Override
-  @CheckForNull
-  public V get(@CheckForNull Object key) {
+  public @Nullable V get(@Nullable Object key) {
     return Maps.valueOrNull(seekByKey(key, smearedHash(key)));
   }
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V put(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V put(@ParametricNullness K key, @ParametricNullness V value) {
     return put(key, value, false);
   }
 
-  @CheckForNull
-  private V put(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
+  private @Nullable V put(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
     int keyHash = smearedHash(key);
     int valueHash = smearedHash(value);
 
     BiEntry<K, V> oldEntryForKey = seekByKey(key, keyHash);
     if (oldEntryForKey != null
         && valueHash == oldEntryForKey.valueHash
-        && Objects.equal(value, oldEntryForKey.value)) {
+        && Objects.equals(value, oldEntryForKey.getValue())) {
       return value;
     }
 
@@ -323,7 +317,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
       insert(newEntry, oldEntryForKey);
       oldEntryForKey.prevInKeyInsertionOrder = null;
       oldEntryForKey.nextInKeyInsertionOrder = null;
-      return oldEntryForKey.value;
+      return oldEntryForKey.getValue();
     } else {
       insert(newEntry, null);
       rehashIfNecessary();
@@ -333,14 +327,13 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
     return put(key, value, true);
   }
 
   @CanIgnoreReturnValue
-  @CheckForNull
-  private K putInverse(@ParametricNullness V value, @ParametricNullness K key, boolean force) {
+  private @Nullable K putInverse(
+      @ParametricNullness V value, @ParametricNullness K key, boolean force) {
     int valueHash = smearedHash(value);
     int keyHash = smearedHash(key);
 
@@ -348,7 +341,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     BiEntry<K, V> oldEntryForKey = seekByKey(key, keyHash);
     if (oldEntryForValue != null
         && keyHash == oldEntryForValue.keyHash
-        && Objects.equal(key, oldEntryForValue.key)) {
+        && Objects.equals(key, oldEntryForValue.getKey())) {
       return key;
     } else if (oldEntryForKey != null && !force) {
       throw new IllegalArgumentException("key already present: " + key);
@@ -410,8 +403,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V remove(@CheckForNull Object key) {
+  public @Nullable V remove(@Nullable Object key) {
     BiEntry<K, V> entry = seekByKey(key, smearedHash(key));
     if (entry == null) {
       return null;
@@ -419,7 +411,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
       delete(entry);
       entry.prevInKeyInsertionOrder = null;
       entry.nextInKeyInsertionOrder = null;
-      return entry.value;
+      return entry.getValue();
     }
   }
 
@@ -439,8 +431,8 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   private abstract class Itr<T extends @Nullable Object> implements Iterator<T> {
-    @CheckForNull BiEntry<K, V> next = firstInKeyInsertionOrder;
-    @CheckForNull BiEntry<K, V> toRemove = null;
+    @Nullable BiEntry<K, V> next = firstInKeyInsertionOrder;
+    @Nullable BiEntry<K, V> toRemove = null;
     int expectedModCount = modCount;
     int remaining = size();
 
@@ -498,13 +490,13 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
         @Override
         @ParametricNullness
         K output(BiEntry<K, V> entry) {
-          return entry.key;
+          return entry.getKey();
         }
       };
     }
 
     @Override
-    public boolean remove(@CheckForNull Object o) {
+    public boolean remove(@Nullable Object o) {
       BiEntry<K, V> entry = seekByKey(o, smearedHash(o));
       if (entry == null) {
         return false;
@@ -530,7 +522,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
         return new MapEntry(entry);
       }
 
-      class MapEntry extends AbstractMapEntry<K, V> {
+      final class MapEntry extends AbstractMapEntry<K, V> {
         private BiEntry<K, V> delegate;
 
         MapEntry(BiEntry<K, V> entry) {
@@ -540,26 +532,27 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
         @Override
         @ParametricNullness
         public K getKey() {
-          return delegate.key;
+          return delegate.getKey();
         }
 
         @Override
         @ParametricNullness
         public V getValue() {
-          return delegate.value;
+          return delegate.getValue();
         }
 
         @Override
         @ParametricNullness
         public V setValue(@ParametricNullness V value) {
-          V oldValue = delegate.value;
+          V oldValue = delegate.getValue();
           int valueHash = smearedHash(value);
-          if (valueHash == delegate.valueHash && Objects.equal(value, oldValue)) {
+          if (valueHash == delegate.valueHash && Objects.equals(value, oldValue)) {
             return value;
           }
           checkArgument(seekByValue(value, valueHash) == null, "value already present: %s", value);
           delete(delegate);
-          BiEntry<K, V> newEntry = new BiEntry<>(delegate.key, delegate.keyHash, value, valueHash);
+          BiEntry<K, V> newEntry =
+              new BiEntry<>(delegate.getKey(), delegate.keyHash, value, valueHash);
           insert(newEntry, delegate);
           delegate.prevInKeyInsertionOrder = null;
           delegate.nextInKeyInsertionOrder = null;
@@ -580,7 +573,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     for (BiEntry<K, V> entry = firstInKeyInsertionOrder;
         entry != null;
         entry = entry.nextInKeyInsertionOrder) {
-      action.accept(entry.key, entry.value);
+      action.accept(entry.getKey(), entry.getValue());
     }
   }
 
@@ -590,11 +583,11 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     BiEntry<K, V> oldFirst = firstInKeyInsertionOrder;
     clear();
     for (BiEntry<K, V> entry = oldFirst; entry != null; entry = entry.nextInKeyInsertionOrder) {
-      put(entry.key, function.apply(entry.key, entry.value));
+      put(entry.getKey(), function.apply(entry.getKey(), entry.getValue()));
     }
   }
 
-  @LazyInit @RetainedWith @CheckForNull private transient BiMap<V, K> inverse;
+  @LazyInit @RetainedWith private transient @Nullable BiMap<V, K> inverse;
 
   @Override
   public BiMap<V, K> inverse() {
@@ -619,32 +612,28 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean containsKey(@CheckForNull Object value) {
+    public boolean containsKey(@Nullable Object value) {
       return forward().containsValue(value);
     }
 
     @Override
-    @CheckForNull
-    public K get(@CheckForNull Object value) {
+    public @Nullable K get(@Nullable Object value) {
       return Maps.keyOrNull(seekByValue(value, smearedHash(value)));
     }
 
     @CanIgnoreReturnValue
     @Override
-    @CheckForNull
-    public K put(@ParametricNullness V value, @ParametricNullness K key) {
+    public @Nullable K put(@ParametricNullness V value, @ParametricNullness K key) {
       return putInverse(value, key, false);
     }
 
     @Override
-    @CheckForNull
-    public K forcePut(@ParametricNullness V value, @ParametricNullness K key) {
+    public @Nullable K forcePut(@ParametricNullness V value, @ParametricNullness K key) {
       return putInverse(value, key, true);
     }
 
     @Override
-    @CheckForNull
-    public K remove(@CheckForNull Object value) {
+    public @Nullable K remove(@Nullable Object value) {
       BiEntry<K, V> entry = seekByValue(value, smearedHash(value));
       if (entry == null) {
         return null;
@@ -652,7 +641,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
         delete(entry);
         entry.prevInKeyInsertionOrder = null;
         entry.nextInKeyInsertionOrder = null;
-        return entry.key;
+        return entry.getKey();
       }
     }
 
@@ -672,7 +661,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
       }
 
       @Override
-      public boolean remove(@CheckForNull Object o) {
+      public boolean remove(@Nullable Object o) {
         BiEntry<K, V> entry = seekByValue(o, smearedHash(o));
         if (entry == null) {
           return false;
@@ -688,7 +677,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
           @Override
           @ParametricNullness
           V output(BiEntry<K, V> entry) {
-            return entry.value;
+            return entry.getValue();
           }
         };
       }
@@ -707,7 +696,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
           return new InverseEntry(entry);
         }
 
-        class InverseEntry extends AbstractMapEntry<V, K> {
+        final class InverseEntry extends AbstractMapEntry<V, K> {
           private BiEntry<K, V> delegate;
 
           InverseEntry(BiEntry<K, V> entry) {
@@ -717,27 +706,27 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
           @Override
           @ParametricNullness
           public V getKey() {
-            return delegate.value;
+            return delegate.getValue();
           }
 
           @Override
           @ParametricNullness
           public K getValue() {
-            return delegate.key;
+            return delegate.getKey();
           }
 
           @Override
           @ParametricNullness
           public K setValue(@ParametricNullness K key) {
-            K oldKey = delegate.key;
+            K oldKey = delegate.getKey();
             int keyHash = smearedHash(key);
-            if (keyHash == delegate.keyHash && Objects.equal(key, oldKey)) {
+            if (keyHash == delegate.keyHash && Objects.equals(key, oldKey)) {
               return key;
             }
             checkArgument(seekByKey(key, keyHash) == null, "value already present: %s", key);
             delete(delegate);
             BiEntry<K, V> newEntry =
-                new BiEntry<>(key, keyHash, delegate.value, delegate.valueHash);
+                new BiEntry<>(key, keyHash, delegate.getValue(), delegate.valueHash);
             delegate = newEntry;
             insert(newEntry, null);
             expectedModCount = modCount;
@@ -759,7 +748,7 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
       BiEntry<K, V> oldFirst = firstInKeyInsertionOrder;
       clear();
       for (BiEntry<K, V> entry = oldFirst; entry != null; entry = entry.nextInKeyInsertionOrder) {
-        put(entry.value, function.apply(entry.value, entry.key));
+        put(entry.getValue(), function.apply(entry.getValue(), entry.getKey()));
       }
     }
 
@@ -767,9 +756,9 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
       return new InverseSerializedForm<>(HashBiMap.this);
     }
 
-    @GwtIncompatible // serialization
+    @GwtIncompatible
     @J2ktIncompatible
-    private void readObject(ObjectInputStream in) throws InvalidObjectException {
+        private void readObject(ObjectInputStream in) throws InvalidObjectException {
       throw new InvalidObjectException("Use InverseSerializedForm");
     }
   }
@@ -791,23 +780,21 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   /**
    * @serialData the number of entries, first key, first value, second key, second value, and so on.
    */
-  @GwtIncompatible // java.io.ObjectOutputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void writeObject(ObjectOutputStream stream) throws IOException {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     Serialization.writeMap(this, stream);
   }
 
-  @GwtIncompatible // java.io.ObjectInputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
     int size = Serialization.readCount(stream);
     init(16); // resist hostile attempts to allocate gratuitous heap
     Serialization.populateMap(this, stream, size);
   }
 
-  @GwtIncompatible // Not needed in emulated source
-  @J2ktIncompatible
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

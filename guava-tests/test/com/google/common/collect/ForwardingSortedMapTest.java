@@ -36,13 +36,15 @@ import java.util.SortedMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code ForwardingSortedMap}.
  *
  * @author Robert KonigsbergSortedMapFeature
  */
+@NullUnmarked
 public class ForwardingSortedMapTest extends TestCase {
   static class StandardImplForwardingSortedMap<K, V> extends ForwardingSortedMap<K, V> {
     private final SortedMap<K, V> backingSortedMap;
@@ -127,6 +129,7 @@ public class ForwardingSortedMapTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -192,7 +195,7 @@ public class ForwardingSortedMapTest extends TestCase {
                     return new StandardImplForwardingSortedMap<>(builder.build());
                   }
                 })
-            .named("ForwardingSortedMap[ImmutableSortedMap] with standard " + "implementations")
+            .named("ForwardingSortedMap[ImmutableSortedMap] with standard implementations")
             .withFeatures(
                 CollectionSize.ANY,
                 MapFeature.REJECTS_DUPLICATES_AT_CREATION,
@@ -224,7 +227,7 @@ public class ForwardingSortedMapTest extends TestCase {
         .testEquals();
   }
 
-  private static <K, V> SortedMap<K, V> wrap(final SortedMap<K, V> delegate) {
+  private static <K, V> SortedMap<K, V> wrap(SortedMap<K, V> delegate) {
     return new ForwardingSortedMap<K, V>() {
       @Override
       protected SortedMap<K, V> delegate() {

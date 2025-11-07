@@ -25,6 +25,7 @@ import static com.google.common.util.concurrent.Futures.immediateCancelledFuture
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
 import static com.google.common.util.concurrent.MoreExecutors.shutdownAndAwaitTermination;
 import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
@@ -75,6 +76,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 import org.mockito.Mockito;
 
 /**
@@ -83,6 +85,7 @@ import org.mockito.Mockito;
  * ClosingFuture#finishToValueAndCloser(ValueAndCloserConsumer, Executor)} paths to complete a
  * {@link ClosingFuture} pipeline.
  */
+@NullUnmarked
 public abstract class AbstractClosingFutureTest extends TestCase {
   // TODO(dpb): Use Expect once that supports JUnit 3, or we can use JUnit 4.
   final List<AssertionError> failures = new ArrayList<>();
@@ -95,8 +98,7 @@ public abstract class AbstractClosingFutureTest extends TestCase {
             }
           });
 
-  final ListeningExecutorService executor =
-      MoreExecutors.listeningDecorator(newSingleThreadExecutor());
+  final ListeningExecutorService executor = listeningDecorator(newSingleThreadExecutor());
   final ExecutorService closingExecutor = newSingleThreadExecutor();
 
   final TestCloseable closeable1 = new TestCloseable("closeable1");
@@ -710,10 +712,10 @@ public abstract class AbstractClosingFutureTest extends TestCase {
   }
 
   public void testWhenAllComplete_call() throws Exception {
-    final ClosingFuture<String> input1 = ClosingFuture.from(immediateFuture("value1"));
-    final ClosingFuture<Object> input2Failed = failedClosingFuture();
-    final ClosingFuture<String> nonInput = ClosingFuture.from(immediateFuture("value3"));
-    final AtomicReference<ClosingFuture.Peeker> capturedPeeker = new AtomicReference<>();
+    ClosingFuture<String> input1 = ClosingFuture.from(immediateFuture("value1"));
+    ClosingFuture<Object> input2Failed = failedClosingFuture();
+    ClosingFuture<String> nonInput = ClosingFuture.from(immediateFuture("value3"));
+    AtomicReference<ClosingFuture.Peeker> capturedPeeker = new AtomicReference<>();
     ClosingFuture<TestCloseable> closingFuture =
         ClosingFuture.whenAllComplete(ImmutableList.of(input1, input2Failed))
             .call(
@@ -791,10 +793,10 @@ public abstract class AbstractClosingFutureTest extends TestCase {
   }
 
   public void testWhenAllComplete_callAsync() throws Exception {
-    final ClosingFuture<String> input1 = ClosingFuture.from(immediateFuture("value1"));
-    final ClosingFuture<Object> input2Failed = failedClosingFuture();
-    final ClosingFuture<String> nonInput = ClosingFuture.from(immediateFuture("value3"));
-    final AtomicReference<ClosingFuture.Peeker> capturedPeeker = new AtomicReference<>();
+    ClosingFuture<String> input1 = ClosingFuture.from(immediateFuture("value1"));
+    ClosingFuture<Object> input2Failed = failedClosingFuture();
+    ClosingFuture<String> nonInput = ClosingFuture.from(immediateFuture("value3"));
+    AtomicReference<ClosingFuture.Peeker> capturedPeeker = new AtomicReference<>();
     ClosingFuture<TestCloseable> closingFuture =
         ClosingFuture.whenAllComplete(ImmutableList.of(input1, input2Failed))
             .callAsync(
@@ -1790,7 +1792,7 @@ public abstract class AbstractClosingFutureTest extends TestCase {
       return waitFor(closingFunction5, ClosingFunction5.class);
     }
 
-    <T> T waitFor(final T delegate, final Class<T> type) {
+    <T> T waitFor(T delegate, Class<T> type) {
       checkState(proxy == null);
       T proxyObject =
           Reflection.newProxy(

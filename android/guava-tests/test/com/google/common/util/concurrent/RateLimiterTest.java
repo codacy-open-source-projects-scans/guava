@@ -27,17 +27,18 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.NullPointerTester.Visibility;
 import com.google.common.util.concurrent.RateLimiter.SleepingStopwatch;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 import org.mockito.Mockito;
 
 /**
@@ -45,6 +46,7 @@ import org.mockito.Mockito;
  *
  * @author Dimitris Andreou
  */
+@NullUnmarked
 public class RateLimiterTest extends TestCase {
   private static final double EPSILON = 1e-8;
 
@@ -422,10 +424,10 @@ public class RateLimiterTest extends TestCase {
       limiter.setRate(rate);
       long burst = measureTotalTimeMillis(limiter, oneSecWorthOfWork, new Random());
       // we allow one second worth of work to go in a burst (i.e. take less than a second)
-      assertTrue(burst <= 1000);
+      assertThat(burst).isAtMost(1000);
       long afterBurst = measureTotalTimeMillis(limiter, oneSecWorthOfWork, new Random());
       // but work beyond that must take at least one second
-      assertTrue(afterBurst >= 1000);
+      assertThat(afterBurst).isAtLeast(1000);
     }
   }
 
@@ -494,7 +496,7 @@ public class RateLimiterTest extends TestCase {
    */
   static class FakeStopwatch extends SleepingStopwatch {
     long instant = 0L;
-    final List<String> events = Lists.newArrayList();
+    final List<String> events = new ArrayList<>();
 
     @Override
     public long readMicros() {
@@ -507,7 +509,7 @@ public class RateLimiterTest extends TestCase {
 
     void sleepMicros(String caption, long micros) {
       instant += MICROSECONDS.toNanos(micros);
-      events.add(caption + String.format(Locale.ROOT, "%3.2f", (micros / 1000000.0)));
+      events.add(caption + String.format(Locale.ROOT, "%3.2f", micros / 1000000.0));
     }
 
     @Override

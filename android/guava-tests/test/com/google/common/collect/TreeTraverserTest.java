@@ -24,14 +24,17 @@ import com.google.common.base.Function;
 import com.google.common.testing.NullPointerTester;
 import java.util.List;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for {@code TreeTraverser}.
  *
+ * @deprecated Use {@link com.google.common.graph.Traverser} instead.
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
+@Deprecated // Use com.google.common.graph.Traverser instead.
 public class TreeTraverserTest extends TestCase {
   private static class Node {
     final char value;
@@ -44,7 +47,7 @@ public class TreeTraverserTest extends TestCase {
   private static final class Tree extends Node {
     final List<Tree> children;
 
-    public Tree(char value, Tree... children) {
+    Tree(char value, Tree... children) {
       super(value);
       this.children = asList(children);
     }

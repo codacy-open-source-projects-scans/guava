@@ -37,6 +37,7 @@ import static java.util.logging.Level.FINER;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
 
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.FluentIterable;
@@ -47,7 +48,6 @@ import com.google.common.util.concurrent.Futures.FutureCombiner;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotMock;
 import com.google.j2objc.annotations.RetainedWith;
-import java.io.Closeable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -58,8 +58,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A step in a pipeline of an asynchronous computation. When the last step in the computation is
@@ -140,7 +139,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * to be closed asynchronously <b>after</b> the returned {@code Future} is done: the future
  * completes before closing starts, rather than once it has finished.
  *
- * <pre>{@code
+ * {@snippet :
  * FluentFuture<UserName> userName =
  *     ClosingFuture.submit(
  *             closer -> closer.eventuallyClose(database.newTransaction(), closingExecutor),
@@ -149,7 +148,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         .transform((closer, result) -> result.get("userName"), directExecutor())
  *         .catching(DBException.class, e -> "no user", directExecutor())
  *         .finishToFuture();
- * }</pre>
+ * }
  *
  * In this example, when the {@code userName} {@link Future} is done, the transaction and the query
  * result cursor will both be closed, even if the operation is cancelled or fails.
@@ -160,7 +159,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * {@link #finishToValueAndCloser(ValueAndCloserConsumer, Executor)} to get an object that holds the
  * final result. You then call {@link ValueAndCloser#closeAsync()} to close the captured objects.
  *
- * <pre>{@code
+ * {@snippet :
  *     ClosingFuture.submit(
  *             closer -> closer.eventuallyClose(database.newTransaction(), closingExecutor),
  *             executor)
@@ -177,7 +176,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * } finally {
  *   userNameValueAndCloser.closeAsync();
  * }
- * }</pre>
+ * }
  *
  * In this example, when {@code userNameValueAndCloser.closeAsync()} is called, the transaction and
  * the query result cursor will both be closed, even if the operation is cancelled or fails.
@@ -191,8 +190,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 // TODO(dpb): Consider reusing one CloseableList for the entire pipeline, modulo combinations.
 @DoNotMock("Use ClosingFuture.from(Futures.immediate*Future)")
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
-// TODO(dpb): GWT compatibility.
+@GwtIncompatible // TODO(dpb): GWT compatibility.
 public final class ClosingFuture<V extends @Nullable Object> {
 
   private static final LazyLogger logger = new LazyLogger(ClosingFuture.class);
@@ -211,23 +209,15 @@ public final class ClosingFuture<V extends @Nullable Object> {
     /**
      * Captures an object to be closed when a {@link ClosingFuture} pipeline is done.
      *
-     * <p>For users of the {@code -jre} flavor of Guava, the object can be any {@code
-     * AutoCloseable}. For users of the {@code -android} flavor, the object must be a {@code
-     * Closeable}. (For more about the flavors, see <a
-     * href="https://github.com/google/guava#adding-guava-to-your-build">Adding Guava to your
-     * build</a>.)
-     *
      * <p>Be careful when targeting an older SDK than you are building against (most commonly when
      * building for Android): Ensure that any object you pass implements the interface not just in
      * your current SDK version but also at the oldest version you support. For example, <a
-     * href="https://developer.android.com/sdk/api_diff/16/">API Level 16</a> is the first version
-     * in which {@code Cursor} is {@code Closeable}. To support older versions, pass a wrapper
-     * {@code Closeable} with a method reference like {@code cursor::close}.
+     * href="https://developer.android.com/sdk/api_diff/28/changes/android.media.MediaDrm#android.media.MediaDrm.close_added()">API
+     * Level 28</a> is the first version in which {@code MediaDrm} is {@code AutoCloseable}. To
+     * support older versions, pass a wrapper {@code AutoCloseable} with a method reference like
+     * {@code mediaDrm::release}.
      *
-     * <p>Note that this method is still binary-compatible between flavors because the erasure of
-     * its parameter type is {@code Object}, not {@code AutoCloseable} or {@code Closeable}.
-     *
-     * @param closeable the object to be closed (see notes above)
+     * @param closeable the object to be closed
      * @param closingExecutor the object will be closed on this executor
      * @return the first argument
      */
@@ -441,7 +431,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    * Starts a {@link ClosingFuture} pipeline with a {@link ListenableFuture}.
    *
    * <p>{@code future}'s value will not be closed when the pipeline is done even if {@code V}
-   * implements {@link Closeable}. In order to start a pipeline with a value that will be closed
+   * implements {@link AutoCloseable}. In order to start a pipeline with a value that will be closed
    * when the pipeline is done, use {@link #submit(ClosingCallable, Executor)} instead.
    */
   public static <V extends @Nullable Object> ClosingFuture<V> from(ListenableFuture<V> future) {
@@ -471,15 +461,14 @@ public final class ClosingFuture<V extends @Nullable Object> {
    */
   @Deprecated
   public static <C extends @Nullable Object & @Nullable AutoCloseable>
-      ClosingFuture<C> eventuallyClosing(
-          ListenableFuture<C> future, final Executor closingExecutor) {
+      ClosingFuture<C> eventuallyClosing(ListenableFuture<C> future, Executor closingExecutor) {
     checkNotNull(closingExecutor);
-    final ClosingFuture<C> closingFuture = new ClosingFuture<>(nonCancellationPropagating(future));
+    ClosingFuture<C> closingFuture = new ClosingFuture<>(nonCancellationPropagating(future));
     Futures.addCallback(
         future,
         new FutureCallback<@Nullable AutoCloseable>() {
           @Override
-          public void onSuccess(@CheckForNull AutoCloseable result) {
+          public void onSuccess(@Nullable AutoCloseable result) {
             closingFuture.closeables.closer.eventuallyClose(result, closingExecutor);
           }
 
@@ -663,10 +652,10 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *
    * <p>Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * ClosingFuture<List<Row>> rowsFuture =
    *     queryFuture.transform((closer, result) -> result.getRows(), executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link ListenableFuture#addListener} documentation. All its warnings
@@ -684,7 +673,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *     finished}
    */
   public <U extends @Nullable Object> ClosingFuture<U> transform(
-      final ClosingFunction<? super V, U> function, Executor executor) {
+      ClosingFunction<? super V, U> function, Executor executor) {
     checkNotNull(function);
     AsyncFunction<V, U> applyFunction =
         new AsyncFunction<V, U>() {
@@ -736,14 +725,14 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *
    * <p>Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Result.getRowsClosingFuture() returns a ClosingFuture.
    * ClosingFuture<List<Row>> rowsFuture =
    *     queryFuture.transformAsync((closer, result) -> result.getRowsClosingFuture(), executor);
    *
    * // Result.writeRowsToOutputStreamFuture() returns a ListenableFuture that resolves to the
    * // number of written rows. openOutputFile() returns a FileOutputStream (which implements
-   * // Closeable).
+   * // AutoCloseable).
    * ClosingFuture<Integer> rowsFuture2 =
    *     queryFuture.transformAsync(
    *         (closer, result) -> {
@@ -756,7 +745,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    * ClosingFuture<List<Row>> rowsFuture3 =
    *     queryFuture.transformAsync(withoutCloser(Result::getRowsFuture), executor);
    *
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link ListenableFuture#addListener} documentation. All its warnings
@@ -778,7 +767,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *     finished}
    */
   public <U extends @Nullable Object> ClosingFuture<U> transformAsync(
-      final AsyncClosingFunction<? super V, U> function, Executor executor) {
+      AsyncClosingFunction<? super V, U> function, Executor executor) {
     checkNotNull(function);
     AsyncFunction<V, U> applyFunction =
         new AsyncFunction<V, U>() {
@@ -805,31 +794,26 @@ public final class ClosingFuture<V extends @Nullable Object> {
    * meets these conditions:
    *
    * <ul>
-   *   <li>It does not need to capture any {@link Closeable} objects by calling {@link
+   *   <li>It does not need to capture any {@link AutoCloseable} objects by calling {@link
    *       DeferredCloser#eventuallyClose(Object, Executor)}.
    *   <li>It returns a {@link ListenableFuture}.
    * </ul>
    *
    * <p>Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Result.getRowsFuture() returns a ListenableFuture.
    * ClosingFuture<List<Row>> rowsFuture =
    *     queryFuture.transformAsync(withoutCloser(Result::getRowsFuture), executor);
-   * }</pre>
+   * }
    *
    * @param function transforms the value of a {@code ClosingFuture} step to a {@link
    *     ListenableFuture} with the value of a derived step
    */
   public static <V extends @Nullable Object, U extends @Nullable Object>
-      AsyncClosingFunction<V, U> withoutCloser(final AsyncFunction<V, U> function) {
+      AsyncClosingFunction<V, U> withoutCloser(AsyncFunction<V, U> function) {
     checkNotNull(function);
-    return new AsyncClosingFunction<V, U>() {
-      @Override
-      public ClosingFuture<U> apply(DeferredCloser closer, V input) throws Exception {
-        return ClosingFuture.from(function.apply(input));
-      }
-    };
+    return (closer, input) -> ClosingFuture.from(function.apply(input));
   }
 
   /**
@@ -846,11 +830,11 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *
    * <p>Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * ClosingFuture<QueryResult> queryFuture =
    *     queryFuture.catching(
    *         QueryException.class, (closer, x) -> Query.emptyQueryResult(), executor);
-   * }</pre>
+   * }
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link ListenableFuture#addListener} documentation. All its warnings
@@ -880,7 +864,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
   // Avoids generic type capture inconsistency problems where |? extends V| is incompatible with V.
   private <X extends Throwable, W extends V> ClosingFuture<V> catchingMoreGeneric(
-      Class<X> exceptionType, final ClosingFunction<? super X, W> fallback, Executor executor) {
+      Class<X> exceptionType, ClosingFunction<? super X, W> fallback, Executor executor) {
     checkNotNull(fallback);
     AsyncFunction<X, W> applyFallback =
         new AsyncFunction<X, W>() {
@@ -934,13 +918,12 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *
    * <p>Example usage:
    *
-   * <pre>{@code
+   * {@snippet :
    * // Fall back to a secondary input stream in case of IOException.
    * ClosingFuture<InputStream> inputFuture =
    *     firstInputFuture.catchingAsync(
    *         IOException.class, (closer, x) -> secondaryInputStreamClosingFuture(), executor);
    * }
-   * }</pre>
    *
    * <p>When selecting an executor, note that {@code directExecutor} is dangerous in some cases. See
    * the discussion in the {@link ListenableFuture#addListener} documentation. All its warnings
@@ -977,9 +960,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
   // Avoids generic type capture inconsistency problems where |? extends V| is incompatible with V.
   private <X extends Throwable, W extends V> ClosingFuture<V> catchingAsyncMoreGeneric(
-      Class<X> exceptionType,
-      final AsyncClosingFunction<? super X, W> fallback,
-      Executor executor) {
+      Class<X> exceptionType, AsyncClosingFunction<? super X, W> fallback, Executor executor) {
     checkNotNull(fallback);
     AsyncFunction<X, W> asyncFunction =
         new AsyncFunction<X, W>() {
@@ -1016,13 +997,10 @@ public final class ClosingFuture<V extends @Nullable Object> {
     if (compareAndUpdateState(OPEN, WILL_CLOSE)) {
       logger.get().log(FINER, "will close {0}", this);
       future.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              checkAndUpdateState(WILL_CLOSE, CLOSING);
-              close();
-              checkAndUpdateState(CLOSING, CLOSED);
-            }
+          () -> {
+            checkAndUpdateState(WILL_CLOSE, CLOSING);
+            close();
+            checkAndUpdateState(CLOSING, CLOSED);
           },
           directExecutor());
     } else {
@@ -1059,7 +1037,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *     operation is done
    */
   public void finishToValueAndCloser(
-      final ValueAndCloserConsumer<? super V> consumer, Executor executor) {
+      ValueAndCloserConsumer<? super V> consumer, Executor executor) {
     checkNotNull(consumer);
     if (!compareAndUpdateState(OPEN, WILL_CREATE_VALUE_AND_CLOSER)) {
       switch (state.get()) {
@@ -1081,14 +1059,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
       }
       throw new AssertionError(state);
     }
-    future.addListener(
-        new Runnable() {
-          @Override
-          public void run() {
-            provideValueAndCloser(consumer, ClosingFuture.this);
-          }
-        },
-        executor);
+    future.addListener(() -> provideValueAndCloser(consumer, ClosingFuture.this), executor);
   }
 
   private static <C extends @Nullable Object, V extends C> void provideValueAndCloser(
@@ -1208,7 +1179,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *
    * <p>Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * final ClosingFuture<BufferedReader> file1ReaderFuture = ...;
    * final ClosingFuture<BufferedReader> file2ReaderFuture = ...;
    * ListenableFuture<Integer> numberOfDifferentLines =
@@ -1221,7 +1192,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
    *               },
    *               executor)
    *           .closing(executor);
-   * }</pre>
+   * }
    */
   @DoNotMock("Use ClosingFuture.whenAllSucceed() or .whenAllComplete() instead.")
   public static class Combiner {
@@ -1293,7 +1264,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * {@code ExecutionException} will be extracted and used as the failure of the derived step.
      */
     public <V extends @Nullable Object> ClosingFuture<V> call(
-        final CombiningCallable<V> combiningCallable, Executor executor) {
+        CombiningCallable<V> combiningCallable, Executor executor) {
       Callable<V> callable =
           new Callable<V>() {
             @Override
@@ -1349,7 +1320,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ClosingFuture#transformAsync(AsyncClosingFunction, Executor)} apply here.
      */
     public <V extends @Nullable Object> ClosingFuture<V> callAsync(
-        final AsyncCombiningCallable<V> combiningCallable, Executor executor) {
+        AsyncCombiningCallable<V> combiningCallable, Executor executor) {
       AsyncCallable<V> asyncCallable =
           new AsyncCallable<V>() {
             @Override
@@ -1373,7 +1344,6 @@ public final class ClosingFuture<V extends @Nullable Object> {
           ? Futures.whenAllSucceed(inputFutures())
           : Futures.whenAllComplete(inputFutures());
     }
-
 
     private ImmutableList<FluentFuture<?>> inputFutures() {
       return FluentIterable.from(inputs)
@@ -1464,7 +1434,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ExecutionException} will be extracted and used as the failure of the derived step.
      */
     public <U extends @Nullable Object> ClosingFuture<U> call(
-        final ClosingFunction2<V1, V2, U> function, Executor executor) {
+        ClosingFunction2<V1, V2, U> function, Executor executor) {
       return call(
           new CombiningCallable<U>() {
             @Override
@@ -1517,7 +1487,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ClosingFuture#transformAsync(AsyncClosingFunction, Executor)} apply here.
      */
     public <U extends @Nullable Object> ClosingFuture<U> callAsync(
-        final AsyncClosingFunction2<V1, V2, U> function, Executor executor) {
+        AsyncClosingFunction2<V1, V2, U> function, Executor executor) {
       return callAsync(
           new AsyncCombiningCallable<U>() {
             @Override
@@ -1633,7 +1603,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ExecutionException} will be extracted and used as the failure of the derived step.
      */
     public <U extends @Nullable Object> ClosingFuture<U> call(
-        final ClosingFunction3<V1, V2, V3, U> function, Executor executor) {
+        ClosingFunction3<V1, V2, V3, U> function, Executor executor) {
       return call(
           new CombiningCallable<U>() {
             @Override
@@ -1690,7 +1660,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ClosingFuture#transformAsync(AsyncClosingFunction, Executor)} apply here.
      */
     public <U extends @Nullable Object> ClosingFuture<U> callAsync(
-        final AsyncClosingFunction3<V1, V2, V3, U> function, Executor executor) {
+        AsyncClosingFunction3<V1, V2, V3, U> function, Executor executor) {
       return callAsync(
           new AsyncCombiningCallable<U>() {
             @Override
@@ -1826,7 +1796,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ExecutionException} will be extracted and used as the failure of the derived step.
      */
     public <U extends @Nullable Object> ClosingFuture<U> call(
-        final ClosingFunction4<V1, V2, V3, V4, U> function, Executor executor) {
+        ClosingFunction4<V1, V2, V3, V4, U> function, Executor executor) {
       return call(
           new CombiningCallable<U>() {
             @Override
@@ -1884,7 +1854,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ClosingFuture#transformAsync(AsyncClosingFunction, Executor)} apply here.
      */
     public <U extends @Nullable Object> ClosingFuture<U> callAsync(
-        final AsyncClosingFunction4<V1, V2, V3, V4, U> function, Executor executor) {
+        AsyncClosingFunction4<V1, V2, V3, V4, U> function, Executor executor) {
       return callAsync(
           new AsyncCombiningCallable<U>() {
             @Override
@@ -2034,7 +2004,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ExecutionException} will be extracted and used as the failure of the derived step.
      */
     public <U extends @Nullable Object> ClosingFuture<U> call(
-        final ClosingFunction5<V1, V2, V3, V4, V5, U> function, Executor executor) {
+        ClosingFunction5<V1, V2, V3, V4, V5, U> function, Executor executor) {
       return call(
           new CombiningCallable<U>() {
             @Override
@@ -2094,7 +2064,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
      * ClosingFuture#transformAsync(AsyncClosingFunction, Executor)} apply here.
      */
     public <U extends @Nullable Object> ClosingFuture<U> callAsync(
-        final AsyncClosingFunction5<V1, V2, V3, V4, V5, U> function, Executor executor) {
+        AsyncClosingFunction5<V1, V2, V3, V4, V5, U> function, Executor executor) {
       return callAsync(
           new AsyncCombiningCallable<U>() {
             @Override
@@ -2132,7 +2102,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
     }
   }
 
-  private static void closeQuietly(@CheckForNull final AutoCloseable closeable, Executor executor) {
+  private static void closeQuietly(@Nullable AutoCloseable closeable, Executor executor) {
     if (closeable == null) {
       return;
     }
@@ -2142,14 +2112,6 @@ public final class ClosingFuture<V extends @Nullable Object> {
             try {
               closeable.close();
             } catch (Exception e) {
-              /*
-               * In guava-jre, any kind of Exception may be thrown because `closeable` has type
-               * `AutoCloseable`.
-               *
-               * In guava-android, the only kinds of Exception that may be thrown are
-               * RuntimeException and IOException because `closeable` has type `Closeable`—except
-               * that we have to account for sneaky checked exception.
-               */
               restoreInterruptIfIsInterruptedException(e);
               logger.get().log(WARNING, "thrown by close()", e);
             }
@@ -2181,10 +2143,10 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
   // TODO(dpb): Should we use a pair of ArrayLists instead of an IdentityHashMap?
   private static final class CloseableList extends IdentityHashMap<AutoCloseable, Executor>
-      implements Closeable {
+      implements AutoCloseable {
     private final DeferredCloser closer = new DeferredCloser(this);
     private volatile boolean closed;
-    @CheckForNull private volatile CountDownLatch whenClosed;
+    private volatile @Nullable CountDownLatch whenClosed;
 
     <V extends @Nullable Object, U extends @Nullable Object>
         ListenableFuture<U> applyClosingFunction(
@@ -2234,7 +2196,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
       }
     }
 
-    void add(@CheckForNull AutoCloseable closeable, Executor executor) {
+    void add(@Nullable AutoCloseable closeable, Executor executor) {
       checkNotNull(executor);
       if (closeable == null) {
         return;

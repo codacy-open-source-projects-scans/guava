@@ -25,9 +25,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /** Utilities for the AbstractFutureBenchmarks */
+@NullUnmarked
 final class AbstractFutureBenchmarks {
   private AbstractFutureBenchmarks() {}
 
@@ -406,7 +408,7 @@ final class AbstractFutureBenchmarks {
       }
     }
 
-    static final CancellationException cancellationExceptionWithCause(
+    static CancellationException cancellationExceptionWithCause(
         @Nullable String message, @Nullable Throwable cause) {
       CancellationException exception = new CancellationException(message);
       exception.initCause(cause);

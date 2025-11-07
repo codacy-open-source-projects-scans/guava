@@ -17,14 +17,15 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.testing.NullPointerTester;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit tests for {@link ExecutionList}.
@@ -32,12 +33,13 @@ import junit.framework.TestCase;
  * @author Nishant Thakkar
  * @author Sven Mawson
  */
+@NullUnmarked
 public class ExecutionListTest extends TestCase {
 
   private final ExecutionList list = new ExecutionList();
 
   public void testRunOnPopulatedList() throws Exception {
-    Executor exec = Executors.newCachedThreadPool();
+    Executor exec = newCachedThreadPool();
     CountDownLatch countDownLatch = new CountDownLatch(3);
     list.add(new MockRunnable(countDownLatch), exec);
     list.add(new MockRunnable(countDownLatch), exec);
@@ -51,7 +53,7 @@ public class ExecutionListTest extends TestCase {
   }
 
   public void testExecute_idempotent() {
-    final AtomicInteger runCalled = new AtomicInteger();
+    AtomicInteger runCalled = new AtomicInteger();
     list.add(
         new Runnable() {
           @Override
@@ -67,8 +69,8 @@ public class ExecutionListTest extends TestCase {
   }
 
   public void testExecute_idempotentConcurrently() throws InterruptedException {
-    final CountDownLatch okayToRun = new CountDownLatch(1);
-    final AtomicInteger runCalled = new AtomicInteger();
+    CountDownLatch okayToRun = new CountDownLatch(1);
+    AtomicInteger runCalled = new AtomicInteger();
     list.add(
         new Runnable() {
           @Override
@@ -107,14 +109,14 @@ public class ExecutionListTest extends TestCase {
 
     // If it passed, then verify an Add will be executed without calling run
     CountDownLatch countDownLatch = new CountDownLatch(1);
-    list.add(new MockRunnable(countDownLatch), Executors.newCachedThreadPool());
+    list.add(new MockRunnable(countDownLatch), newCachedThreadPool());
     assertTrue(countDownLatch.await(1L, SECONDS));
   }
 
   public void testOrdering() throws Exception {
-    final AtomicInteger integer = new AtomicInteger();
+    AtomicInteger integer = new AtomicInteger();
     for (int i = 0; i < 10; i++) {
-      final int expectedCount = i;
+      int expectedCount = i;
       list.add(
           new Runnable() {
             @Override
@@ -129,7 +131,7 @@ public class ExecutionListTest extends TestCase {
   }
 
   private class MockRunnable implements Runnable {
-    CountDownLatch countDownLatch;
+    final CountDownLatch countDownLatch;
 
     MockRunnable(CountDownLatch countDownLatch) {
       this.countDownLatch = countDownLatch;

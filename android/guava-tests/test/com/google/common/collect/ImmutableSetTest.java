@@ -37,11 +37,13 @@ import com.google.common.collect.testing.google.SetGenerators.ImmutableSetTooSma
 import com.google.common.collect.testing.google.SetGenerators.ImmutableSetUnsizedBuilderGenerator;
 import com.google.common.collect.testing.google.SetGenerators.ImmutableSetWithBadHashesGenerator;
 import com.google.common.testing.EqualsTester;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Unit test for {@link ImmutableSet}.
@@ -50,12 +52,13 @@ import junit.framework.TestSuite;
  * @author Jared Levy
  * @author Nick Kralevich
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableSetTest extends AbstractImmutableSetTest {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -201,20 +204,22 @@ public class ImmutableSetTest extends AbstractImmutableSetTest {
   public void testCreation_allDuplicates() {
     ImmutableSet<String> set = ImmutableSet.copyOf(Lists.newArrayList("a", "a"));
     assertTrue(set instanceof SingletonImmutableSet);
-    assertEquals(Lists.newArrayList("a"), Lists.newArrayList(set));
+    assertEquals(Lists.newArrayList("a"), new ArrayList<>(set));
   }
 
   public void testCreation_oneDuplicate() {
     // now we'll get the varargs overload
+    @SuppressWarnings("DistinctVarargsChecker") // deliberately testing deduplication
     ImmutableSet<String> set =
         ImmutableSet.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "a");
     assertEquals(
         Lists.newArrayList("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"),
-        Lists.newArrayList(set));
+        new ArrayList<>(set));
   }
 
   public void testCreation_manyDuplicates() {
     // now we'll get the varargs overload
+    @SuppressWarnings("DistinctVarargsChecker") // deliberately testing deduplication
     ImmutableSet<String> set =
         ImmutableSet.of("a", "b", "c", "c", "c", "c", "b", "b", "a", "a", "c", "c", "c", "a");
     assertThat(set).containsExactly("a", "b", "c").inOrder();
@@ -338,6 +343,7 @@ public class ImmutableSetTest extends AbstractImmutableSetTest {
     return LAST_COLOR_ADDED;
   }
 
+  @SuppressWarnings("DistinctVarargsChecker") // deliberately testing deduplication
   public void testEquals() {
     new EqualsTester()
         .addEqualityGroup(ImmutableSet.of(), ImmutableSet.of())

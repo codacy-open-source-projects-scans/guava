@@ -43,8 +43,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Queue;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Provides utility methods for working with byte arrays and I/O streams.
@@ -53,9 +52,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Colin Decker
  * @since 1.0
  */
-@J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class ByteStreams {
 
   private static final int BUFFER_SIZE = 8192;
@@ -134,6 +131,7 @@ public final class ByteStreams {
    * @return the number of bytes copied
    * @throws IOException if an I/O error occurs
    */
+  @J2ktIncompatible
   @CanIgnoreReturnValue
   public static long copy(ReadableByteChannel from, WritableByteChannel to) throws IOException {
     checkNotNull(from);
@@ -303,6 +301,7 @@ public final class ByteStreams {
    * Returns a new {@link ByteArrayDataInput} instance to read from the {@code bytes} array from the
    * beginning.
    */
+  @J2ktIncompatible
   public static ByteArrayDataInput newDataInput(byte[] bytes) {
     return newDataInput(new ByteArrayInputStream(bytes));
   }
@@ -314,6 +313,7 @@ public final class ByteStreams {
    * @throws IndexOutOfBoundsException if {@code start} is negative or greater than the length of
    *     the array
    */
+  @J2ktIncompatible
   public static ByteArrayDataInput newDataInput(byte[] bytes, int start) {
     checkPositionIndex(start, bytes.length);
     return newDataInput(new ByteArrayInputStream(bytes, start, bytes.length - start));
@@ -326,11 +326,13 @@ public final class ByteStreams {
    *
    * @since 17.0
    */
+  @J2ktIncompatible
   public static ByteArrayDataInput newDataInput(ByteArrayInputStream byteArrayInputStream) {
     return new ByteArrayDataInputStream(checkNotNull(byteArrayInputStream));
   }
 
-  private static class ByteArrayDataInputStream implements ByteArrayDataInput {
+  @J2ktIncompatible
+  private static final class ByteArrayDataInputStream implements ByteArrayDataInput {
     final DataInput input;
 
     ByteArrayDataInputStream(ByteArrayInputStream byteArrayInputStream) {
@@ -338,7 +340,7 @@ public final class ByteStreams {
     }
 
     @Override
-    public void readFully(byte b[]) {
+    public void readFully(byte[] b) {
       try {
         input.readFully(b);
       } catch (IOException e) {
@@ -347,7 +349,7 @@ public final class ByteStreams {
     }
 
     @Override
-    public void readFully(byte b[], int off, int len) {
+    public void readFully(byte[] b, int off, int len) {
       try {
         input.readFully(b, off, len);
       } catch (IOException e) {
@@ -457,8 +459,7 @@ public final class ByteStreams {
     }
 
     @Override
-    @CheckForNull
-    public String readLine() {
+    public @Nullable String readLine() {
       try {
         return input.readLine();
       } catch (IOException e) {
@@ -477,6 +478,7 @@ public final class ByteStreams {
   }
 
   /** Returns a new {@link ByteArrayDataOutput} instance with a default size. */
+  @J2ktIncompatible
   public static ByteArrayDataOutput newDataOutput() {
     return newDataOutput(new ByteArrayOutputStream());
   }
@@ -487,6 +489,7 @@ public final class ByteStreams {
    *
    * @throws IllegalArgumentException if {@code size} is negative
    */
+  @J2ktIncompatible
   public static ByteArrayDataOutput newDataOutput(int size) {
     // When called at high frequency, boxing size generates too much garbage,
     // so avoid doing that if we can.
@@ -508,11 +511,13 @@ public final class ByteStreams {
    *
    * @since 17.0
    */
+  @J2ktIncompatible
   public static ByteArrayDataOutput newDataOutput(ByteArrayOutputStream byteArrayOutputStream) {
     return new ByteArrayDataOutputStream(checkNotNull(byteArrayOutputStream));
   }
 
-  private static class ByteArrayDataOutputStream implements ByteArrayDataOutput {
+  @J2ktIncompatible
+  private static final class ByteArrayDataOutputStream implements ByteArrayDataOutput {
 
     final DataOutput output;
     final ByteArrayOutputStream byteArrayOutputStream;
@@ -682,6 +687,11 @@ public final class ByteStreams {
   /**
    * Returns an {@link OutputStream} that simply discards written bytes.
    *
+   * <p><b>Java 11+ users:</b> use {@link OutputStream#nullOutputStream()} instead. Note that the
+   * {@link ByteStreams} method returns a singleton stream whose {@code close} method has no effect,
+   * while the {@link OutputStream} method returns a new instance whose {@code write} methods throw
+   * if called on a closed stream.
+   *
    * @since 14.0 (since 1.0 as com.google.common.io.NullOutputStream)
    */
   public static OutputStream nullOutputStream() {
@@ -696,10 +706,12 @@ public final class ByteStreams {
    * @return a length-limited {@link InputStream}
    * @since 14.0 (since 1.0 as com.google.common.io.LimitInputStream)
    */
+  @J2ktIncompatible
   public static InputStream limit(InputStream in, long limit) {
     return new LimitedInputStream(in, limit);
   }
 
+  @J2ktIncompatible
   private static final class LimitedInputStream extends FilterInputStream {
 
     private long left;
@@ -882,6 +894,7 @@ public final class ByteStreams {
    */
   @CanIgnoreReturnValue // some processors won't return a useful result
   @ParametricNullness
+  @J2ktIncompatible
   public static <T extends @Nullable Object> T readBytes(
       InputStream input, ByteProcessor<T> processor) throws IOException {
     checkNotNull(input);
@@ -938,5 +951,33 @@ public final class ByteStreams {
       total += result;
     }
     return total;
+  }
+
+  /** Compares the contents of the two {@link InputStream}s for equality. */
+  static boolean contentsEqual(InputStream in1, InputStream in2) throws IOException {
+    byte[] buf1 = createBuffer();
+    byte[] buf2 = createBuffer();
+    while (true) {
+      int read1 = read(in1, buf1, 0, BUFFER_SIZE);
+      int read2 = read(in2, buf2, 0, BUFFER_SIZE);
+      if (read1 != read2 || !arraysEqual(buf1, buf2, read1)) {
+        return false;
+      } else if (read1 != BUFFER_SIZE) {
+        return true;
+      }
+    }
+  }
+
+  // The Arrays.equals(<arraytype>, int, int, <arraytype>, int, int) methods were not added until
+  // Java 9. This function is just returns the same result that
+  // Arrays.equals(array1, 0, count, array2, 0, count) would. It assumes that both arrays have a
+  // length of at least count.
+  private static boolean arraysEqual(byte[] array1, byte[] array2, int count) {
+    for (int i = 0; i < count; i++) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

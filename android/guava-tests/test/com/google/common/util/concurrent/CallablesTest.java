@@ -29,19 +29,21 @@ import com.google.common.util.concurrent.TestExceptions.SomeCheckedException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@link Callables}.
  *
  * @author Isaac Shum
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class CallablesTest extends TestCase {
 
   @J2ktIncompatible // TODO(b/324550390): Enable
   public void testReturning() throws Exception {
-    assertNull(Callables.returning(null).call());
+    assertThat(Callables.returning(null).call()).isNull();
 
     Object value = new Object();
     Callable<Object> callable = Callables.returning(value);
@@ -53,7 +55,7 @@ public class CallablesTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible
   public void testAsAsyncCallable() throws Exception {
-    final String expected = "MyCallableString";
+    String expected = "MyCallableString";
     Callable<String> callable =
         new Callable<String>() {
           @Override
@@ -72,7 +74,7 @@ public class CallablesTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible
   public void testAsAsyncCallable_exception() throws Exception {
-    final Exception expected = new IllegalArgumentException();
+    Exception expected = new IllegalArgumentException();
     Callable<String> callable =
         new Callable<String>() {
           @Override
@@ -93,7 +95,7 @@ public class CallablesTest extends TestCase {
   @GwtIncompatible // threads
   public void testRenaming() throws Exception {
     String oldName = Thread.currentThread().getName();
-    final Supplier<String> newName = Suppliers.ofInstance("MyCrazyThreadName");
+    Supplier<String> newName = Suppliers.ofInstance("MyCrazyThreadName");
     Callable<@Nullable Void> callable =
         new Callable<@Nullable Void>() {
           @Override
@@ -110,7 +112,7 @@ public class CallablesTest extends TestCase {
   @GwtIncompatible // threads
   public void testRenaming_exceptionalReturn() throws Exception {
     String oldName = Thread.currentThread().getName();
-    final Supplier<String> newName = Suppliers.ofInstance("MyCrazyThreadName");
+    Supplier<String> newName = Suppliers.ofInstance("MyCrazyThreadName");
     Callable<@Nullable Void> callable =
         new Callable<@Nullable Void>() {
           @Override

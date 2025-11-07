@@ -21,11 +21,12 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertThrows;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link AbstractIdleService}.
@@ -33,6 +34,7 @@ import junit.framework.TestCase;
  * @author Chris Nokleberg
  * @author Ben Yu
  */
+@NullUnmarked
 public class AbstractIdleServiceTest extends TestCase {
   public void testStart() {
     TestService service = new TestService();
@@ -44,7 +46,7 @@ public class AbstractIdleServiceTest extends TestCase {
   }
 
   public void testStart_failed() {
-    final Exception exception = new Exception("deliberate");
+    Exception exception = new Exception("deliberate");
     TestService service =
         new TestService() {
           @Override
@@ -86,7 +88,7 @@ public class AbstractIdleServiceTest extends TestCase {
   }
 
   public void testStop_failed() {
-    final Exception exception = new Exception("deliberate");
+    Exception exception = new Exception("deliberate");
     TestService service =
         new TestService() {
           @Override
@@ -146,7 +148,7 @@ public class AbstractIdleServiceTest extends TestCase {
   private static class TestService extends AbstractIdleService {
     int startUpCalled = 0;
     int shutDownCalled = 0;
-    final List<State> transitionStates = Lists.newArrayList();
+    final List<State> transitionStates = new ArrayList<>();
 
     @Override
     protected void startUp() throws Exception {
@@ -191,7 +193,7 @@ public class AbstractIdleServiceTest extends TestCase {
   }
 
   public void testFunctionalStart_failed() {
-    final Exception exception = new Exception("deliberate");
+    Exception exception = new Exception("deliberate");
     AbstractIdleService service =
         new DefaultService() {
           @Override
@@ -206,7 +208,7 @@ public class AbstractIdleServiceTest extends TestCase {
   }
 
   public void testFunctionalStop_failed() {
-    final Exception exception = new Exception("deliberate");
+    Exception exception = new Exception("deliberate");
     AbstractIdleService service =
         new DefaultService() {
           @Override

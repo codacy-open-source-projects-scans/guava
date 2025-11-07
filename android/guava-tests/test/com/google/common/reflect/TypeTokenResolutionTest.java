@@ -21,6 +21,7 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
+import com.google.errorprone.annotations.Keep;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link TypeToken} and {@link TypeResolver}.
@@ -37,6 +39,7 @@ import junit.framework.TestCase;
  * @author Ben Yu
  */
 @AndroidIncompatible // lots of failures, possibly some related to bad equals() implementations?
+@NullUnmarked
 public class TypeTokenResolutionTest extends TestCase {
 
   private static class Foo<A, B> {
@@ -222,9 +225,7 @@ public class TypeTokenResolutionTest extends TestCase {
   }
 
   private static class ParameterizedOuter<T> {
-
-    @SuppressWarnings("unused") // used by reflection
-    public Inner field;
+    @Keep public Inner field;
 
     class Inner {}
   }
@@ -358,7 +359,7 @@ public class TypeTokenResolutionTest extends TestCase {
   }
 
   public void testLocalClassInsideStaticMethod() {
-    assertNotNull(staticMethodWithLocalClass());
+    assertThat(staticMethodWithLocalClass()).isNotNull();
   }
 
   public void testLocalClassInsideNonStaticMethod() {
@@ -367,7 +368,7 @@ public class TypeTokenResolutionTest extends TestCase {
         return new TypeToken<T>(getClass()) {}.getType();
       }
     }
-    assertNotNull(new MyLocalClass<String>().getType());
+    assertThat(new MyLocalClass<String>().getType()).isNotNull();
   }
 
   private static <T> Type staticMethodWithAnonymousClass() {
@@ -379,16 +380,17 @@ public class TypeTokenResolutionTest extends TestCase {
   }
 
   public void testAnonymousClassInsideStaticMethod() {
-    assertNotNull(staticMethodWithAnonymousClass());
+    assertThat(staticMethodWithAnonymousClass()).isNotNull();
   }
 
   public void testAnonymousClassInsideNonStaticMethod() {
-    assertNotNull(
-        new Object() {
-          Type getType() {
-            return new TypeToken<Object>() {}.getType();
-          }
-        }.getType());
+    assertThat(
+            new Object() {
+              Type getType() {
+                return new TypeToken<Object>() {}.getType();
+              }
+            }.getType())
+        .isNotNull();
   }
 
   public void testStaticContext() {
@@ -416,20 +418,20 @@ public class TypeTokenResolutionTest extends TestCase {
 
   private abstract class WithGenericBound<A> {
 
-    @SuppressWarnings("unused")
+    @Keep
     public <B extends A> void withTypeVariable(List<B> list) {}
 
-    @SuppressWarnings("unused")
+    @Keep
     public <E extends Enum<E>> void withRecursiveBound(List<E> list) {}
 
-    @SuppressWarnings("unused")
+    @Keep
     public <K extends List<V>, V extends List<K>> void withMutualRecursiveBound(
         List<Map<K, V>> list) {}
 
-    @SuppressWarnings("unused")
+    @Keep
     void withWildcardLowerBound(List<? super A> list) {}
 
-    @SuppressWarnings("unused")
+    @Keep
     void withWildcardUpperBound(List<? extends A> list) {}
 
     Type getTargetType(String methodName) throws Exception {

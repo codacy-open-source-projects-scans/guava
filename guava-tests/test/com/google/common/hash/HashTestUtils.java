@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.Assert;
 
 /**
@@ -44,6 +45,7 @@ import org.junit.Assert;
  * @author Dimitris Andreou
  * @author Kurt Alfred Kluever
  */
+@NullUnmarked
 final class HashTestUtils {
   private HashTestUtils() {}
 
@@ -304,7 +306,7 @@ final class HashTestUtils {
         // test whether the hash values have same output bits
         same |= ~(hash1 ^ hash2);
         // test whether the hash values have different output bits
-        diff |= (hash1 ^ hash2);
+        diff |= hash1 ^ hash2;
 
         count++;
         // check whether we've exceeded the probabilistically
@@ -479,7 +481,7 @@ final class HashTestUtils {
       Assert.assertEquals(hashFunction.bits(), hashcode1.asBytes().length * 8);
       hashcodes.add(hashcode1);
     }
-    Assert.assertTrue(hashcodes.size() > objects * 0.95); // quite relaxed test
+    assertThat((double) hashcodes.size()).isGreaterThan(objects * 0.95); // quite relaxed test
 
     assertHashBytesThrowsCorrectExceptions(hashFunction);
     assertIndependentHashers(hashFunction);

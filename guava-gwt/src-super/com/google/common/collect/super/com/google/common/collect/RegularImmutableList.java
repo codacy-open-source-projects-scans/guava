@@ -20,20 +20,16 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
 import java.util.List;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * GWT emulated version of {@link RegularImmutableList}.
  *
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
-class RegularImmutableList<E> extends ForwardingImmutableList<E> {
-
+final class RegularImmutableList<E> extends ForwardingImmutableList<E> {
   static final ImmutableList<Object> EMPTY = new RegularImmutableList<Object>(emptyList());
 
   private final List<E> delegate;
-  @Nullable E forSerialization;
 
   RegularImmutableList(List<E> delegate) {
     // TODO(cpovirk): avoid redundant unmodifiableList wrapping

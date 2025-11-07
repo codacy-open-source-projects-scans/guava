@@ -18,22 +18,15 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * GWT emulation of {@link SingletonImmutableSet}.
  *
  * @author Hayward Chan
  */
-@ElementTypesAreNonnullByDefault
 final class SingletonImmutableSet<E> extends ImmutableSet<E> {
-
-  // This reference is used both by the custom field serializer, and by the
-  // GWT compiler to infer the elements of the lists that needs to be
-  // serialized.
-  //
-  // Although this reference is non-final, it doesn't change after set creation.
-  E element;
+  private final E element;
 
   SingletonImmutableSet(E element) {
     this.element = checkNotNull(element);

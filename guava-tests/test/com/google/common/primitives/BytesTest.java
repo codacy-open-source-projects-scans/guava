@@ -29,15 +29,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Bytes}.
  *
  * @author Kevin Bourrillion
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class BytesTest extends TestCase {
   private static final byte[] EMPTY = {};
   private static final byte[] ARRAY1 = {(byte) 1};
@@ -45,9 +46,11 @@ public class BytesTest extends TestCase {
 
   private static final byte[] VALUES = {Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE};
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testHashCode() {
     for (byte value : VALUES) {
-      assertThat(Bytes.hashCode(value)).isEqualTo(((Byte) value).hashCode());
+      assertThat(Bytes.hashCode(value)).isEqualTo(Byte.hashCode(value));
     }
   }
 
@@ -218,9 +221,9 @@ public class BytesTest extends TestCase {
     List<Byte> bytes = Arrays.asList((byte) 0, (byte) 1, (byte) 2);
     List<Short> shorts = Arrays.asList((short) 0, (short) 1, (short) 2);
     List<Integer> ints = Arrays.asList(0, 1, 2);
-    List<Float> floats = Arrays.asList((float) 0, (float) 1, (float) 2);
-    List<Long> longs = Arrays.asList((long) 0, (long) 1, (long) 2);
-    List<Double> doubles = Arrays.asList((double) 0, (double) 1, (double) 2);
+    List<Float> floats = Arrays.asList(0.0f, 1.0f, 2.0f);
+    List<Long> longs = Arrays.asList(0L, 1L, 2L);
+    List<Double> doubles = Arrays.asList(0.0, 1.0, 2.0);
 
     assertThat(Bytes.toArray(bytes)).isEqualTo(array);
     assertThat(Bytes.toArray(shorts)).isEqualTo(array);
@@ -260,6 +263,8 @@ public class BytesTest extends TestCase {
     assertThat(Bytes.toArray(list.subList(2, 2))).isEqualTo(new byte[] {});
   }
 
+  // `primitives` can't depend on `collect`, so this is what the prod code has to return.
+  @SuppressWarnings("EmptyList")
   public void testAsListEmpty() {
     assertThat(Bytes.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }

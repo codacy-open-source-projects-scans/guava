@@ -17,15 +17,17 @@ package com.google.common.net;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.google.common.annotations.GwtCompatible;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
+import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
 import java.io.Serializable;
-import javax.annotation.CheckForNull;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An immutable representation of a host and port.
@@ -62,7 +64,6 @@ import javax.annotation.CheckForNull;
  */
 @Immutable
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class HostAndPort implements Serializable {
   /** Magic value indicating the absence of a port number. */
   private static final int NO_PORT = -1;
@@ -183,23 +184,16 @@ public final class HostAndPort implements Serializable {
       } else {
         // 0 or 2+ colons. Bare hostname or IPv6 literal.
         host = hostPortString;
-        hasBracketlessColons = (colonPos >= 0);
+        hasBracketlessColons = colonPos >= 0;
       }
     }
 
-    int port = NO_PORT;
-    if (!Strings.isNullOrEmpty(portString)) {
-      // Try to parse the whole port string as a number.
-      // Java accepts leading plus signs. We don't want to.
-      checkArgument(
-          !portString.startsWith("+") && CharMatcher.ascii().matchesAllOf(portString),
-          "Unparseable port number: %s",
-          hostPortString);
-      try {
-        port = Integer.parseInt(portString);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("Unparseable port number: " + hostPortString);
-      }
+    Integer port;
+    if (isNullOrEmpty(portString)) {
+      port = NO_PORT;
+    } else {
+      port = Ints.tryParse(portString);
+      checkArgument(port != null, "Unparseable port number: %s", hostPortString);
       checkArgument(isValidPort(port), "Port number out of range: %s", hostPortString);
     }
 
@@ -281,20 +275,20 @@ public final class HostAndPort implements Serializable {
   }
 
   @Override
-  public boolean equals(@CheckForNull Object other) {
+  public boolean equals(@Nullable Object other) {
     if (this == other) {
       return true;
     }
     if (other instanceof HostAndPort) {
       HostAndPort that = (HostAndPort) other;
-      return Objects.equal(this.host, that.host) && this.port == that.port;
+      return Objects.equals(this.host, that.host) && this.port == that.port;
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(host, port);
+    return Objects.hash(host, port);
   }
 
   /** Rebuild the host:port string, including brackets if necessary. */
@@ -318,5 +312,5 @@ public final class HostAndPort implements Serializable {
     return port >= 0 && port <= 65535;
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

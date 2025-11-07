@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,7 +67,8 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@code Maps}.
@@ -75,14 +77,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 @SuppressWarnings("JUnitIncompatibleType") // Many intentional violations here.
 public class MapsTest extends TestCase {
 
   private static final Comparator<Integer> SOME_COMPARATOR = Collections.reverseOrder();
 
   public void testHashMap() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashMap<Integer, Integer> map = Maps.newHashMap();
     assertEquals(emptyMap(), map);
   }
@@ -92,6 +95,7 @@ public class MapsTest extends TestCase {
     original.put("a", 1);
     original.put("b", 2);
     original.put("c", 3);
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashMap<String, Integer> map = Maps.newHashMap(original);
     assertEquals(original, map);
   }
@@ -101,6 +105,7 @@ public class MapsTest extends TestCase {
     original.put("a", 1);
     original.put("b", 2);
     original.put("c", 3);
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashMap<Object, Object> map = Maps.newHashMap(original);
     assertEquals(original, map);
   }
@@ -124,7 +129,7 @@ public class MapsTest extends TestCase {
   public void testNewHashMapWithExpectedSize_wontGrow() throws Exception {
     // before jdk7u40: creates one-bucket table
     // after  jdk7u40: creates empty table
-    assertTrue(bucketsOf(Maps.newHashMapWithExpectedSize(0)) <= 1);
+    assertThat(bucketsOf(Maps.newHashMapWithExpectedSize(0))).isAtMost(1);
 
     for (int size = 1; size < 200; size++) {
       assertWontGrow(
@@ -140,7 +145,7 @@ public class MapsTest extends TestCase {
   @GwtIncompatible // reflection
   @AndroidIncompatible // relies on assumptions about OpenJDK
   public void testNewLinkedHashMapWithExpectedSize_wontGrow() throws Exception {
-    assertTrue(bucketsOf(Maps.newLinkedHashMapWithExpectedSize(0)) <= 1);
+    assertThat(bucketsOf(Maps.newLinkedHashMapWithExpectedSize(0))).isAtMost(1);
 
     for (int size = 1; size < 200; size++) {
       assertWontGrow(
@@ -220,11 +225,11 @@ public class MapsTest extends TestCase {
   }
 
   public void testLinkedHashMap() {
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     LinkedHashMap<Integer, Integer> map = Maps.newLinkedHashMap();
     assertEquals(emptyMap(), map);
   }
 
-  @SuppressWarnings("serial")
   public void testLinkedHashMapWithInitialMap() {
     Map<String, String> map =
         new LinkedHashMap<String, String>(
@@ -234,6 +239,7 @@ public class MapsTest extends TestCase {
                 "polygene", "lubricants",
                 "alpha", "betical"));
 
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     LinkedHashMap<String, String> copy = Maps.newLinkedHashMap(map);
 
     Iterator<Entry<String, String>> iter = copy.entrySet().iterator();
@@ -264,6 +270,7 @@ public class MapsTest extends TestCase {
     original.put("a", 1);
     original.put("b", 2);
     original.put("c", 3);
+    @SuppressWarnings("UseCollectionConstructor") // test of factory method
     HashMap<Object, Object> map = Maps.<Object, Object>newLinkedHashMap(original);
     assertEquals(original, map);
   }
@@ -283,7 +290,7 @@ public class MapsTest extends TestCase {
   public void testTreeMap() {
     TreeMap<Integer, Integer> map = Maps.newTreeMap();
     assertEquals(emptyMap(), map);
-    assertNull(map.comparator());
+    assertThat(map.comparator()).isNull();
   }
 
   public void testTreeMapDerived() {
@@ -293,7 +300,7 @@ public class MapsTest extends TestCase {
     map.put(new Derived("bar"), 2);
     assertThat(map.keySet()).containsExactly(new Derived("bar"), new Derived("foo")).inOrder();
     assertThat(map.values()).containsExactly(2, 1).inOrder();
-    assertNull(map.comparator());
+    assertThat(map.comparator()).isNull();
   }
 
   public void testTreeMapNonGeneric() {
@@ -305,7 +312,7 @@ public class MapsTest extends TestCase {
         .containsExactly(new LegacyComparable("bar"), new LegacyComparable("foo"))
         .inOrder();
     assertThat(map.values()).containsExactly(2, 1).inOrder();
-    assertNull(map.comparator());
+    assertThat(map.comparator()).isNull();
   }
 
   public void testTreeMapWithComparator() {
@@ -356,19 +363,19 @@ public class MapsTest extends TestCase {
   }
 
   public void testEnumMapWithInitialMap() {
-    HashMap<SomeEnum, Integer> original = Maps.newHashMap();
+    HashMap<SomeEnum, Integer> original = new HashMap<>();
     original.put(SomeEnum.SOME_INSTANCE, 0);
     EnumMap<SomeEnum, Integer> copy = Maps.newEnumMap(original);
     assertEquals(original, copy);
   }
 
   public void testEnumMapWithInitialEmptyMap() {
-    Map<SomeEnum, Integer> original = Maps.newHashMap();
+    Map<SomeEnum, Integer> original = new HashMap<>();
     assertThrows(IllegalArgumentException.class, () -> Maps.newEnumMap(original));
   }
 
   public void testToStringImplWithNullKeys() throws Exception {
-    Map<@Nullable String, String> hashmap = Maps.newHashMap();
+    Map<@Nullable String, String> hashmap = new HashMap<>();
     hashmap.put("foo", "bar");
     hashmap.put(null, "baz");
 
@@ -376,7 +383,7 @@ public class MapsTest extends TestCase {
   }
 
   public void testToStringImplWithNullValues() throws Exception {
-    Map<String, @Nullable String> hashmap = Maps.newHashMap();
+    Map<String, @Nullable String> hashmap = new HashMap<>();
     hashmap.put("foo", "bar");
     hashmap.put("baz", null);
 
@@ -656,25 +663,25 @@ public class MapsTest extends TestCase {
     Map<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5), map);
     assertEquals(Integer.valueOf(5), map.get("three"));
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
     assertThat(map.entrySet())
         .containsExactly(mapEntry("one", 3), mapEntry("two", 3), mapEntry("three", 5))
         .inOrder();
   }
 
   public void testAsMapReadsThrough() {
-    Set<String> strings = Sets.newLinkedHashSet();
+    Set<String> strings = new LinkedHashSet<>();
     Collections.addAll(strings, "one", "two", "three");
     Map<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5), map);
-    assertNull(map.get("four"));
+    assertThat(map.get("four")).isNull();
     strings.add("four");
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5, "four", 4), map);
     assertEquals(Integer.valueOf(4), map.get("four"));
   }
 
   public void testAsMapWritesThrough() {
-    Set<String> strings = Sets.newLinkedHashSet();
+    Set<String> strings = new LinkedHashSet<>();
     Collections.addAll(strings, "one", "two", "three");
     Map<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5), map);
@@ -687,7 +694,7 @@ public class MapsTest extends TestCase {
     Map<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertThat(map.entrySet()).isEmpty();
     assertTrue(map.isEmpty());
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
   }
 
   private static class NonNavigableSortedSet extends ForwardingSortedSet<String> {
@@ -705,7 +712,7 @@ public class MapsTest extends TestCase {
     SortedMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5), map);
     assertEquals(Integer.valueOf(5), map.get("three"));
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
     assertThat(map.entrySet())
         .containsExactly(mapEntry("one", 3), mapEntry("three", 5), mapEntry("two", 3))
         .inOrder();
@@ -721,9 +728,9 @@ public class MapsTest extends TestCase {
     SortedSet<String> strings = new NonNavigableSortedSet();
     Collections.addAll(strings, "one", "two", "three");
     SortedMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
-    assertNull(map.comparator());
+    assertThat(map.comparator()).isNull();
     assertEquals(ImmutableSortedMap.of("one", 3, "two", 3, "three", 5), map);
-    assertNull(map.get("four"));
+    assertThat(map.get("four")).isNull();
     strings.add("four");
     assertEquals(ImmutableSortedMap.of("one", 3, "two", 3, "three", 5, "four", 4), map);
     assertEquals(Integer.valueOf(4), map.get("four"));
@@ -761,7 +768,7 @@ public class MapsTest extends TestCase {
     SortedMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertThat(map.entrySet()).isEmpty();
     assertTrue(map.isEmpty());
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
   }
 
   @GwtIncompatible // NavigableMap
@@ -770,7 +777,7 @@ public class MapsTest extends TestCase {
     NavigableMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertEquals(ImmutableMap.of("one", 3, "two", 3, "three", 5), map);
     assertEquals(Integer.valueOf(5), map.get("three"));
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
     assertThat(map.entrySet())
         .containsExactly(mapEntry("one", 3), mapEntry("three", 5), mapEntry("two", 3))
         .inOrder();
@@ -801,7 +808,7 @@ public class MapsTest extends TestCase {
         .inOrder();
     assertEquals(map.headMap("three", true), map.descendingMap().tailMap("three", true));
     assertThat(map.tailMap("three", false).entrySet()).contains(mapEntry("two", 3));
-    assertNull(map.tailMap("three", true).lowerEntry("three"));
+    assertThat(map.tailMap("three", true).lowerEntry("three")).isNull();
     assertThat(map.headMap("two", false).values()).containsExactly(3, 5).inOrder();
     assertThat(map.headMap("two", false).descendingMap().values()).containsExactly(5, 3).inOrder();
     assertThat(map.descendingKeySet()).containsExactly("two", "three", "one").inOrder();
@@ -816,9 +823,9 @@ public class MapsTest extends TestCase {
     NavigableSet<String> strings = Sets.newTreeSet();
     Collections.addAll(strings, "one", "two", "three");
     NavigableMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
-    assertNull(map.comparator());
+    assertThat(map.comparator()).isNull();
     assertEquals(ImmutableSortedMap.of("one", 3, "two", 3, "three", 5), map);
-    assertNull(map.get("four"));
+    assertThat(map.get("four")).isNull();
     strings.add("four");
     assertEquals(ImmutableSortedMap.of("one", 3, "two", 3, "three", 5, "four", 4), map);
     assertEquals(Integer.valueOf(4), map.get("four"));
@@ -879,7 +886,7 @@ public class MapsTest extends TestCase {
     NavigableMap<String, Integer> map = Maps.asMap(strings, LENGTH_FUNCTION);
     assertThat(map.entrySet()).isEmpty();
     assertTrue(map.isEmpty());
-    assertNull(map.get("five"));
+    assertThat(map.get("five")).isNull();
   }
 
   public void testToMap() {
@@ -981,7 +988,6 @@ public class MapsTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // Maps.fromProperties
-  @SuppressWarnings("deprecation") // StringBufferInputStream
   public void testFromProperties() throws IOException {
     Properties testProp = new Properties();
 
@@ -1023,7 +1029,7 @@ public class MapsTest extends TestCase {
     testProp.load(new StringReader(override));
 
     result = Maps.fromProperties(testProp);
-    assertTrue(result.size() > 2);
+    assertThat(result.size()).isGreaterThan(2);
     assertEquals("", result.get("test"));
     assertEquals("hidden", result.get("java.version"));
     assertNotSame(System.getProperty("java.version"), result.get("java.version"));
@@ -1099,8 +1105,8 @@ public class MapsTest extends TestCase {
             "one", 1,
             "two", 2);
     Converter<String, Integer> converter = Maps.asConverter(biMap);
-    assertNull(converter.convert(null));
-    assertNull(converter.reverse().convert(null));
+    assertThat(converter.convert(null)).isNull();
+    assertThat(converter.reverse().convert(null)).isNull();
   }
 
   public void testAsConverter_isAView() throws Exception {
@@ -1197,8 +1203,8 @@ public class MapsTest extends TestCase {
 
   public void testImmutableEntryNull() {
     Entry<@Nullable String, @Nullable Integer> e = immutableEntry((String) null, (Integer) null);
-    assertNull(e.getKey());
-    assertNull(e.getValue());
+    assertThat(e.getKey()).isNull();
+    assertThat(e.getValue()).isNull();
     assertThrows(UnsupportedOperationException.class, () -> e.setValue(null));
     assertEquals("null=null", e.toString());
     assertEquals(0, e.hashCode());
@@ -1310,7 +1316,7 @@ public class MapsTest extends TestCase {
   }
 
   // Logically this would accept a NavigableMap, but that won't work under GWT.
-  private static <K, V> SortedMap<K, V> sortedNotNavigable(final SortedMap<K, V> map) {
+  private static <K, V> SortedMap<K, V> sortedNotNavigable(SortedMap<K, V> map) {
     return new ForwardingSortedMap<K, V>() {
       @Override
       protected SortedMap<K, V> delegate() {
@@ -1413,12 +1419,12 @@ public class MapsTest extends TestCase {
           iterator.remove();
         });
     {
-    Entry<Integer, String> entry = entries.iterator().next();
+      Entry<Integer, String> entry = entries.iterator().next();
       assertThrows(UnsupportedOperationException.class, () -> entry.setValue("four"));
     }
     {
       Entry<Integer, String> entry = unmod.lowerEntry(1);
-    assertNull(entry);
+      assertThat(entry).isNull();
     }
     {
       Entry<Integer, String> entry = unmod.floorEntry(2);

@@ -53,7 +53,8 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link ImmutableList}.
@@ -62,12 +63,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author George van den Driessche
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableListTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTest(
@@ -242,8 +244,7 @@ public class ImmutableListTest extends TestCase {
   }
 
   public void testCopyOf_collection_empty() {
-    // "<String>" is required to work around a javac 1.5 bug.
-    Collection<String> c = MinimalCollection.<String>of();
+    Collection<String> c = MinimalCollection.of();
     List<String> list = ImmutableList.copyOf(c);
     assertEquals(emptyList(), list);
   }
@@ -546,7 +547,7 @@ public class ImmutableListTest extends TestCase {
     assertEquals(0x003300, (int) webSafeColors.get(6));
     ImmutableList<Integer> addedColor = webSafeColorsBuilder.add(0x00BFFF).build();
     assertEquals(
-        "Modifying the builder should not have changed any already" + " built sets",
+        "Modifying the builder should not have changed any already built sets",
         216,
         webSafeColors.size());
     assertEquals("the new array should be one bigger than webSafeColors", 217, addedColor.size());
@@ -565,7 +566,7 @@ public class ImmutableListTest extends TestCase {
 
   public void testBuilderAddAllHandlesNullsCorrectly() {
     {
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
+      ImmutableList.Builder<String> builder = ImmutableList.builder();
       assertThrows(NullPointerException.class, () -> builder.addAll((Iterable<String>) null));
     }
 
@@ -576,26 +577,28 @@ public class ImmutableListTest extends TestCase {
 
     {
       ImmutableList.Builder<String> builder = ImmutableList.builder();
-    List<@Nullable String> listWithNulls = asList("a", null, "b");
+      List<@Nullable String> listWithNulls = asList("a", null, "b");
       assertThrows(NullPointerException.class, () -> builder.addAll((List<String>) listWithNulls));
     }
 
     {
       ImmutableList.Builder<String> builder = ImmutableList.builder();
-    Iterator<@Nullable String> iteratorWithNulls =
-        Arrays.<@Nullable String>asList("a", null, "b").iterator();
+      Iterator<@Nullable String> iteratorWithNulls =
+          Arrays.<@Nullable String>asList("a", null, "b").iterator();
       assertThrows(
           NullPointerException.class, () -> builder.addAll((Iterator<String>) iteratorWithNulls));
     }
 
     {
       ImmutableList.Builder<String> builder = ImmutableList.builder();
-    Iterable<@Nullable String> iterableWithNulls = MinimalIterable.of("a", null, "b");
+      Iterable<@Nullable String> iterableWithNulls = MinimalIterable.of("a", null, "b");
       assertThrows(
           NullPointerException.class, () -> builder.addAll((Iterable<String>) iterableWithNulls));
     }
   }
 
+  // We need to test that asList() really does return the original list.
+  @SuppressWarnings("InlineMeInliner")
   public void testAsList() {
     ImmutableList<String> list = ImmutableList.of("a", "b");
     assertSame(list, list.asList());

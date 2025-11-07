@@ -22,9 +22,10 @@ import static java.util.Arrays.asList;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.Maps;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Generators of various {@link com.google.common.collect.BiMap}s and derived collections.
@@ -33,7 +34,7 @@ import java.util.Map.Entry;
  * @author Hayward Chan
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class BiMapGenerators {
   public static class ImmutableBiMapGenerator extends TestStringBiMapGenerator {
     @Override
@@ -50,7 +51,7 @@ public class BiMapGenerators {
   public static class ImmutableBiMapCopyOfGenerator extends TestStringBiMapGenerator {
     @Override
     protected BiMap<String, String> create(Entry<String, String>[] entries) {
-      Map<String, String> builder = Maps.newLinkedHashMap();
+      Map<String, String> builder = new LinkedHashMap<>();
       for (Entry<String, String> entry : entries) {
         builder.put(entry.getKey(), entry.getValue());
       }
@@ -64,4 +65,12 @@ public class BiMapGenerators {
       return ImmutableBiMap.copyOf(asList(entries));
     }
   }
+
+  /**
+   * Useless constructor for a class of static utility methods.
+   *
+   * @deprecated Do not instantiate this utility class.
+   */
+  @Deprecated
+  public BiMapGenerators() {}
 }

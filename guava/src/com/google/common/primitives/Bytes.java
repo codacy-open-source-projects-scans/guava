@@ -20,6 +20,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
+import com.google.errorprone.annotations.InlineMe;
+import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Arrays;
@@ -27,7 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code byte} primitives, that are not already found in
@@ -44,19 +48,19 @@ import javax.annotation.CheckForNull;
 // TODO(kevinb): how to prevent warning on UnsignedBytes when building GWT
 // javadoc?
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public final class Bytes {
   private Bytes() {}
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Byte)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Byte#hashCode(byte)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Byte#hashCode(byte)}.
    *
    * @param value a primitive {@code byte} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Byte.hashCode(value)")
+  @InlineMeValidationDisabled(
+      "The hash code of a byte is the int version of the byte itself, so it's simplest to return"
+          + " that.")
   public static int hashCode(byte value) {
     return value;
   }
@@ -249,8 +253,7 @@ public final class Bytes {
     return new ByteArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class ByteArrayAsList extends AbstractList<Byte>
+  private static final class ByteArrayAsList extends AbstractList<Byte>
       implements RandomAccess, Serializable {
     final byte[] array;
     final int start;
@@ -283,13 +286,13 @@ public final class Bytes {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Byte) && Bytes.indexOf(array, (Byte) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Byte) {
         int i = Bytes.indexOf(array, (Byte) target, start, end);
@@ -301,7 +304,7 @@ public final class Bytes {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Byte) {
         int i = Bytes.lastIndexOf(array, (Byte) target, start, end);
@@ -332,7 +335,7 @@ public final class Bytes {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -356,7 +359,7 @@ public final class Bytes {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Bytes.hashCode(array[i]);
+        result = 31 * result + Byte.hashCode(array[i]);
       }
       return result;
     }
@@ -375,7 +378,7 @@ public final class Bytes {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**

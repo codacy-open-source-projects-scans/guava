@@ -27,39 +27,40 @@ import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.collect.ForwardingList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.testing.NullPointerTester;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Joiner}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class JoinerTest extends TestCase {
   private static final Joiner J = Joiner.on("-");
 
   // <Integer> needed to prevent warning :(
-  private static final Iterable<Integer> ITERABLE_ = Arrays.<Integer>asList();
-  private static final Iterable<Integer> ITERABLE_1 = Arrays.asList(1);
-  private static final Iterable<Integer> ITERABLE_12 = Arrays.asList(1, 2);
-  private static final Iterable<Integer> ITERABLE_123 = Arrays.asList(1, 2, 3);
-  private static final Iterable<@Nullable Integer> ITERABLE_NULL = Arrays.asList((Integer) null);
-  private static final Iterable<@Nullable Integer> ITERABLE_NULL_NULL =
+  private static final Iterable<Integer> iterable = Arrays.<Integer>asList();
+  private static final Iterable<Integer> iterable1 = Arrays.asList(1);
+  private static final Iterable<Integer> iterable12 = Arrays.asList(1, 2);
+  private static final Iterable<Integer> iterable123 = Arrays.asList(1, 2, 3);
+  private static final Iterable<@Nullable Integer> iterableNull = Arrays.asList((Integer) null);
+  private static final Iterable<@Nullable Integer> iterableNullNull =
       Arrays.asList((Integer) null, null);
-  private static final Iterable<@Nullable Integer> ITERABLE_NULL_1 = Arrays.asList(null, 1);
-  private static final Iterable<@Nullable Integer> ITERABLE_1_NULL = Arrays.asList(1, null);
-  private static final Iterable<@Nullable Integer> ITERABLE_1_NULL_2 = Arrays.asList(1, null, 2);
-  private static final Iterable<@Nullable Integer> ITERABLE_FOUR_NULLS =
+  private static final Iterable<@Nullable Integer> iterableNull1 = Arrays.asList(null, 1);
+  private static final Iterable<@Nullable Integer> iterable1Null = Arrays.asList(1, null);
+  private static final Iterable<@Nullable Integer> iterable1Null2 = Arrays.asList(1, null, 2);
+  private static final Iterable<@Nullable Integer> iterableFourNulls =
       Arrays.asList((Integer) null, null, null, null);
 
   /*
@@ -106,60 +107,60 @@ public class JoinerTest extends TestCase {
 
   @SuppressWarnings("JoinIterableIterator") // explicitly testing iterator overload, too
   public void testNoSpecialNullBehavior() {
-    checkNoOutput(J, ITERABLE_);
-    checkResult(J, ITERABLE_1, "1");
-    checkResult(J, ITERABLE_12, "1-2");
-    checkResult(J, ITERABLE_123, "1-2-3");
+    checkNoOutput(J, iterable);
+    checkResult(J, iterable1, "1");
+    checkResult(J, iterable12, "1-2");
+    checkResult(J, iterable123, "1-2-3");
     checkResult(J, UNDERREPORTING_SIZE_LIST, "1-2-3");
     checkResult(J, OVERREPORTING_SIZE_LIST, "1-2-3");
 
-    assertThrows(NullPointerException.class, () -> J.join(ITERABLE_NULL));
-    assertThrows(NullPointerException.class, () -> J.join(ITERABLE_1_NULL_2));
+    assertThrows(NullPointerException.class, () -> J.join(iterableNull));
+    assertThrows(NullPointerException.class, () -> J.join(iterable1Null2));
 
-    assertThrows(NullPointerException.class, () -> J.join(ITERABLE_NULL.iterator()));
-    assertThrows(NullPointerException.class, () -> J.join(ITERABLE_1_NULL_2.iterator()));
+    assertThrows(NullPointerException.class, () -> J.join(iterableNull.iterator()));
+    assertThrows(NullPointerException.class, () -> J.join(iterable1Null2.iterator()));
   }
 
   public void testOnCharOverride() {
     Joiner onChar = Joiner.on('-');
-    checkNoOutput(onChar, ITERABLE_);
-    checkResult(onChar, ITERABLE_1, "1");
-    checkResult(onChar, ITERABLE_12, "1-2");
-    checkResult(onChar, ITERABLE_123, "1-2-3");
+    checkNoOutput(onChar, iterable);
+    checkResult(onChar, iterable1, "1");
+    checkResult(onChar, iterable12, "1-2");
+    checkResult(onChar, iterable123, "1-2-3");
     checkResult(J, UNDERREPORTING_SIZE_LIST, "1-2-3");
     checkResult(J, OVERREPORTING_SIZE_LIST, "1-2-3");
   }
 
   public void testSkipNulls() {
     Joiner skipNulls = J.skipNulls();
-    checkNoOutput(skipNulls, ITERABLE_);
-    checkNoOutput(skipNulls, ITERABLE_NULL);
-    checkNoOutput(skipNulls, ITERABLE_NULL_NULL);
-    checkNoOutput(skipNulls, ITERABLE_FOUR_NULLS);
-    checkResult(skipNulls, ITERABLE_1, "1");
-    checkResult(skipNulls, ITERABLE_12, "1-2");
-    checkResult(skipNulls, ITERABLE_123, "1-2-3");
+    checkNoOutput(skipNulls, iterable);
+    checkNoOutput(skipNulls, iterableNull);
+    checkNoOutput(skipNulls, iterableNullNull);
+    checkNoOutput(skipNulls, iterableFourNulls);
+    checkResult(skipNulls, iterable1, "1");
+    checkResult(skipNulls, iterable12, "1-2");
+    checkResult(skipNulls, iterable123, "1-2-3");
     checkResult(J, UNDERREPORTING_SIZE_LIST, "1-2-3");
     checkResult(J, OVERREPORTING_SIZE_LIST, "1-2-3");
-    checkResult(skipNulls, ITERABLE_NULL_1, "1");
-    checkResult(skipNulls, ITERABLE_1_NULL, "1");
-    checkResult(skipNulls, ITERABLE_1_NULL_2, "1-2");
+    checkResult(skipNulls, iterableNull1, "1");
+    checkResult(skipNulls, iterable1Null, "1");
+    checkResult(skipNulls, iterable1Null2, "1-2");
   }
 
   public void testUseForNull() {
     Joiner zeroForNull = J.useForNull("0");
-    checkNoOutput(zeroForNull, ITERABLE_);
-    checkResult(zeroForNull, ITERABLE_1, "1");
-    checkResult(zeroForNull, ITERABLE_12, "1-2");
-    checkResult(zeroForNull, ITERABLE_123, "1-2-3");
+    checkNoOutput(zeroForNull, iterable);
+    checkResult(zeroForNull, iterable1, "1");
+    checkResult(zeroForNull, iterable12, "1-2");
+    checkResult(zeroForNull, iterable123, "1-2-3");
     checkResult(J, UNDERREPORTING_SIZE_LIST, "1-2-3");
     checkResult(J, OVERREPORTING_SIZE_LIST, "1-2-3");
-    checkResult(zeroForNull, ITERABLE_NULL, "0");
-    checkResult(zeroForNull, ITERABLE_NULL_NULL, "0-0");
-    checkResult(zeroForNull, ITERABLE_NULL_1, "0-1");
-    checkResult(zeroForNull, ITERABLE_1_NULL, "1-0");
-    checkResult(zeroForNull, ITERABLE_1_NULL_2, "1-0-2");
-    checkResult(zeroForNull, ITERABLE_FOUR_NULLS, "0-0-0-0");
+    checkResult(zeroForNull, iterableNull, "0");
+    checkResult(zeroForNull, iterableNullNull, "0-0");
+    checkResult(zeroForNull, iterableNull1, "0-1");
+    checkResult(zeroForNull, iterable1Null, "1-0");
+    checkResult(zeroForNull, iterable1Null2, "1-0-2");
+    checkResult(zeroForNull, iterableFourNulls, "0-0-0-0");
   }
 
   private static void checkNoOutput(Joiner joiner, Iterable<Integer> set) {
@@ -274,7 +275,7 @@ public class JoinerTest extends TestCase {
     assertEquals("", j.join(ImmutableMap.of()));
     assertEquals(":", j.join(ImmutableMap.of("", "")));
 
-    Map<@Nullable String, @Nullable String> mapWithNulls = Maps.newLinkedHashMap();
+    Map<@Nullable String, @Nullable String> mapWithNulls = new LinkedHashMap<>();
     mapWithNulls.put("a", null);
     mapWithNulls.put(null, "b");
 
@@ -296,7 +297,7 @@ public class JoinerTest extends TestCase {
     assertEquals("1:a;1:b", j.join(ImmutableMultimap.of("1", "a", "1", "b").entries()));
     assertEquals("1:a;1:b", j.join(ImmutableMultimap.of("1", "a", "1", "b").entries().iterator()));
 
-    Map<@Nullable String, @Nullable String> mapWithNulls = Maps.newLinkedHashMap();
+    Map<@Nullable String, @Nullable String> mapWithNulls = new LinkedHashMap<>();
     mapWithNulls.put("a", null);
     mapWithNulls.put(null, "b");
     Set<Entry<String, String>> entriesWithNulls = mapWithNulls.entrySet();

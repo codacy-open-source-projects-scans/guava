@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import java.io.Flushable;
 import java.io.IOException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit tests for {@link Flushables}.
@@ -32,6 +33,7 @@ import junit.framework.TestCase;
  *
  * @author Michael Lancaster
  */
+@NullUnmarked
 public class FlushablesTest extends TestCase {
   private Flushable mockFlushable;
 
@@ -71,9 +73,7 @@ public class FlushablesTest extends TestCase {
   private void setupFlushable(boolean shouldThrowOnFlush) throws IOException {
     mockFlushable = mock(Flushable.class);
     if (shouldThrowOnFlush) {
-      doThrow(
-              new IOException(
-                  "This should only appear in the " + "logs. It should not be rethrown."))
+      doThrow(new IOException("This should only appear in the logs. It should not be rethrown."))
           .when(mockFlushable)
           .flush();
     }

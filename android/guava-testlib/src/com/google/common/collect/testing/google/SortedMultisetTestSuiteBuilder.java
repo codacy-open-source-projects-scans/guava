@@ -28,7 +28,6 @@ import static java.util.Collections.sort;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.collect.BoundType;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.SortedMultiset;
 import com.google.common.collect.testing.AbstractTester;
@@ -115,7 +114,7 @@ public class SortedMultisetTestSuiteBuilder<E> extends MultisetTestSuiteBuilder<
   }
 
   List<TestSuite> createDerivedSuites(SortedMultisetTestSuiteBuilder<E> parentBuilder) {
-    List<TestSuite> derivedSuites = Lists.newArrayList();
+    List<TestSuite> derivedSuites = new ArrayList<>();
 
     if (!parentBuilder.getFeatures().contains(NoRecurse.DESCENDING)) {
       derivedSuites.add(createDescendingSuite(parentBuilder));
@@ -225,7 +224,7 @@ public class SortedMultisetTestSuiteBuilder<E> extends MultisetTestSuiteBuilder<
    * work for this purpose, which may cause problems for navigable maps with non-string or unicode
    * generators.
    */
-  private List<String> getExtremeValues() {
+  private static List<String> getExtremeValues() {
     List<String> result = new ArrayList<>();
     result.add("!! a");
     result.add("!! b");
@@ -275,7 +274,7 @@ public class SortedMultisetTestSuiteBuilder<E> extends MultisetTestSuiteBuilder<
             new ForwardingTestMultisetGenerator<E>(delegate) {
               @Override
               public SortedMultiset<E> create(Object... entries) {
-                return SerializableTester.reserialize(((SortedMultiset<E>) super.create(entries)));
+                return SerializableTester.reserialize((SortedMultiset<E>) super.create(entries));
               }
             })
         .named(parentBuilder.getName() + " reserialized")

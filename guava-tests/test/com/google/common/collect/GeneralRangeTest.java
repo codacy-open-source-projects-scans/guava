@@ -17,29 +17,32 @@ package com.google.common.collect;
 import static com.google.common.collect.BoundType.CLOSED;
 import static com.google.common.collect.BoundType.OPEN;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
-import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Objects;
 import com.google.common.testing.NullPointerTester;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code GeneralRange}.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class GeneralRangeTest extends TestCase {
   private static final Ordering<@Nullable Integer> ORDERING =
       Ordering.<Integer>natural().<Integer>nullsFirst();
 
-  private static final List<@Nullable Integer> IN_ORDER_VALUES = asList(null, 1, 2, 3, 4, 5);
+  private static final List<@Nullable Integer> IN_ORDER_VALUES =
+      unmodifiableList(Arrays.<@Nullable Integer>asList(null, 1, 2, 3, 4, 5));
 
   public void testCreateEmptyRangeFails() {
     for (BoundType lboundType : BoundType.values()) {
@@ -81,7 +84,7 @@ public class GeneralRangeTest extends TestCase {
     for (Integer i : IN_ORDER_VALUES) {
       GeneralRange<@Nullable Integer> range = GeneralRange.range(ORDERING, i, CLOSED, i, CLOSED);
       for (Integer j : IN_ORDER_VALUES) {
-        assertEquals(Objects.equal(i, j), range.contains(j));
+        assertEquals(Objects.equals(i, j), range.contains(j));
       }
     }
   }

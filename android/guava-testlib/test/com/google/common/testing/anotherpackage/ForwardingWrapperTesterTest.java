@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ForwardingWrapperTester}. Live in a different package to detect reflection
@@ -72,7 +72,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable);
           }
         });
@@ -83,7 +83,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable) {
               @Override
               public String toString() {
@@ -99,7 +99,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable) {
               @Override
               public String toString() {
@@ -117,7 +117,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable) {
 
               @SuppressWarnings("EqualsHashCode")
@@ -141,7 +141,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable) {
               @Override
               public boolean equals(@Nullable Object o) {
@@ -167,7 +167,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new ForwardingRunnable(runnable) {
               @Override
               public int hashCode() {
@@ -200,7 +200,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
         Runnable.class,
         new Function<Runnable, Runnable>() {
           @Override
-          public Runnable apply(final Runnable runnable) {
+          public Runnable apply(Runnable runnable) {
             return new Runnable() {
               @Override
               public void run() {
@@ -320,7 +320,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
   private static class ForwardingArithmetic implements Arithmetic {
     private final Arithmetic arithmetic;
 
-    public ForwardingArithmetic(Arithmetic arithmetic) {
+    ForwardingArithmetic(Arithmetic arithmetic) {
       this.arithmetic = arithmetic;
     }
 
@@ -384,10 +384,11 @@ public class ForwardingWrapperTesterTest extends TestCase {
     }
 
     @Override
+    @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
     public int add(int a, int b) {
       try {
         return adder.add(a, b);
-      } catch (Exception e) {
+      } catch (Exception e) { // sneaky checked exception
         // swallow!
         return 0;
       }
@@ -454,7 +455,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
   private static class ParameterTypesDifferentForwarder implements ParameterTypesDifferent {
     private final ParameterTypesDifferent delegate;
 
-    public ParameterTypesDifferentForwarder(ParameterTypesDifferent delegate) {
+    ParameterTypesDifferentForwarder(ParameterTypesDifferent delegate) {
       this.delegate = delegate;
     }
 
@@ -544,7 +545,7 @@ public class ForwardingWrapperTesterTest extends TestCase {
 
   private static class NoDelegateToEquals implements Equals {
 
-    private static Function<Equals, Equals> WRAPPER =
+    private static final Function<Equals, Equals> WRAPPER =
         new Function<Equals, Equals>() {
           @Override
           public NoDelegateToEquals apply(Equals delegate) {

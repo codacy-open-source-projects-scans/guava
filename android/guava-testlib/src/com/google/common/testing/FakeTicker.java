@@ -28,6 +28,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A Ticker whose value can be advanced programmatically in test.
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jige Yu
  * @since 10.0
  */
-@ElementTypesAreNonnullByDefault
+@NullMarked
 @GwtCompatible
 public class FakeTicker extends Ticker {
 
@@ -71,7 +72,6 @@ public class FakeTicker extends Ticker {
   @GwtIncompatible
   @J2ktIncompatible
   @CanIgnoreReturnValue
-  @SuppressWarnings("Java7ApiChecker") // guava-android can rely on library desugaring now.
   @IgnoreJRERequirement // TODO: b/288085449 - Remove this once we use library-desugaring scents.
   @Beta // TODO: b/288085449 - Remove @Beta after we're sure that Java 8 APIs are safe for Android
   public FakeTicker advance(Duration duration) {
@@ -104,7 +104,6 @@ public class FakeTicker extends Ticker {
   @GwtIncompatible
   @J2ktIncompatible
   @CanIgnoreReturnValue
-  @SuppressWarnings("Java7ApiChecker") // guava-android can rely on library desugaring now.
   @IgnoreJRERequirement // TODO: b/288085449 - Remove this once we use library-desugaring scents.
   @Beta // TODO: b/288085449 - Remove @Beta after we're sure that Java 8 APIs are safe for Android
   public FakeTicker setAutoIncrementStep(Duration autoIncrementStep) {

@@ -24,7 +24,6 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Objects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import com.google.j2objc.annotations.RetainedWith;
@@ -36,9 +35,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A general-purpose bimap implementation using any two backing {@code Map} instances.
@@ -49,21 +48,18 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kevin Bourrillion
  * @author Mike Bostock
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Object>
     extends ForwardingMap<K, V> implements BiMap<K, V>, Serializable {
 
-  @SuppressWarnings("nullness:initialization.field.uninitialized") // For J2KT (lateinit)
   private transient Map<K, V> delegate;
 
-  @SuppressWarnings("nullness:initialization.field.uninitialized") // For J2KT (lateinit)
-  @RetainedWith
-  transient AbstractBiMap<V, K> inverse;
+  @RetainedWith private transient AbstractBiMap<V, K> inverse;
 
   /** Package-private constructor for creating a map-backed bimap. */
   AbstractBiMap(Map<K, V> forward, Map<V, K> backward) {
-    setDelegates(forward, backward);
+    inverse = checkMapsAndMakeInverse(forward, backward);
+    delegate = forward;
   }
 
   /** Private constructor for inverse bimap. */
@@ -92,17 +88,19 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   /**
-   * Specifies the delegate maps going in each direction. Called by the constructor and by
-   * subclasses during deserialization.
+   * Specifies the delegate maps going in each direction. Called by subclasses during
+   * deserialization.
    */
   void setDelegates(Map<K, V> forward, Map<V, K> backward) {
-    checkState(delegate == null);
-    checkState(inverse == null);
+    inverse = checkMapsAndMakeInverse(forward, backward);
+    delegate = forward;
+  }
+
+  private AbstractBiMap<V, K> checkMapsAndMakeInverse(Map<K, V> forward, Map<V, K> backward) {
     checkArgument(forward.isEmpty());
     checkArgument(backward.isEmpty());
     checkArgument(forward != backward);
-    delegate = forward;
-    inverse = makeInverse(backward);
+    return makeInverse(backward);
   }
 
   AbstractBiMap<V, K> makeInverse(Map<V, K> backward) {
@@ -116,7 +114,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   // Query Operations (optimizations)
 
   @Override
-  public boolean containsValue(@CheckForNull Object value) {
+  public boolean containsValue(@Nullable Object value) {
     return inverse.containsKey(value);
   }
 
@@ -124,24 +122,22 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V put(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V put(@ParametricNullness K key, @ParametricNullness V value) {
     return putInBothMaps(key, value, false);
   }
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
+  public @Nullable V forcePut(@ParametricNullness K key, @ParametricNullness V value) {
     return putInBothMaps(key, value, true);
   }
 
-  @CheckForNull
-  private V putInBothMaps(@ParametricNullness K key, @ParametricNullness V value, boolean force) {
+  private @Nullable V putInBothMaps(
+      @ParametricNullness K key, @ParametricNullness V value, boolean force) {
     checkKey(key);
     checkValue(value);
     boolean containedKey = containsKey(key);
-    if (containedKey && Objects.equal(value, get(key))) {
+    if (containedKey && Objects.equals(value, get(key))) {
       return value;
     }
     if (force) {
@@ -157,7 +153,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   private void updateInverseMap(
       @ParametricNullness K key,
       boolean containedKey,
-      @CheckForNull V oldValue,
+      @Nullable V oldValue,
       @ParametricNullness V newValue) {
     if (containedKey) {
       // The cast is safe because of the containedKey check.
@@ -168,14 +164,13 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
 
   @CanIgnoreReturnValue
   @Override
-  @CheckForNull
-  public V remove(@CheckForNull Object key) {
+  public @Nullable V remove(@Nullable Object key) {
     return containsKey(key) ? removeFromBothMaps(key) : null;
   }
 
   @CanIgnoreReturnValue
   @ParametricNullness
-  private V removeFromBothMaps(@CheckForNull Object key) {
+  private V removeFromBothMaps(@Nullable Object key) {
     // The cast is safe because the callers of this method first check that the key is present.
     V oldValue = uncheckedCastNullableTToT(delegate.remove(key));
     removeFromInverseMap(oldValue);
@@ -208,7 +203,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     return inverse;
   }
 
-  @LazyInit @CheckForNull private transient Set<K> keySet;
+  @LazyInit private transient @Nullable Set<K> keySet;
 
   @Override
   public Set<K> keySet() {
@@ -217,7 +212,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   @WeakOuter
-  private class KeySet extends ForwardingSet<K> {
+  private final class KeySet extends ForwardingSet<K> {
     @Override
     protected Set<K> delegate() {
       return delegate.keySet();
@@ -229,7 +224,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean remove(@CheckForNull Object key) {
+    public boolean remove(@Nullable Object key) {
       if (!contains(key)) {
         return false;
       }
@@ -253,7 +248,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
   }
 
-  @LazyInit @CheckForNull private transient Set<V> valueSet;
+  @LazyInit private transient @Nullable Set<V> valueSet;
 
   @Override
   public Set<V> values() {
@@ -266,7 +261,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   @WeakOuter
-  private class ValueSet extends ForwardingSet<V> {
+  private final class ValueSet extends ForwardingSet<V> {
     final Set<V> valuesDelegate = inverse.keySet();
 
     @Override
@@ -296,7 +291,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
   }
 
-  @LazyInit @CheckForNull private transient Set<Entry<K, V>> entrySet;
+  @LazyInit private transient @Nullable Set<Entry<K, V>> entrySet;
 
   @Override
   public Set<Entry<K, V>> entrySet() {
@@ -304,7 +299,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     return (result == null) ? entrySet = new EntrySet() : result;
   }
 
-  class BiMapEntry extends ForwardingMapEntry<K, V> {
+  private final class BiMapEntry extends ForwardingMapEntry<K, V> {
     private final Entry<K, V> delegate;
 
     BiMapEntry(Entry<K, V> delegate) {
@@ -322,21 +317,21 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
       // Preconditions keep the map and inverse consistent.
       checkState(entrySet().contains(this), "entry no longer in map");
       // similar to putInBothMaps, but set via entry
-      if (Objects.equal(value, getValue())) {
+      if (Objects.equals(value, getValue())) {
         return value;
       }
       checkArgument(!containsValue(value), "value already present: %s", value);
       V oldValue = delegate.setValue(value);
-      checkState(Objects.equal(value, get(getKey())), "entry no longer in map");
+      checkState(Objects.equals(value, get(getKey())), "entry no longer in map");
       updateInverseMap(getKey(), true, oldValue, value);
       return oldValue;
     }
   }
 
   Iterator<Entry<K, V>> entrySetIterator() {
-    final Iterator<Entry<K, V>> iterator = delegate.entrySet().iterator();
+    Iterator<Entry<K, V>> iterator = delegate.entrySet().iterator();
     return new Iterator<Entry<K, V>>() {
-      @CheckForNull Entry<K, V> entry;
+      @Nullable Entry<K, V> entry;
 
       @Override
       public boolean hasNext() {
@@ -363,7 +358,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   @WeakOuter
-  private class EntrySet extends ForwardingSet<Entry<K, V>> {
+  private final class EntrySet extends ForwardingSet<Entry<K, V>> {
     final Set<Entry<K, V>> esDelegate = delegate.entrySet();
 
     @Override
@@ -377,7 +372,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean remove(@CheckForNull Object object) {
+    public boolean remove(@Nullable Object object) {
       /*
        * `o instanceof Entry` is guaranteed by `contains`, but we check it here to satisfy our
        * nullness checker.
@@ -416,7 +411,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     }
 
     @Override
-    public boolean contains(@CheckForNull Object o) {
+    public boolean contains(@Nullable Object o) {
       return Maps.containsEntryImpl(delegate(), o);
     }
 
@@ -437,7 +432,7 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
   }
 
   /** The inverse of any other {@code AbstractBiMap} subclass. */
-  static class Inverse<K extends @Nullable Object, V extends @Nullable Object>
+  private static final class Inverse<K extends @Nullable Object, V extends @Nullable Object>
       extends AbstractBiMap<K, V> {
     Inverse(Map<K, V> backward, AbstractBiMap<V, K> forward) {
       super(backward, forward);
@@ -455,28 +450,28 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
     @Override
     @ParametricNullness
     K checkKey(@ParametricNullness K key) {
-      return inverse.checkValue(key);
+      return super.inverse.checkValue(key);
     }
 
     @Override
     @ParametricNullness
     V checkValue(@ParametricNullness V value) {
-      return inverse.checkKey(value);
+      return super.inverse.checkKey(value);
     }
 
     /**
      * @serialData the forward bimap
      */
-    @GwtIncompatible // java.io.ObjectOutputStream
+    @GwtIncompatible
     @J2ktIncompatible
-    private void writeObject(ObjectOutputStream stream) throws IOException {
+        private void writeObject(ObjectOutputStream stream) throws IOException {
       stream.defaultWriteObject();
       stream.writeObject(inverse());
     }
 
-    @GwtIncompatible // java.io.ObjectInputStream
+    @GwtIncompatible
     @J2ktIncompatible
-    @SuppressWarnings("unchecked") // reading data stored by writeObject
+        @SuppressWarnings("unchecked") // reading data stored by writeObject
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
       stream.defaultReadObject();
       setInverse((AbstractBiMap<V, K>) requireNonNull(stream.readObject()));
@@ -488,12 +483,8 @@ abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nullable Obj
       return inverse().inverse();
     }
 
-    @GwtIncompatible // Not needed in emulated source.
-    @J2ktIncompatible
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
-  @GwtIncompatible // Not needed in emulated source.
-  @J2ktIncompatible
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

@@ -33,7 +33,7 @@ import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@code Multimap} whose keys and values are ordered by their natural ordering or
@@ -72,8 +72,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  * @since 2.0
  */
-@GwtCompatible(serializable = true, emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractSortedKeySortedSetMultimap<K, V> {
   private transient Comparator<? super K> keyComparator;
@@ -165,7 +164,9 @@ public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object
     return valueComparator;
   }
 
-  /** @since 14.0 (present with return type {@code SortedSet} since 2.0) */
+  /**
+   * @since 14.0 (present with return type {@code SortedSet} since 2.0)
+   */
   @Override
   @GwtIncompatible // NavigableSet
   public NavigableSet<V> get(@ParametricNullness K key) {
@@ -204,18 +205,18 @@ public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object
    * @serialData key comparator, value comparator, number of distinct keys, and then for each
    *     distinct key: the key, number of values for that key, and key values
    */
-  @GwtIncompatible // java.io.ObjectOutputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  private void writeObject(ObjectOutputStream stream) throws IOException {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     stream.writeObject(keyComparator());
     stream.writeObject(valueComparator());
     Serialization.writeMultimap(this, stream);
   }
 
-  @GwtIncompatible // java.io.ObjectInputStream
+  @GwtIncompatible
   @J2ktIncompatible
-  @SuppressWarnings("unchecked") // reading data stored by writeObject
+    @SuppressWarnings("unchecked") // reading data stored by writeObject
   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
     keyComparator = requireNonNull((Comparator<? super K>) stream.readObject());
@@ -224,7 +225,5 @@ public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object
     Serialization.populateMultimap(this, stream);
   }
 
-  @GwtIncompatible // not needed in emulated source
-  @J2ktIncompatible
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

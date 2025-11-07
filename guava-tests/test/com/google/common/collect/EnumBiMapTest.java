@@ -42,6 +42,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for {@code EnumBiMap}.
@@ -50,8 +51,8 @@ import junit.framework.TestSuite;
  * @author Jared Levy
  */
 @J2ktIncompatible // EnumBimap
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class EnumBiMapTest extends TestCase {
   private enum Currency {
     DOLLAR,
@@ -69,6 +70,7 @@ public class EnumBiMapTest extends TestCase {
     UK
   }
 
+  @AndroidIncompatible // test-suite builders
   public static final class EnumBiMapGenerator implements TestBiMapGenerator<Country, Currency> {
     @SuppressWarnings("unchecked")
     @Override
@@ -115,6 +117,7 @@ public class EnumBiMapTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTest(
@@ -175,7 +178,7 @@ public class EnumBiMapTest extends TestCase {
     assertEquals(bimap1, bimap2);
     bimap2.inverse().put(Country.SWITZERLAND, Currency.FRANC);
     assertEquals(Country.SWITZERLAND, bimap2.get(Currency.FRANC));
-    assertNull(bimap1.get(Currency.FRANC));
+    assertThat(bimap1.get(Currency.FRANC)).isNull();
     assertFalse(bimap2.equals(bimap1));
 
     /* Test that it can be empty. */
@@ -288,9 +291,9 @@ public class EnumBiMapTest extends TestCase {
     assertEquals(3, uniqueEntries.size());
   }
 
+  @GwtIncompatible
   @J2ktIncompatible
-  @GwtIncompatible // serialization
-  public void testSerializable() {
+    public void testSerializable() {
     SerializableTester.reserializeAndAssert(
         EnumBiMap.create(ImmutableMap.of(Currency.DOLLAR, Country.CANADA)));
   }

@@ -21,16 +21,18 @@ import static com.google.common.collect.Sets.newHashSet;
 import com.google.common.testing.EqualsTester;
 import java.util.Set;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code ForwardingObject}.
  *
  * @author Mike Bostock
  */
+@NullUnmarked
 public class ForwardingObjectTest extends TestCase {
 
   public void testEqualsReflexive() {
-    final Object delegate = new Object();
+    Object delegate = new Object();
     ForwardingObject forward =
         new ForwardingObject() {
           @Override
@@ -42,7 +44,7 @@ public class ForwardingObjectTest extends TestCase {
   }
 
   public void testEqualsSymmetric() {
-    final Set<String> delegate = newHashSet("foo");
+    Set<String> delegate = newHashSet("foo");
     ForwardingObject forward =
         new ForwardingObject() {
           @Override

@@ -29,7 +29,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An object that can traverse the nodes that are reachable from a specified (set of) start node(s)
@@ -64,7 +64,6 @@ import javax.annotation.CheckForNull;
 @DoNotMock(
     "Call forGraph or forTree, passing a lambda or a Graph with the desired edges (built with"
         + " GraphBuilder)")
-@ElementTypesAreNonnullByDefault
 public abstract class Traverser<N> {
   private final SuccessorsFunction<N> successorFunction;
 
@@ -141,7 +140,7 @@ public abstract class Traverser<N> {
    * b} were <i>also</i> a start node, then there would be multiple paths to reach {@code e} and
    * {@code h}.
    *
-   * <pre>{@code
+   * {@snippet :
    *    a     b      c
    *   / \   / \     |
    *  /   \ /   \    |
@@ -149,14 +148,14 @@ public abstract class Traverser<N> {
    *       |
    *       |
    *       h
-   * }</pre>
+   * }
    *
    * <p>.
    *
    * <p>The graph below would be a valid input with start nodes of {@code a, f}. However, if {@code
    * b} were a start node, there would be multiple paths to {@code f}.
    *
-   * <pre>{@code
+   * {@snippet :
    *    a     b
    *   / \   / \
    *  /   \ /   \
@@ -164,16 +163,16 @@ public abstract class Traverser<N> {
    *        \   /
    *         \ /
    *          f
-   * }</pre>
+   * }
    *
    * <p><b>Note on binary trees</b>
    *
    * <p>This method can be used to traverse over a binary tree. Given methods {@code
    * leftChild(node)} and {@code rightChild(node)}, this method can be called as
    *
-   * <pre>{@code
+   * {@snippet :
    * Traverser.forTree(node -> ImmutableList.of(leftChild(node), rightChild(node)));
-   * }</pre>
+   * }
    *
    * @param tree {@link SuccessorsFunction} representing a directed acyclic graph that has at most
    *     one path between any two nodes
@@ -201,12 +200,12 @@ public abstract class Traverser<N> {
    * <p><b>Example:</b> The following graph with {@code startNode} {@code a} would return nodes in
    * the order {@code abcdef} (assuming successors are returned in alphabetical order).
    *
-   * <pre>{@code
+   * {@snippet :
    * b ---- a ---- d
    * |      |
    * |      |
    * e ---- c ---- f
-   * }</pre>
+   * }
    *
    * <p>The behavior of this method is undefined if the nodes, or the topology of the graph, change
    * while iteration is in progress.
@@ -215,9 +214,9 @@ public abstract class Traverser<N> {
    * compute its next element on the fly. It is thus possible to limit the traversal to a certain
    * number of nodes as follows:
    *
-   * <pre>{@code
+   * {@snippet :
    * Iterables.limit(Traverser.forGraph(graph).breadthFirst(node), maxNumberOfNodes);
-   * }</pre>
+   * }
    *
    * <p>See <a href="https://en.wikipedia.org/wiki/Breadth-first_search">Wikipedia</a> for more
    * info.
@@ -240,12 +239,7 @@ public abstract class Traverser<N> {
    */
   public final Iterable<N> breadthFirst(Iterable<? extends N> startNodes) {
     ImmutableSet<N> validated = validate(startNodes);
-    return new Iterable<N>() {
-      @Override
-      public Iterator<N> iterator() {
-        return newTraversal().breadthFirst(validated.iterator());
-      }
-    };
+    return () -> newTraversal().breadthFirst(validated.iterator());
   }
 
   /**
@@ -256,12 +250,12 @@ public abstract class Traverser<N> {
    * <p><b>Example:</b> The following graph with {@code startNode} {@code a} would return nodes in
    * the order {@code abecfd} (assuming successors are returned in alphabetical order).
    *
-   * <pre>{@code
+   * {@snippet :
    * b ---- a ---- d
    * |      |
    * |      |
    * e ---- c ---- f
-   * }</pre>
+   * }
    *
    * <p>The behavior of this method is undefined if the nodes, or the topology of the graph, change
    * while iteration is in progress.
@@ -270,10 +264,10 @@ public abstract class Traverser<N> {
    * compute its next element on the fly. It is thus possible to limit the traversal to a certain
    * number of nodes as follows:
    *
-   * <pre>{@code
+   * {@snippet :
    * Iterables.limit(
    *     Traverser.forGraph(graph).depthFirstPreOrder(node), maxNumberOfNodes);
-   * }</pre>
+   * }
    *
    * <p>See <a href="https://en.wikipedia.org/wiki/Depth-first_search">Wikipedia</a> for more info.
    *
@@ -295,12 +289,7 @@ public abstract class Traverser<N> {
    */
   public final Iterable<N> depthFirstPreOrder(Iterable<? extends N> startNodes) {
     ImmutableSet<N> validated = validate(startNodes);
-    return new Iterable<N>() {
-      @Override
-      public Iterator<N> iterator() {
-        return newTraversal().preOrder(validated.iterator());
-      }
-    };
+    return () -> newTraversal().preOrder(validated.iterator());
   }
 
   /**
@@ -311,12 +300,12 @@ public abstract class Traverser<N> {
    * <p><b>Example:</b> The following graph with {@code startNode} {@code a} would return nodes in
    * the order {@code fcebda} (assuming successors are returned in alphabetical order).
    *
-   * <pre>{@code
+   * {@snippet :
    * b ---- a ---- d
    * |      |
    * |      |
    * e ---- c ---- f
-   * }</pre>
+   * }
    *
    * <p>The behavior of this method is undefined if the nodes, or the topology of the graph, change
    * while iteration is in progress.
@@ -325,10 +314,10 @@ public abstract class Traverser<N> {
    * compute its next element on the fly. It is thus possible to limit the traversal to a certain
    * number of nodes as follows:
    *
-   * <pre>{@code
+   * {@snippet :
    * Iterables.limit(
    *     Traverser.forGraph(graph).depthFirstPostOrder(node), maxNumberOfNodes);
-   * }</pre>
+   * }
    *
    * <p>See <a href="https://en.wikipedia.org/wiki/Depth-first_search">Wikipedia</a> for more info.
    *
@@ -350,12 +339,7 @@ public abstract class Traverser<N> {
    */
   public final Iterable<N> depthFirstPostOrder(Iterable<? extends N> startNodes) {
     ImmutableSet<N> validated = validate(startNodes);
-    return new Iterable<N>() {
-      @Override
-      public Iterator<N> iterator() {
-        return newTraversal().postOrder(validated.iterator());
-      }
-    };
+    return () -> newTraversal().postOrder(validated.iterator());
   }
 
   abstract Traversal<N> newTraversal();
@@ -385,8 +369,7 @@ public abstract class Traverser<N> {
       Set<N> visited = new HashSet<>();
       return new Traversal<N>(graph) {
         @Override
-        @CheckForNull
-        N visitNext(Deque<Iterator<? extends N>> horizon) {
+        @Nullable N visitNext(Deque<Iterator<? extends N>> horizon) {
           Iterator<? extends N> top = horizon.getFirst();
           while (top.hasNext()) {
             N element = top.next();
@@ -411,9 +394,8 @@ public abstract class Traverser<N> {
 
     static <N> Traversal<N> inTree(SuccessorsFunction<N> tree) {
       return new Traversal<N>(tree) {
-        @CheckForNull
         @Override
-        N visitNext(Deque<Iterator<? extends N>> horizon) {
+        @Nullable N visitNext(Deque<Iterator<? extends N>> horizon) {
           Iterator<? extends N> top = horizon.getFirst();
           if (top.hasNext()) {
             return checkNotNull(top.next());
@@ -443,8 +425,7 @@ public abstract class Traverser<N> {
       horizon.add(startNodes);
       return new AbstractIterator<N>() {
         @Override
-        @CheckForNull
-        protected N computeNext() {
+        protected @Nullable N computeNext() {
           do {
             N next = visitNext(horizon);
             if (next != null) {
@@ -468,8 +449,7 @@ public abstract class Traverser<N> {
       horizon.add(startNodes);
       return new AbstractIterator<N>() {
         @Override
-        @CheckForNull
-        protected N computeNext() {
+        protected @Nullable N computeNext() {
           for (N next = visitNext(horizon); next != null; next = visitNext(horizon)) {
             Iterator<? extends N> successors = successorFunction.successors(next).iterator();
             if (!successors.hasNext()) {
@@ -497,8 +477,7 @@ public abstract class Traverser<N> {
      * into {@code horizon} between calls to {@code visitNext()}. This causes them to receive
      * additional values interleaved with those shown above.)
      */
-    @CheckForNull
-    abstract N visitNext(Deque<Iterator<? extends N>> horizon);
+    abstract @Nullable N visitNext(Deque<Iterator<? extends N>> horizon);
   }
 
   /** Poor man's method reference for {@code Deque::addFirst} and {@code Deque::addLast}. */

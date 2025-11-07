@@ -18,24 +18,23 @@ package com.google.common.graph;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.graph.GraphConstants.NODE_NOT_IN_GRAPH;
+import static com.google.common.graph.Graphs.TransitiveClosureSelfLoopStrategy.ADD_SELF_LOOPS_ALWAYS;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods for {@link Graph}, {@link ValueGraph}, and {@link Network} instances.
@@ -45,7 +44,6 @@ import javax.annotation.CheckForNull;
  * @since 20.0
  */
 @Beta
-@ElementTypesAreNonnullByDefault
 public final class Graphs extends GraphsBridgeMethods {
 
   private Graphs() {}
@@ -151,7 +149,7 @@ public final class Graphs extends GraphsBridgeMethods {
      * successors if we determine that we need them after we've performed the initial processing of
      * the node.
      */
-    @CheckForNull Queue<N> remainingSuccessors;
+    @Nullable Queue<N> remainingSuccessors;
 
     NodeAndRemainingSuccessors(N node) {
       this.node = node;
@@ -165,8 +163,8 @@ public final class Graphs extends GraphsBridgeMethods {
    * from B to A).
    */
   private static boolean canTraverseWithoutReusingEdge(
-      Graph<?> graph, Object nextNode, @CheckForNull Object previousNode) {
-    if (graph.isDirected() || !Objects.equal(previousNode, nextNode)) {
+      Graph<?> graph, Object nextNode, @Nullable Object previousNode) {
+    if (graph.isDirected() || !Objects.equals(previousNode, nextNode)) {
       return true;
     }
     // This falls into the undirected A->B->A case. The Graph interface does not support parallel
@@ -175,59 +173,105 @@ public final class Graphs extends GraphsBridgeMethods {
   }
 
   /**
-   * Returns the transitive closure of {@code graph}. The transitive closure of a graph is another
-   * graph with an edge connecting node A to node B if node B is {@link #reachableNodes(Graph,
-   * Object) reachable} from node A.
+   * Returns the transitive closure of {@code graph}. The transitive closure of a graph {@code G} is
+   * a graph {@code T} that is a supergraph of {@code G}, augmented by, for each pair of nodes A and
+   * B, an edge connecting node A to node B if there is a sequence of edges in {@code G} starting at
+   * A and ending at B.
+   *
+   * <p>{@code strategy} defines the circumstances under which self-loops will be added to the
+   * transitive closure graph.
    *
    * <p>This is a "snapshot" based on the current topology of {@code graph}, rather than a live view
    * of the transitive closure of {@code graph}. In other words, the returned {@link Graph} will not
    * be updated after modifications to {@code graph}.
    *
-   * @since 33.1.0 (present with return type {@code Graph} since 20.0)
+   * @since NEXT
    */
-  // TODO(b/31438252): Consider potential optimizations for this algorithm.
-  public static <N> ImmutableGraph<N> transitiveClosure(Graph<N> graph) {
+  // TODO(b/31438252): Consider optimizing for undirected graphs.
+  public static <N> ImmutableGraph<N> transitiveClosure(
+      Graph<N> graph, TransitiveClosureSelfLoopStrategy strategy) {
     ImmutableGraph.Builder<N> transitiveClosure =
         GraphBuilder.from(graph).allowsSelfLoops(true).<N>immutable();
-    // Every node is, at a minimum, reachable from itself. Since the resulting transitive closure
-    // will have no isolated nodes, we can skip adding nodes explicitly and let putEdge() do it.
 
-    if (graph.isDirected()) {
-      // Note: works for both directed and undirected graphs, but we only use in the directed case.
-      for (N node : graph.nodes()) {
-        for (N reachableNode : reachableNodes(graph, node)) {
-          transitiveClosure.putEdge(node, reachableNode);
-        }
-      }
-    } else {
-      // An optimization for the undirected case: for every node B reachable from node A,
-      // node A and node B have the same reachability set.
-      Set<N> visitedNodes = new HashSet<>();
-      for (N node : graph.nodes()) {
-        if (!visitedNodes.contains(node)) {
-          Set<N> reachableNodes = reachableNodes(graph, node);
-          visitedNodes.addAll(reachableNodes);
-          int pairwiseMatch = 1; // start at 1 to include self-loops
-          for (N nodeU : reachableNodes) {
-            for (N nodeV : Iterables.limit(reachableNodes, pairwiseMatch++)) {
-              transitiveClosure.putEdge(nodeU, nodeV);
-            }
-          }
-        }
+    for (N node : graph.nodes()) {
+      // add each node explicitly to include isolated nodes
+      transitiveClosure.addNode(node);
+      for (N reachableNode : getReachableNodes(graph, node, strategy)) {
+        transitiveClosure.putEdge(node, reachableNode);
       }
     }
-
     return transitiveClosure.build();
   }
 
   /**
-   * Returns the set of nodes that are reachable from {@code node}. Node B is defined as reachable
-   * from node A if there exists a path (a sequence of adjacent outgoing edges) starting at node A
-   * and ending at node B. Note that a node is always reachable from itself via a zero-length path.
+   * Equivalent to {@code transitiveClosure(graph, ADD_SELF_LOOPS_ALWAYS)}. Callers should look at
+   * the different strategy options that the new method supports rather than simply migrating to the
+   * new method with the existing behavior; we believe that most callers will want to use the {@code
+   * ADD_SELF_LOOPS_FOR_CYCLES} strategy.
    *
-   * <p>This is a "snapshot" based on the current topology of {@code graph}, rather than a live view
-   * of the set of nodes reachable from {@code node}. In other words, the returned {@link Set} will
-   * not be updated after modifications to {@code graph}.
+   * @since 33.1.0 (present with return type {@code Graph} since 20.0)
+   * @deprecated Use {@link #transitiveClosure(Graph, TransitiveClosureSelfLoopStrategy)} instead.
+   */
+  @SuppressWarnings("InlineMeSuggester") // We expect most users to want to change behavior.
+  @Deprecated
+  public static <N> ImmutableGraph<N> transitiveClosure(Graph<N> graph) {
+    return transitiveClosure(graph, ADD_SELF_LOOPS_ALWAYS);
+  }
+
+  /**
+   * Returns the nodes reachable from {@code node} in {@code graph}, according to the given {@code
+   * strategy}.
+   */
+  private static <N> Iterable<N> getReachableNodes(
+      Graph<N> graph, N node, TransitiveClosureSelfLoopStrategy strategy) {
+    Traverser<N> traverser = Traverser.forGraph(graph);
+    switch (strategy) {
+      case ADD_SELF_LOOPS_ALWAYS: // always include 'node'
+        return traverser.breadthFirst(node);
+      case ADD_SELF_LOOPS_FOR_CYCLES: // include 'node' iff there's an incident cycle
+        // note that if 'node' has a self-loop, it will appear in its successors
+        return traverser.breadthFirst(graph.successors(node));
+    }
+    throw new IllegalArgumentException("Unrecognized strategy: " + strategy);
+  }
+
+  /**
+   * A strategy for adding self-loops to {@linkplain #transitiveClosure(Graph,
+   * TransitiveClosureSelfLoopStrategy) the transitive closure graph}. All strategies preserve
+   * self-loops that are present in the original graph.
+   *
+   * <p>The strategies differ based on how they define "cycle incident to a node".
+   *
+   * @since NEXT
+   */
+  public enum TransitiveClosureSelfLoopStrategy {
+    /**
+     * Add a self-loop to each node in the original graph; this is based on a definition of "cycle
+     * incident to a node" that includes zero-length cycles. This matches the behavior of the
+     * now-deprecated {@link #transitiveClosure(Graph)} method.
+     */
+    ADD_SELF_LOOPS_ALWAYS,
+    /**
+     * Add a self-loop to each node that is incident to a cycle of length one or greater in the
+     * original graph.
+     */
+    ADD_SELF_LOOPS_FOR_CYCLES
+  }
+
+  /**
+   * Returns the set of nodes that are reachable from {@code node}. Specifically, it returns all
+   * nodes {@code v} such that there exists a path (a sequence of adjacent outgoing edges) starting
+   * at {@code node} and ending at {@code v}. This implementation includes {@code node} as the first
+   * element in the result.
+   *
+   * <p>If needed, the {@link Traverser} class provides more flexible and lighter-weight ways to
+   * list the nodes reachable from a given node or nodes. See the <a
+   * href="https://github.com/google/guava/wiki/GraphsExplained#Graph-traversal">"Graph traversal"
+   * section of the Guava User's Guide</a> for more information.
+   *
+   * <p>The {@link Set} returned is a "snapshot" based on the current topology of {@code graph},
+   * rather than a live view. In other words, modifications to {@code graph} made after this method
+   * returns will not be reflected in the set.
    *
    * @throws IllegalArgumentException if {@code node} is not present in {@code graph}
    * @since 33.1.0 (present with return type {@code Set} since 20.0)
@@ -298,7 +342,7 @@ public final class Graphs extends GraphsBridgeMethods {
 
   // NOTE: this should work as long as the delegate graph's implementation of edges() (like that of
   // AbstractGraph) derives its behavior from calling successors().
-  private static class TransposedGraph<N> extends ForwardingGraph<N> {
+  private static final class TransposedGraph<N> extends ForwardingGraph<N> {
     private final Graph<N> graph;
 
     TransposedGraph(Graph<N> graph) {
@@ -322,7 +366,7 @@ public final class Graphs extends GraphsBridgeMethods {
 
     @Override
     public Set<EndpointPair<N>> incidentEdges(N node) {
-      return new IncidentEdgeSet<N>(this, node) {
+      return new IncidentEdgeSet<N>(this, node, IncidentEdgeSet.EdgeType.BOTH) {
         @Override
         public Iterator<EndpointPair<N>> iterator() {
           return Iterators.transform(
@@ -355,7 +399,7 @@ public final class Graphs extends GraphsBridgeMethods {
 
   // NOTE: this should work as long as the delegate graph's implementation of edges() (like that of
   // AbstractValueGraph) derives its behavior from calling successors().
-  private static class TransposedValueGraph<N, V> extends ForwardingValueGraph<N, V> {
+  private static final class TransposedValueGraph<N, V> extends ForwardingValueGraph<N, V> {
     private final ValueGraph<N, V> graph;
 
     TransposedValueGraph(ValueGraph<N, V> graph) {
@@ -398,19 +442,17 @@ public final class Graphs extends GraphsBridgeMethods {
     }
 
     @Override
-    @CheckForNull
-    public V edgeValueOrDefault(N nodeU, N nodeV, @CheckForNull V defaultValue) {
+    public @Nullable V edgeValueOrDefault(N nodeU, N nodeV, @Nullable V defaultValue) {
       return delegate().edgeValueOrDefault(nodeV, nodeU, defaultValue); // transpose
     }
 
     @Override
-    @CheckForNull
-    public V edgeValueOrDefault(EndpointPair<N> endpoints, @CheckForNull V defaultValue) {
+    public @Nullable V edgeValueOrDefault(EndpointPair<N> endpoints, @Nullable V defaultValue) {
       return delegate().edgeValueOrDefault(transpose(endpoints), defaultValue);
     }
   }
 
-  private static class TransposedNetwork<N, E> extends ForwardingNetwork<N, E> {
+  private static final class TransposedNetwork<N, E> extends ForwardingNetwork<N, E> {
     private final Network<N, E> network;
 
     TransposedNetwork(Network<N, E> network) {
@@ -469,14 +511,12 @@ public final class Graphs extends GraphsBridgeMethods {
     }
 
     @Override
-    @CheckForNull
-    public E edgeConnectingOrNull(N nodeU, N nodeV) {
+    public @Nullable E edgeConnectingOrNull(N nodeU, N nodeV) {
       return delegate().edgeConnectingOrNull(nodeV, nodeU); // transpose
     }
 
     @Override
-    @CheckForNull
-    public E edgeConnectingOrNull(EndpointPair<N> endpoints) {
+    public @Nullable E edgeConnectingOrNull(EndpointPair<N> endpoints) {
       return delegate().edgeConnectingOrNull(transpose(endpoints));
     }
 

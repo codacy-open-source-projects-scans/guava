@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Predicate;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * GWT emulated version of {@link ImmutableCollection}.
@@ -33,43 +33,51 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jesse Wilson
  */
 @SuppressWarnings("serial") // we're overriding default serialization
-@ElementTypesAreNonnullByDefault
 public abstract class ImmutableCollection<E> extends AbstractCollection<E> implements Serializable {
   static final int SPLITERATOR_CHARACTERISTICS =
       Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.ORDERED;
 
   ImmutableCollection() {}
 
+  @Override
   public abstract UnmodifiableIterator<E> iterator();
 
+  @Override
   public boolean contains(@Nullable Object object) {
     return object != null && super.contains(object);
   }
 
+  @Override
   public final boolean add(E e) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final boolean remove(@Nullable Object object) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final boolean addAll(Collection<? extends E> newElements) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final boolean removeAll(Collection<?> oldElements) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final boolean removeIf(Predicate<? super E> predicate) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final boolean retainAll(Collection<?> elementsToKeep) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final void clear() {
     throw new UnsupportedOperationException();
   }

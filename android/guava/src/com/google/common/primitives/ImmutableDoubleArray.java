@@ -31,7 +31,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.DoubleConsumer;
 import java.util.stream.DoubleStream;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An immutable array of {@code double} values, with an API resembling {@link List}.
@@ -85,7 +85,6 @@ import javax.annotation.CheckForNull;
  */
 @GwtCompatible
 @Immutable
-@ElementTypesAreNonnullByDefault
 public final class ImmutableDoubleArray implements Serializable {
   private static final ImmutableDoubleArray EMPTY = new ImmutableDoubleArray(new double[0]);
 
@@ -174,7 +173,6 @@ public final class ImmutableDoubleArray implements Serializable {
    *
    * @since 33.4.0 (but since 22.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static ImmutableDoubleArray copyOf(DoubleStream stream) {
     // Note this uses very different growth behavior from copyOf(Iterable) and the builder.
@@ -279,7 +277,6 @@ public final class ImmutableDoubleArray implements Serializable {
      *
      * @since 33.4.0 (but since 22.0 in the JRE flavor)
      */
-    @SuppressWarnings("Java7ApiChecker")
     @IgnoreJRERequirement // Users will use this only if they're already using streams.
     @CanIgnoreReturnValue
     public Builder addAll(DoubleStream stream) {
@@ -428,7 +425,6 @@ public final class ImmutableDoubleArray implements Serializable {
    *
    * @since 33.4.0 (but since 22.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // We rely on users not to call this without library desugaring.
   public void forEach(DoubleConsumer consumer) {
     checkNotNull(consumer);
@@ -442,7 +438,6 @@ public final class ImmutableDoubleArray implements Serializable {
    *
    * @since 33.4.0 (but since 22.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   // If users use this when they shouldn't, we hope that NewApi will catch subsequent stream calls
   @IgnoreJRERequirement
   public DoubleStream stream() {
@@ -468,7 +463,6 @@ public final class ImmutableDoubleArray implements Serializable {
         : new ImmutableDoubleArray(array, start + startIndex, start + endIndex);
   }
 
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // used only from APIs that use streams
   /*
    * We declare this as package-private, rather than private, to avoid generating a synthetic
@@ -494,7 +488,8 @@ public final class ImmutableDoubleArray implements Serializable {
     return new AsList(this);
   }
 
-  static class AsList extends AbstractList<Double> implements RandomAccess, Serializable {
+  private static final class AsList extends AbstractList<Double>
+      implements RandomAccess, Serializable {
     private final ImmutableDoubleArray parent;
 
     private AsList(ImmutableDoubleArray parent) {
@@ -514,17 +509,17 @@ public final class ImmutableDoubleArray implements Serializable {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       return indexOf(target) >= 0;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       return target instanceof Double ? parent.indexOf((Double) target) : -1;
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       return target instanceof Double ? parent.lastIndexOf((Double) target) : -1;
     }
 
@@ -535,7 +530,6 @@ public final class ImmutableDoubleArray implements Serializable {
 
     // The default List spliterator is not efficiently splittable
     @Override
-    @SuppressWarnings("Java7ApiChecker")
     /*
      * This is an override that is not directly visible to callers, so NewApi will catch calls to
      * Collection.spliterator() where necessary.
@@ -546,7 +540,7 @@ public final class ImmutableDoubleArray implements Serializable {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object instanceof AsList) {
         AsList that = (AsList) object;
         return this.parent.equals(that.parent);
@@ -586,7 +580,7 @@ public final class ImmutableDoubleArray implements Serializable {
    * values as this one, in the same order. Values are compared as if by {@link Double#equals}.
    */
   @Override
-  public boolean equals(@CheckForNull Object object) {
+  public boolean equals(@Nullable Object object) {
     if (object == this) {
       return true;
     }
@@ -616,7 +610,7 @@ public final class ImmutableDoubleArray implements Serializable {
     int hash = 1;
     for (int i = start; i < end; i++) {
       hash *= 31;
-      hash += Doubles.hashCode(array[i]);
+      hash += Double.hashCode(array[i]);
     }
     return hash;
   }

@@ -16,15 +16,16 @@
 
 package com.google.common.collect;
 
-
 import com.google.common.annotations.GwtCompatible;
+import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class FilteredMapTest extends AbstractFilteredMapTest {
   @Override
   Map<String, Integer> createUnfiltered() {
-    return Maps.newHashMap();
+    return new HashMap<>();
   }
 }

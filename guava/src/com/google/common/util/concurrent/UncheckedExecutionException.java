@@ -15,7 +15,9 @@
 package com.google.common.util.concurrent;
 
 import com.google.common.annotations.GwtCompatible;
-import javax.annotation.CheckForNull;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unchecked variant of {@link java.util.concurrent.ExecutionException}. As with {@code
@@ -33,7 +35,6 @@ import javax.annotation.CheckForNull;
  * @since 10.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public class UncheckedExecutionException extends RuntimeException {
   /*
    * Ideally, this class would have exposed only constructors that require a non-null cause. See
@@ -68,8 +69,9 @@ public class UncheckedExecutionException extends RuntimeException {
    *     anyone from calling {@link #initCause} later, so it is not quite equivalent to using a
    *     constructor that omits the cause.
    */
+  @SuppressWarnings("InlineMeSuggester") // b/387265535
   @Deprecated
-  protected UncheckedExecutionException(@CheckForNull String message) {
+  protected UncheckedExecutionException(@Nullable String message) {
     super(message);
   }
 
@@ -77,7 +79,7 @@ public class UncheckedExecutionException extends RuntimeException {
    * Creates a new instance with the given detail message and cause. Prefer to provide a
    * non-nullable {@code cause}, as many users expect to find one.
    */
-  public UncheckedExecutionException(@CheckForNull String message, @CheckForNull Throwable cause) {
+  public UncheckedExecutionException(@Nullable String message, @Nullable Throwable cause) {
     super(message, cause);
   }
 
@@ -85,9 +87,9 @@ public class UncheckedExecutionException extends RuntimeException {
    * Creates a new instance with {@code null} as its detail message and the given cause. Prefer to
    * provide a non-nullable {@code cause}, as many users expect to find one.
    */
-  public UncheckedExecutionException(@CheckForNull Throwable cause) {
+  public UncheckedExecutionException(@Nullable Throwable cause) {
     super(cause);
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

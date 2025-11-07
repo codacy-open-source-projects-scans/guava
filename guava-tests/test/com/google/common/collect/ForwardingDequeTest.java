@@ -20,12 +20,14 @@ import com.google.common.base.Function;
 import com.google.common.testing.ForwardingWrapperTester;
 import java.util.Deque;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code ForwardingDeque}.
  *
  * @author Kurt Alfred Kluever
  */
+@NullUnmarked
 public class ForwardingDequeTest extends TestCase {
 
   @SuppressWarnings("rawtypes")
@@ -41,7 +43,7 @@ public class ForwardingDequeTest extends TestCase {
             });
   }
 
-  private static <T> Deque<T> wrap(final Deque<T> delegate) {
+  private static <T> Deque<T> wrap(Deque<T> delegate) {
     return new ForwardingDeque<T>() {
       @Override
       protected Deque<T> delegate() {

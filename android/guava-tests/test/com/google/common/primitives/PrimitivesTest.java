@@ -25,13 +25,15 @@ import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
 import java.util.Set;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit test for {@link Primitives}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class PrimitivesTest extends TestCase {
   public void testIsWrapperType() {
     assertThat(Primitives.isWrapperType(Void.class)).isTrue();

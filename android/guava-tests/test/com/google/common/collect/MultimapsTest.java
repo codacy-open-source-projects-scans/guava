@@ -54,6 +54,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -66,21 +67,22 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@code Multimaps}.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class MultimapsTest extends TestCase {
 
   private static final Comparator<Integer> INT_COMPARATOR =
       Ordering.<Integer>natural().reverse().nullsFirst();
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testUnmodifiableListMultimapShortCircuit() {
     ListMultimap<String, Integer> mod = ArrayListMultimap.create();
     ListMultimap<String, Integer> unmod = Multimaps.unmodifiableListMultimap(mod);
@@ -93,7 +95,7 @@ public class MultimapsTest extends TestCase {
         immutable, Multimaps.unmodifiableListMultimap((ListMultimap<String, Integer>) immutable));
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testUnmodifiableSetMultimapShortCircuit() {
     SetMultimap<String, Integer> mod = HashMultimap.create();
     SetMultimap<String, Integer> unmod = Multimaps.unmodifiableSetMultimap(mod);
@@ -106,7 +108,7 @@ public class MultimapsTest extends TestCase {
         immutable, Multimaps.unmodifiableSetMultimap((SetMultimap<String, Integer>) immutable));
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testUnmodifiableMultimapShortCircuit() {
     Multimap<String, Integer> mod = HashMultimap.create();
     Multimap<String, Integer> unmod = Multimaps.unmodifiableMultimap(mod);
@@ -295,7 +297,7 @@ public class MultimapsTest extends TestCase {
     assertEquals(multimap, unmodifiable);
 
     assertThat(unmodifiable.asMap().get("bar")).containsExactly(5, -1);
-    assertNull(unmodifiable.asMap().get("missing"));
+    assertThat(unmodifiable.asMap().get("missing")).isNull();
 
     assertFalse(unmodifiable.entries() instanceof Serializable);
   }
@@ -395,7 +397,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testForMap() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("foo", 1);
     map.put("bar", 2);
     Multimap<String, Integer> multimap = HashMultimap.create();
@@ -450,7 +452,7 @@ public class MultimapsTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // SerializableTester
   public void testForMapSerialization() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("foo", 1);
     map.put("bar", 2);
     Multimap<String, Integer> multimapView = Multimaps.forMap(map);
@@ -458,7 +460,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testForMapRemoveAll() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("foo", 1);
     map.put("bar", 2);
     map.put("cow", 3);
@@ -473,12 +475,12 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testForMapAsMap() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("foo", 1);
     map.put("bar", 2);
     Map<String, Collection<Integer>> asMap = Multimaps.forMap(map).asMap();
     assertEquals(singleton(1), asMap.get("foo"));
-    assertNull(asMap.get("cow"));
+    assertThat(asMap.get("cow")).isNull();
     assertTrue(asMap.containsKey("foo"));
     assertFalse(asMap.containsKey("cow"));
 
@@ -487,8 +489,8 @@ public class MultimapsTest extends TestCase {
     assertFalse(entries.remove((Object) 4.5));
     assertFalse(entries.contains(Maps.immutableEntry("foo", singletonList(1))));
     assertFalse(entries.remove(Maps.immutableEntry("foo", singletonList(1))));
-    assertFalse(entries.contains(Maps.immutableEntry("foo", Sets.newLinkedHashSet(asList(1, 2)))));
-    assertFalse(entries.remove(Maps.immutableEntry("foo", Sets.newLinkedHashSet(asList(1, 2)))));
+    assertFalse(entries.contains(Maps.immutableEntry("foo", new LinkedHashSet<>(asList(1, 2)))));
+    assertFalse(entries.remove(Maps.immutableEntry("foo", new LinkedHashSet<>(asList(1, 2)))));
     assertFalse(entries.contains(Maps.immutableEntry("foo", singleton(2))));
     assertFalse(entries.remove(Maps.immutableEntry("foo", singleton(2))));
     assertTrue(map.containsKey("foo"));
@@ -505,7 +507,7 @@ public class MultimapsTest extends TestCase {
 
           @Override
           protected Iterator<Integer> newTargetIterator() {
-            Map<String, Integer> map = Maps.newHashMap();
+            Map<String, Integer> map = new HashMap<>();
             map.put("foo", 1);
             map.put("bar", 2);
             multimap = Multimaps.forMap(map);
@@ -514,7 +516,7 @@ public class MultimapsTest extends TestCase {
 
           @Override
           protected void verify(List<Integer> elements) {
-            assertEquals(newHashSet(elements), multimap.get("foo"));
+            assertEquals(new HashSet<>(elements), multimap.get("foo"));
           }
         };
 
@@ -542,11 +544,16 @@ public class MultimapsTest extends TestCase {
 
   private static class QueueSupplier extends CountingSupplier<Queue<Integer>> {
     @Override
+    /*
+     * We need a Queue that implements equals() for the equality tests we perform after
+     * reserializing the multimap.
+     */
+    @SuppressWarnings("JdkObsolete")
     public Queue<Integer> getImpl() {
       return new LinkedList<>();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   public void testNewMultimapWithCollectionRejectingNegativeElements() {
@@ -554,7 +561,7 @@ public class MultimapsTest extends TestCase {
         new SetSupplier() {
           @Override
           public Set<Integer> getImpl() {
-            final Set<Integer> backing = super.getImpl();
+            Set<Integer> backing = super.getImpl();
             return new ForwardingSet<Integer>() {
               @Override
               protected Set<Integer> delegate() {
@@ -586,7 +593,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testNewMultimap() {
-    // The ubiquitous EnumArrayBlockingQueueMultimap
+    // The ubiquitous EnumLinkedListMultimap
     CountingSupplier<Queue<Integer>> factory = new QueueSupplier();
 
     Map<Color, Collection<Integer>> map = Maps.newEnumMap(Color.class);
@@ -640,7 +647,7 @@ public class MultimapsTest extends TestCase {
       return new LinkedList<>();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   public void testNewListMultimap() {
@@ -676,12 +683,12 @@ public class MultimapsTest extends TestCase {
       return new HashSet<>(4);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   public void testNewSetMultimap() {
     CountingSupplier<Set<Integer>> factory = new SetSupplier();
-    Map<Color, Collection<Integer>> map = Maps.newHashMap();
+    Map<Color, Collection<Integer>> map = new HashMap<>();
     SetMultimap<Color, Integer> multimap = Multimaps.newSetMultimap(map, factory);
     assertEquals(0, factory.count);
     multimap.putAll(Color.BLUE, asList(3, 1, 4));
@@ -695,7 +702,7 @@ public class MultimapsTest extends TestCase {
   @GwtIncompatible // SerializableTester
   public void testNewSetMultimapSerialization() {
     CountingSupplier<Set<Integer>> factory = new SetSupplier();
-    Map<Color, Collection<Integer>> map = Maps.newHashMap();
+    Map<Color, Collection<Integer>> map = new HashMap<>();
     SetMultimap<Color, Integer> multimap = Multimaps.newSetMultimap(map, factory);
     multimap.putAll(Color.BLUE, asList(3, 1, 4));
     multimap.putAll(Color.RED, asList(2, 7, 1, 8));
@@ -708,7 +715,7 @@ public class MultimapsTest extends TestCase {
       return Sets.newTreeSet(INT_COMPARATOR);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   public void testNewSortedSetMultimap() {
@@ -738,7 +745,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testIndex() {
-    final Multimap<String, Object> stringToObject =
+    Multimap<String, Object> stringToObject =
         new ImmutableMultimap.Builder<String, Object>()
             .put("1", 1)
             .put("1", 1L)
@@ -753,7 +760,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testIndexIterator() {
-    final Multimap<String, Object> stringToObject =
+    Multimap<String, Object> stringToObject =
         new ImmutableMultimap.Builder<String, Object>()
             .put("1", 1)
             .put("1", 1L)
@@ -768,7 +775,7 @@ public class MultimapsTest extends TestCase {
   }
 
   public void testIndex_ordering() {
-    final Multimap<Integer, String> expectedIndex =
+    Multimap<Integer, String> expectedIndex =
         new ImmutableListMultimap.Builder<Integer, String>()
             .put(4, "Inky")
             .put(6, "Blinky")
@@ -777,8 +784,8 @@ public class MultimapsTest extends TestCase {
             .put(5, "Clyde")
             .build();
 
-    final List<String> badGuys = Arrays.asList("Inky", "Blinky", "Pinky", "Pinky", "Clyde");
-    final Function<String, Integer> stringLengthFunction =
+    List<String> badGuys = Arrays.asList("Inky", "Blinky", "Pinky", "Pinky", "Clyde");
+    Function<String, Integer> stringLengthFunction =
         new Function<String, Integer>() {
           @Override
           public Integer apply(String input) {

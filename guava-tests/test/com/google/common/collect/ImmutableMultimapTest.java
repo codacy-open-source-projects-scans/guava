@@ -32,15 +32,16 @@ import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 import java.util.Map.Entry;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ImmutableMultimap}.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableMultimapTest extends TestCase {
 
   @SuppressWarnings("JUnitIncompatibleType")
@@ -102,7 +103,7 @@ public class ImmutableMultimapTest extends TestCase {
   @SuppressWarnings("JUnitIncompatibleType")
   public void testBuilder_withMutableEntry() {
     ImmutableMultimap.Builder<String, Integer> builder = new Builder<>();
-    final StringHolder holder = new StringHolder();
+    StringHolder holder = new StringHolder();
     holder.string = "one";
     Entry<String, Integer> entry =
         new AbstractMapEntry<String, Integer>() {

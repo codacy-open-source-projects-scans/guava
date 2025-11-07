@@ -34,7 +34,8 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ForwardingMultiset}.
@@ -42,6 +43,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Hayward Chan
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingMultisetTest extends TestCase {
 
   static final class StandardImplForwardingMultiset<T> extends ForwardingMultiset<T> {
@@ -157,6 +159,7 @@ public class ForwardingMultisetTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -171,7 +174,7 @@ public class ForwardingMultisetTest extends TestCase {
                         LinkedHashMultiset.create(asList(elements)));
                   }
                 })
-            .named("ForwardingMultiset[LinkedHashMultiset] with standard " + "implementations")
+            .named("ForwardingMultiset[LinkedHashMultiset] with standard implementations")
             .withFeatures(
                 CollectionSize.ANY,
                 CollectionFeature.ALLOWS_NULL_VALUES,
@@ -186,7 +189,7 @@ public class ForwardingMultisetTest extends TestCase {
                     return new StandardImplForwardingMultiset<>(ImmutableMultiset.copyOf(elements));
                   }
                 })
-            .named("ForwardingMultiset[ImmutableMultiset] with standard " + "implementations")
+            .named("ForwardingMultiset[ImmutableMultiset] with standard implementations")
             .withFeatures(CollectionSize.ANY, CollectionFeature.ALLOWS_NULL_QUERIES)
             .createTestSuite());
     suite.addTest(
@@ -199,7 +202,7 @@ public class ForwardingMultisetTest extends TestCase {
                    */
                   @Override
                   protected Set<String> create(String[] elements) {
-                    final Multiset<String> inner = LinkedHashMultiset.create(asList(elements));
+                    Multiset<String> inner = LinkedHashMultiset.create(asList(elements));
                     return new ForwardingMultiset<String>() {
                       @Override
                       protected Multiset<String> delegate() {
@@ -223,7 +226,7 @@ public class ForwardingMultisetTest extends TestCase {
 
                       @Override
                       public Set<Entry<String>> entrySet() {
-                        final Set<Entry<String>> backingSet = super.entrySet();
+                        Set<Entry<String>> backingSet = super.entrySet();
                         return new ForwardingSet<Entry<String>>() {
                           @Override
                           protected Set<Entry<String>> delegate() {
@@ -356,7 +359,7 @@ public class ForwardingMultisetTest extends TestCase {
         .testEquals();
   }
 
-  private static <T> Multiset<T> wrap(final Multiset<T> delegate) {
+  private static <T> Multiset<T> wrap(Multiset<T> delegate) {
     return new ForwardingMultiset<T>() {
       @Override
       protected Multiset<T> delegate() {

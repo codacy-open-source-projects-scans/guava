@@ -19,8 +19,11 @@ package com.google.common.collect;
 import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import java.io.Serializable;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A class that implements {@code Comparable} without generics, such as those found in libraries
@@ -31,7 +34,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @SuppressWarnings({"ComparableType", "rawtypes"}) // https://github.com/google/guava/issues/989
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 class LegacyComparable implements Comparable, Serializable {
   static final LegacyComparable X = new LegacyComparable("x");
   static final LegacyComparable Y = new LegacyComparable("y");
@@ -67,5 +70,5 @@ class LegacyComparable implements Comparable, Serializable {
     return value.hashCode();
   }
 
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

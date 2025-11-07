@@ -26,7 +26,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -36,14 +36,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test for {@link WrappingExecutorService}
  *
  * @author Chris Nokleberg
  */
+@NullUnmarked
 public class WrappingExecutorServiceTest extends TestCase {
   private static final String RESULT_VALUE = "ran";
+
   // Uninteresting delegations
   public void testDelegations() throws InterruptedException {
     MockExecutor mock = new MockExecutor();
@@ -141,7 +144,7 @@ public class WrappingExecutorServiceTest extends TestCase {
   }
 
   private static List<Callable<String>> createTasks(int n) {
-    List<Callable<String>> callables = Lists.newArrayList();
+    List<Callable<String>> callables = new ArrayList<>();
     for (int i = 0; i < n; i++) {
       callables.add(Callables.returning(RESULT_VALUE + i));
     }
@@ -151,7 +154,7 @@ public class WrappingExecutorServiceTest extends TestCase {
   private static final class WrappedCallable<T> implements Callable<T> {
     private final Callable<T> delegate;
 
-    public WrappedCallable(Callable<T> delegate) {
+    WrappedCallable(Callable<T> delegate) {
       this.delegate = delegate;
     }
 
@@ -164,7 +167,7 @@ public class WrappingExecutorServiceTest extends TestCase {
   private static final class WrappedRunnable implements Runnable {
     private final Runnable delegate;
 
-    public WrappedRunnable(Runnable delegate) {
+    WrappedRunnable(Runnable delegate) {
       this.delegate = delegate;
     }
 
@@ -175,7 +178,7 @@ public class WrappingExecutorServiceTest extends TestCase {
   }
 
   private static final class TestExecutor extends WrappingExecutorService {
-    public TestExecutor(MockExecutor mock) {
+    TestExecutor(MockExecutor mock) {
       super(mock);
     }
 
@@ -194,13 +197,13 @@ public class WrappingExecutorServiceTest extends TestCase {
   private static final class MockExecutor implements ExecutorService {
     private String lastMethodCalled = "";
     private long lastTimeoutInMillis = -1;
-    private ExecutorService inline = newDirectExecutorService();
+    private final ExecutorService inline = newDirectExecutorService();
 
-    public void assertLastMethodCalled(String method) {
+    void assertLastMethodCalled(String method) {
       assertEquals(method, lastMethodCalled);
     }
 
-    public void assertMethodWithTimeout(String method, long timeout, TimeUnit unit) {
+    void assertMethodWithTimeout(String method, long timeout, TimeUnit unit) {
       assertLastMethodCalled(method + "Timeout");
       assertEquals(unit.toMillis(timeout), lastTimeoutInMillis);
     }

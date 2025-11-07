@@ -19,7 +19,9 @@ package com.google.common.collect;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.testing.MapInterfaceTest;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Test {@link Multimap#asMap()} for a {@link Multimaps#forMap} multimap with {@link
@@ -28,7 +30,7 @@ import java.util.Map;
  * @author Jared Levy
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class ForMapMultimapAsMapImplementsMapTest extends AbstractMultimapAsMapImplementsMapTest {
 
   public ForMapMultimapAsMapImplementsMapTest() {
@@ -37,13 +39,13 @@ public class ForMapMultimapAsMapImplementsMapTest extends AbstractMultimapAsMapI
 
   @Override
   protected Map<String, Collection<Integer>> makeEmptyMap() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     return Multimaps.forMap(map).asMap();
   }
 
   @Override
   protected Map<String, Collection<Integer>> makePopulatedMap() {
-    Map<String, Integer> map = Maps.newHashMap();
+    Map<String, Integer> map = new HashMap<>();
     map.put("foo", 1);
     map.put("bar", 2);
     map.put("cow", 3);

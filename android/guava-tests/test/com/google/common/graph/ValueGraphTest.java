@@ -28,7 +28,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +38,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link StandardMutableValueGraph} and related functionality. */
 // TODO(user): Expand coverage and move to proper test suite.
 @RunWith(JUnit4.class)
+@NullUnmarked
 public final class ValueGraphTest {
   private static final String DEFAULT = "default";
 
@@ -55,6 +57,17 @@ public final class ValueGraphTest {
     assertThat(graph.incidentEdgeOrder()).isEqualTo(asGraph.incidentEdgeOrder());
     assertThat(graph.isDirected()).isEqualTo(asGraph.isDirected());
     assertThat(graph.allowsSelfLoops()).isEqualTo(asGraph.allowsSelfLoops());
+
+    Network<Integer, EndpointPair<Integer>> asNetwork = graph.asNetwork();
+    AbstractNetworkTest.validateNetwork(asNetwork);
+    assertThat(graph.nodes()).isEqualTo(asNetwork.nodes());
+    assertThat(graph.edges()).hasSize(asNetwork.edges().size());
+    assertThat(graph.nodeOrder()).isEqualTo(asNetwork.nodeOrder());
+    assertThat(graph.isDirected()).isEqualTo(asNetwork.isDirected());
+    assertThat(graph.allowsSelfLoops()).isEqualTo(asNetwork.allowsSelfLoops());
+    assertThat(asNetwork.edgeOrder()).isEqualTo(ElementOrder.unordered());
+    assertThat(asNetwork.allowsParallelEdges()).isFalse();
+    assertThat(asNetwork.asGraph()).isEqualTo(graph.asGraph());
 
     for (Integer node : graph.nodes()) {
       assertThat(graph.adjacentNodes(node)).isEqualTo(asGraph.adjacentNodes(node));
@@ -414,7 +427,7 @@ public final class ValueGraphTest {
 
     int threadCount = 20;
     ExecutorService executor = newFixedThreadPool(threadCount);
-    final CyclicBarrier barrier = new CyclicBarrier(threadCount);
+    CyclicBarrier barrier = new CyclicBarrier(threadCount);
     ImmutableList.Builder<Future<?>> futures = ImmutableList.builder();
     for (int i = 0; i < threadCount; i++) {
       futures.add(

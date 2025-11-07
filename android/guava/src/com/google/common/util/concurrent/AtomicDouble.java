@@ -21,7 +21,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -36,13 +35,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * Double#doubleToRawLongBits}, which differs from both the primitive double {@code ==} operator and
  * from {@link Double#equals}, as if implemented by:
  *
- * <pre>{@code
+ * {@snippet :
  * static boolean bitEquals(double x, double y) {
  *   long xBits = Double.doubleToRawLongBits(x);
  *   long yBits = Double.doubleToRawLongBits(y);
  *   return xBits == yBits;
  * }
- * }</pre>
+ * }
  *
  * <p>It is possible to write a more scalable updater, at the cost of giving up strict atomicity.
  * See for example <a
@@ -53,8 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Martin Buchholz
  * @since 11.0
  */
-@ElementTypesAreNonnullByDefault
-public class AtomicDouble extends Number implements Serializable {
+public class AtomicDouble extends Number {
   private static final long serialVersionUID = 0L;
 
   // We would use AtomicLongFieldUpdater, but it has issues on some Android devices.

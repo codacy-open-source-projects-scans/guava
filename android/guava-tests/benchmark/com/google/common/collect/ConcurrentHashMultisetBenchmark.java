@@ -19,6 +19,7 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
@@ -36,15 +37,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Benchmarks for {@link ConcurrentHashMultiset}.
  *
  * @author mike nonemacher
  */
+@NullUnmarked
 public class ConcurrentHashMultisetBenchmark {
   @Param({"1", "2", "4", "8"})
   int threads;
@@ -66,12 +68,11 @@ public class ConcurrentHashMultisetBenchmark {
       builder.add(i);
     }
     keys = builder.build();
-    threadPool =
-        Executors.newFixedThreadPool(threads, new ThreadFactoryBuilder().setDaemon(true).build());
+    threadPool = newFixedThreadPool(threads, new ThreadFactoryBuilder().setDaemon(true).build());
   }
 
   @Benchmark
-  long add(final int reps) throws ExecutionException, InterruptedException {
+  long add(int reps) throws ExecutionException, InterruptedException {
     return doMultithreadedLoop(
         new Callable<Long>() {
           @Override
@@ -82,7 +83,7 @@ public class ConcurrentHashMultisetBenchmark {
   }
 
   @Benchmark
-  long addRemove(final int reps) throws ExecutionException, InterruptedException {
+  long addRemove(int reps) throws ExecutionException, InterruptedException {
     return doMultithreadedLoop(
         new Callable<Long>() {
           @Override
@@ -174,7 +175,7 @@ public class ConcurrentHashMultisetBenchmark {
      * Creates a new, empty {@code OldConcurrentHashMultiset} using the default initial capacity,
      * load factor, and concurrency settings.
      */
-    public static <E> OldConcurrentHashMultiset<E> create() {
+    static <E> OldConcurrentHashMultiset<E> create() {
       return new OldConcurrentHashMultiset<E>(new ConcurrentHashMap<E, Integer>());
     }
 
@@ -350,7 +351,7 @@ public class ConcurrentHashMultisetBenchmark {
      * @param occurrences the number of occurrences of {@code element} to remove
      * @return {@code true} if the removal was possible (including if {@code occurrences} is zero)
      */
-    public boolean removeExactly(@Nullable Object element, int occurrences) {
+    boolean removeExactly(@Nullable Object element, int occurrences) {
       if (occurrences == 0) {
         return true;
       }
@@ -421,7 +422,7 @@ public class ConcurrentHashMultisetBenchmark {
 
     @Override
     Set<E> createElementSet() {
-      final Set<E> delegate = countMap.keySet();
+      Set<E> delegate = countMap.keySet();
       return new ForwardingSet<E>() {
         @Override
         protected Set<E> delegate() {
@@ -467,7 +468,7 @@ public class ConcurrentHashMultisetBenchmark {
 
     @Override
     Iterator<Entry<E>> entryIterator() {
-      final Iterator<Map.Entry<E, Integer>> backingIterator = countMap.entrySet().iterator();
+      Iterator<Map.Entry<E, Integer>> backingIterator = countMap.entrySet().iterator();
       return new Iterator<Entry<E>>() {
         @Override
         public boolean hasNext() {

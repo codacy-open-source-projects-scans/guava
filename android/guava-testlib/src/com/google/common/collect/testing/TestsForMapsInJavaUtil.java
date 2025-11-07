@@ -27,6 +27,7 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.collect.testing.features.MapFeature;
 import com.google.common.collect.testing.testers.MapEntrySetTester;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -245,6 +246,8 @@ public class TestsForMapsInJavaUtil {
     return MapTestSuiteBuilder.using(
             new TestStringMapGenerator() {
               @Override
+              // We are testing Hashtable / testing our tests on Hashtable.
+              @SuppressWarnings("JdkObsolete")
               protected Map<String, String> create(Entry<String, String>[] entries) {
                 return populate(new Hashtable<String, String>(), entries);
               }
@@ -461,6 +464,7 @@ public class TestsForMapsInJavaUtil {
 
   // TODO: call conversion constructors or factory methods instead of using
   // populate() on an empty map
+  @CanIgnoreReturnValue
   private static <T, M extends Map<T, String>> M populate(M map, Entry<T, String>[] entries) {
     for (Entry<T, String> entry : entries) {
       map.put(entry.getKey(), entry.getValue());

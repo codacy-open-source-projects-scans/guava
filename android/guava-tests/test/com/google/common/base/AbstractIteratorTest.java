@@ -17,6 +17,7 @@
 package com.google.common.base;
 
 import static com.google.common.base.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.base.SneakyThrows.sneakyThrow;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -28,13 +29,16 @@ import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@code AbstractIterator}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class AbstractIteratorTest extends TestCase {
 
   public void testDefaultBehaviorOfNextAndHasNext() {
@@ -46,7 +50,7 @@ public class AbstractIteratorTest extends TestCase {
           private int rep;
 
           @Override
-          public Integer computeNext() {
+          public @Nullable Integer computeNext() {
             switch (rep++) {
               case 0:
                 return 0;
@@ -88,8 +92,7 @@ public class AbstractIteratorTest extends TestCase {
               throw new AssertionError("Should not have been called again");
             } else {
               haveBeenCalled = true;
-              sneakyThrow(new SomeCheckedException());
-              throw new AssertionError(); // unreachable
+              throw sneakyThrow(new SomeCheckedException());
             }
           }
         };
@@ -101,7 +104,7 @@ public class AbstractIteratorTest extends TestCase {
   }
 
   public void testException() {
-    final SomeUncheckedException exception = new SomeUncheckedException();
+    SomeUncheckedException exception = new SomeUncheckedException();
     Iterator<Integer> iter =
         new AbstractIterator<Integer>() {
           @Override
@@ -178,15 +181,4 @@ public class AbstractIteratorTest extends TestCase {
   // Technically we should test other reentrant scenarios (4 combinations of
   // hasNext/next), but we'll cop out for now, knowing that
   // next() both start by invoking hasNext() anyway.
-
-  /** Throws an undeclared checked exception. */
-  private static void sneakyThrow(Throwable t) {
-    class SneakyThrower<T extends Throwable> {
-      @SuppressWarnings("unchecked") // intentionally unsafe for test
-      void throwIt(Throwable t) throws T {
-        throw (T) t;
-      }
-    }
-    new SneakyThrower<Error>().throwIt(t);
-  }
 }

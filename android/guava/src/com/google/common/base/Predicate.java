@@ -15,8 +15,7 @@
 package com.google.common.base;
 
 import com.google.common.annotations.GwtCompatible;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Determines a true or false value for a given input; a pre-Java-8 version of {@link
@@ -45,7 +44,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public interface Predicate<T extends @Nullable Object> {
   /**
    * Returns the result of applying this predicate to {@code input} (Java 8+ users, see notes in the
@@ -67,13 +65,13 @@ public interface Predicate<T extends @Nullable Object> {
   /**
    * Indicates whether another object is equal to this predicate.
    *
-   * <p>Most implementations will have no reason to override the behavior of {@link Object#equals}.
-   * However, an implementation may also choose to return {@code true} whenever {@code object} is a
-   * {@link Predicate} that it considers <i>interchangeable</i> with this one. "Interchangeable"
-   * <i>typically</i> means that {@code this.apply(t) == that.apply(t)} for all {@code t} of type
-   * {@code T}). Note that a {@code false} result from this method does not imply that the
-   * predicates are known <i>not</i> to be interchangeable.
+   * <p><b>Warning: do not depend</b> on the behavior of this method.
+   *
+   * <p>Historically, {@code Predicate} instances in this library have implemented this method to
+   * recognize certain cases where distinct {@code Predicate} instances would in fact behave
+   * identically. However, as code migrates to {@code java.util.function}, that behavior will
+   * disappear. It is best not to depend on it.
    */
   @Override
-  boolean equals(@CheckForNull Object object);
+  boolean equals(@Nullable Object obj);
 }

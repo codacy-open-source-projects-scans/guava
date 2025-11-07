@@ -43,11 +43,13 @@ import java.util.stream.DoubleStream;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class ImmutableDoubleArrayTest extends TestCase {
   // Test all creation paths very lazily: by assuming asList() works
 
@@ -168,7 +170,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
    */
   public void testBuilder_bruteForce() {
     for (int i = 0; i < reduceIterationsIfGwt(100); i++) {
-      ImmutableDoubleArray.Builder builder = ImmutableDoubleArray.builder(RANDOM.nextInt(20));
+      ImmutableDoubleArray.Builder builder = ImmutableDoubleArray.builder(random.nextInt(20));
       AtomicInteger counter = new AtomicInteger(0);
       while (counter.get() < 1000) {
         BuilderOp op = BuilderOp.randomOp();
@@ -191,7 +193,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
     ADD_ARRAY {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
-        double[] array = new double[RANDOM.nextInt(10)];
+        double[] array = new double[random.nextInt(10)];
         for (int i = 0; i < array.length; i++) {
           array[i] = counter.getAndIncrement();
         }
@@ -202,7 +204,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
         List<Double> list = new ArrayList<>();
-        double num = RANDOM.nextInt(10);
+        double num = random.nextInt(10);
         for (int i = 0; i < num; i++) {
           list.add((double) counter.getAndIncrement());
         }
@@ -213,7 +215,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
         List<Double> list = new ArrayList<>();
-        double num = RANDOM.nextInt(10);
+        double num = random.nextInt(10);
         for (int i = 0; i < num; i++) {
           list.add((double) counter.getAndIncrement());
         }
@@ -223,7 +225,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
     ADD_STREAM {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
-        double[] array = new double[RANDOM.nextInt(10)];
+        double[] array = new double[random.nextInt(10)];
         for (int i = 0; i < array.length; i++) {
           array[i] = counter.getAndIncrement();
         }
@@ -233,7 +235,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
     ADD_IIA {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
-        double[] array = new double[RANDOM.nextInt(10)];
+        double[] array = new double[random.nextInt(10)];
         for (int i = 0; i < array.length; i++) {
           array[i] = counter.getAndIncrement();
         }
@@ -243,7 +245,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
     ADD_LARGER_ARRAY {
       @Override
       void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter) {
-        double[] array = new double[RANDOM.nextInt(200) + 200];
+        double[] array = new double[random.nextInt(200) + 200];
         for (int i = 0; i < array.length; i++) {
           array[i] = counter.getAndIncrement();
         }
@@ -255,13 +257,13 @@ public class ImmutableDoubleArrayTest extends TestCase {
     static final BuilderOp[] values = values();
 
     static BuilderOp randomOp() {
-      return values[RANDOM.nextInt(values.length)];
+      return values[random.nextInt(values.length)];
     }
 
     abstract void doIt(ImmutableDoubleArray.Builder builder, AtomicInteger counter);
   }
 
-  private static final Random RANDOM = new Random(42);
+  private static final Random random = new Random(42);
 
   public void testLength() {
     assertThat(ImmutableDoubleArray.of().length()).isEqualTo(0);
@@ -373,7 +375,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
    * (so much for "black box") and try instances that both do and don't pass the check. The "don't"
    * half of that is more awkward to arrange...
    */
-  private static <T> Iterable<T> iterable(final Collection<T> collection) {
+  private static <T> Iterable<T> iterable(Collection<T> collection) {
     // return collection::iterator;
     return new Iterable<T>() {
       @Override
@@ -443,6 +445,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     List<ListTestSuiteBuilder<Double>> builders =
         ImmutableList.of(
@@ -475,6 +478,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   private static ImmutableDoubleArray makeArray(Double[] values) {
     return ImmutableDoubleArray.copyOf(Arrays.asList(values));
   }
@@ -484,6 +488,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public static final class ImmutableDoubleArrayAsListGenerator extends TestDoubleListGenerator {
     @Override
     protected List<Double> create(Double[] elements) {
@@ -493,6 +498,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public static final class ImmutableDoubleArrayHeadSubListAsListGenerator
       extends TestDoubleListGenerator {
     @Override
@@ -505,6 +511,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public static final class ImmutableDoubleArrayTailSubListAsListGenerator
       extends TestDoubleListGenerator {
     @Override
@@ -517,6 +524,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public static final class ImmutableDoubleArrayMiddleSubListAsListGenerator
       extends TestDoubleListGenerator {
     @Override
@@ -530,12 +538,14 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   private static Double[] concat(Double[] a, Double[] b) {
     return ObjectArrays.concat(a, b, Double.class);
   }
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public abstract static class TestDoubleListGenerator implements TestListGenerator<Double> {
     @Override
     public SampleElements<Double> samples() {
@@ -572,6 +582,7 @@ public class ImmutableDoubleArrayTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // used only from suite
+  @AndroidIncompatible
   public static class SampleDoubles extends SampleElements<Double> {
     public SampleDoubles() {
       super(-0.0, Long.MAX_VALUE * 3.0, Double.MAX_VALUE, Double.POSITIVE_INFINITY, Double.NaN);

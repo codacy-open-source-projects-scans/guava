@@ -38,13 +38,15 @@ import java.io.Writer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.logging.Logger;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link SourceSinkFactory} implementations.
  *
  * @author Colin Decker
  */
+@NullUnmarked
 public class SourceSinkFactories {
 
   private SourceSinkFactories() {}
@@ -99,7 +101,7 @@ public class SourceSinkFactories {
     return new UrlCharSourceFactory();
   }
 
-  public static ByteSourceFactory asByteSourceFactory(final CharSourceFactory factory) {
+  public static ByteSourceFactory asByteSourceFactory(CharSourceFactory factory) {
     checkNotNull(factory);
     return new ByteSourceFactory() {
       @Override
@@ -119,7 +121,7 @@ public class SourceSinkFactories {
     };
   }
 
-  public static CharSourceFactory asCharSourceFactory(final ByteSourceFactory factory) {
+  public static CharSourceFactory asCharSourceFactory(ByteSourceFactory factory) {
     checkNotNull(factory);
     return new CharSourceFactory() {
       @Override
@@ -139,7 +141,7 @@ public class SourceSinkFactories {
     };
   }
 
-  public static CharSinkFactory asCharSinkFactory(final ByteSinkFactory factory) {
+  public static CharSinkFactory asCharSinkFactory(ByteSinkFactory factory) {
     checkNotNull(factory);
     return new CharSinkFactory() {
       @Override
@@ -170,7 +172,7 @@ public class SourceSinkFactories {
   }
 
   public static ByteSourceFactory asSlicedByteSourceFactory(
-      final ByteSourceFactory factory, final long off, final long len) {
+      ByteSourceFactory factory, long off, long len) {
     checkNotNull(factory);
     return new ByteSourceFactory() {
       @Override
@@ -263,16 +265,18 @@ public class SourceSinkFactories {
 
     private final ThreadLocal<File> fileThreadLocal = new ThreadLocal<>();
 
-    protected File createFile() throws IOException {
+    File createFile() throws IOException {
       File file = File.createTempFile("SinkSourceFile", "txt");
       fileThreadLocal.set(file);
       return file;
     }
 
-    protected File getFile() {
+    File getFile() {
       return fileThreadLocal.get();
     }
 
+    // acts as an override in subclasses that implement SourceSinkFactory
+    @SuppressWarnings("EffectivelyPrivate")
     public final void tearDown() throws IOException {
       if (!fileThreadLocal.get().delete()) {
         logger.warning("Unable to delete file: " + fileThreadLocal.get());

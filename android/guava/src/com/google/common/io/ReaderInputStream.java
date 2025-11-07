@@ -17,11 +17,11 @@ package com.google.common.io;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static java.lang.Byte.toUnsignedInt;
 import static java.lang.Math.min;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.primitives.UnsignedBytes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -47,7 +47,6 @@ import java.util.Arrays;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 final class ReaderInputStream extends InputStream {
   private final Reader reader;
   private final CharsetEncoder encoder;
@@ -68,8 +67,10 @@ final class ReaderInputStream extends InputStream {
 
   /** Whether we've finished reading the reader. */
   private boolean endOfInput;
+
   /** Whether we're copying encoded bytes to the caller's buffer. */
   private boolean draining;
+
   /** Whether we've successfully flushed the encoder. */
   private boolean doneFlushing;
 
@@ -120,7 +121,7 @@ final class ReaderInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    return (read(singleByte) == 1) ? UnsignedBytes.toInt(singleByte[0]) : -1;
+    return (read(singleByte) == 1) ? toUnsignedInt(singleByte[0]) : -1;
   }
 
   // TODO(chrisn): Consider trying to encode/flush directly to the argument byte

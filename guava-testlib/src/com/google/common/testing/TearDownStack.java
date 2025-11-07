@@ -17,16 +17,18 @@
 package com.google.common.testing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A {@code TearDownStack} contains a stack of {@link TearDown} instances.
@@ -37,14 +39,14 @@ import java.util.logging.Logger;
  * @since 10.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class TearDownStack implements TearDownAccepter {
   private static final Logger logger = Logger.getLogger(TearDownStack.class.getName());
 
   @VisibleForTesting final Object lock = new Object();
 
   @GuardedBy("lock")
-  final LinkedList<TearDown> stack = new LinkedList<>();
+  final Deque<TearDown> stack = new ArrayDeque<>();
 
   private final boolean suppressThrows;
 
@@ -65,10 +67,10 @@ public class TearDownStack implements TearDownAccepter {
 
   /** Causes teardown to execute. */
   public final void runTearDown() {
-    List<Throwable> exceptions = new ArrayList<>();
+    Throwable exception = null;
     List<TearDown> stackCopy;
     synchronized (lock) {
-      stackCopy = Lists.newArrayList(stack);
+      stackCopy = new ArrayList<>(stack);
       stack.clear();
     }
     for (TearDown tearDown : stackCopy) {
@@ -78,12 +80,17 @@ public class TearDownStack implements TearDownAccepter {
         if (suppressThrows) {
           logger.log(Level.INFO, "exception thrown during tearDown", t);
         } else {
-          exceptions.add(t);
+          if (exception == null) {
+            exception = t;
+          } else {
+            exception.addSuppressed(t);
+          }
         }
       }
     }
-    if (!suppressThrows && (exceptions.size() > 0)) {
-      throw ClusterException.create(exceptions);
+    if (exception != null) {
+      throwIfUnchecked(exception);
+      throw new RuntimeException("failure during tearDown", exception);
     }
   }
 }

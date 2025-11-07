@@ -17,7 +17,6 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.FuturesGetChecked.checkExceptionClassValidity;
@@ -35,6 +34,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.KeyException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TooManyListenersException;
 import java.util.concurrent.BrokenBarrierException;
@@ -45,8 +45,10 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.zip.DataFormatException;
 import javax.security.auth.RefreshFailedException;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Microbenchmark for {@link Futures#getChecked}. */
+@NullUnmarked
 public class FuturesGetCheckedBenchmark {
   private enum Validator {
     NON_CACHING_WITH_CONSTRUCTOR_CHECK(nonCachingWithConstructorCheckValidator()),
@@ -102,6 +104,7 @@ public class FuturesGetCheckedBenchmark {
   @Param Validator validator;
   @Param Result result;
   @Param ExceptionType exceptionType;
+
   /**
    * The number of other exception types in the cache of known-good exceptions and the number of
    * other {@code ClassValue} entries for the exception type to be tested. This lets us evaluate
@@ -112,7 +115,7 @@ public class FuturesGetCheckedBenchmark {
   @Param({"0", "1", "12"})
   int otherEntriesInDataStructure;
 
-  final List<ClassValue<?>> retainedReferencesToOtherClassValues = newArrayList();
+  final List<ClassValue<?>> retainedReferencesToOtherClassValues = new ArrayList<>();
 
   @BeforeExperiment
   void addOtherEntries() throws Exception {

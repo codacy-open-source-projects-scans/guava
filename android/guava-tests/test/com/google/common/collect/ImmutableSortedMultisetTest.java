@@ -17,7 +17,6 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.emptyIterator;
 import static com.google.common.collect.Iterators.singletonIterator;
-import static com.google.common.collect.Sets.newHashSet;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThrows;
@@ -36,19 +35,23 @@ import com.google.common.testing.SerializableTester;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link ImmutableSortedMultiset}.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ImmutableSortedMultisetTest extends TestCase {
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ImmutableSortedMultisetTest.class);
@@ -98,7 +101,7 @@ public class ImmutableSortedMultisetTest extends TestCase {
                 new TestStringListGenerator() {
                   @Override
                   protected List<String> create(String[] elements) {
-                    Set<String> set = newHashSet();
+                    Set<String> set = new HashSet<>();
                     ImmutableSortedMultiset.Builder<String> builder =
                         ImmutableSortedMultiset.naturalOrder();
                     for (String s : elements) {
@@ -192,8 +195,7 @@ public class ImmutableSortedMultisetTest extends TestCase {
   }
 
   public void testCopyOf_collection_empty() {
-    // "<String>" is required to work around a javac 1.5 bug.
-    Collection<String> c = MinimalCollection.<String>of();
+    Collection<String> c = MinimalCollection.of();
     Multiset<String> multiset = ImmutableSortedMultiset.copyOf(c);
     assertTrue(multiset.isEmpty());
   }

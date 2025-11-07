@@ -27,6 +27,7 @@ import static com.google.common.math.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.math.TestPlatform.intsCanGoOutOfRange;
 import static java.lang.Math.min;
 import static java.math.BigInteger.valueOf;
+import static java.math.RoundingMode.DOWN;
 import static java.math.RoundingMode.FLOOR;
 import static java.math.RoundingMode.UNNECESSARY;
 
@@ -39,13 +40,15 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link IntMath}.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class IntMathTest extends TestCase {
   public void testMaxSignedPowerOfTwo() {
     assertTrue(IntMath.isPowerOfTwo(IntMath.MAX_SIGNED_POWER_OF_TWO));
@@ -96,9 +99,9 @@ public class IntMathTest extends TestCase {
   @GwtIncompatible // BigIntegerMath // TODO(cpovirk): GWT-enable BigIntegerMath
   public void testConstantMaxPowerOfSqrt2Unsigned() {
     assertEquals(
-        /*expected=*/ BigIntegerMath.sqrt(BigInteger.ZERO.setBit(2 * Integer.SIZE - 1), FLOOR)
+        /* expected= */ BigIntegerMath.sqrt(BigInteger.ZERO.setBit(2 * Integer.SIZE - 1), FLOOR)
             .intValue(),
-        /*actual=*/ IntMath.MAX_POWER_OF_SQRT2_UNSIGNED);
+        /* actual= */ IntMath.MAX_POWER_OF_SQRT2_UNSIGNED);
   }
 
   @GwtIncompatible // pow()
@@ -146,8 +149,8 @@ public class IntMathTest extends TestCase {
   @GwtIncompatible // sqrt
   public void testPowersSqrtMaxInt() {
     assertEquals(
-        /*expected=*/ IntMath.sqrt(Integer.MAX_VALUE, FLOOR),
-        /*actual=*/ IntMath.FLOOR_SQRT_MAX_INT);
+        /* expected= */ IntMath.sqrt(Integer.MAX_VALUE, FLOOR),
+        /* actual= */ IntMath.FLOOR_SQRT_MAX_INT);
   }
 
   @AndroidIncompatible // presumably slow
@@ -296,7 +299,7 @@ public class IntMathTest extends TestCase {
     for (int x : POSITIVE_INTEGER_CANDIDATES) {
       int floor = IntMath.sqrt(x, FLOOR);
       // We only expect an exception if x was not a perfect square.
-      boolean isPerfectSquare = (floor * floor == x);
+      boolean isPerfectSquare = floor * floor == x;
       try {
         assertEquals(floor, IntMath.sqrt(x, UNNECESSARY));
         assertTrue(isPerfectSquare);
@@ -316,6 +319,7 @@ public class IntMathTest extends TestCase {
   }
 
   @AndroidIncompatible // slow
+  @GwtIncompatible // Math.floorDiv gets wrong answers for negative divisors
   public void testDivNonZero() {
     for (int p : NONZERO_INTEGER_CANDIDATES) {
       for (int q : NONZERO_INTEGER_CANDIDATES) {
@@ -328,6 +332,12 @@ public class IntMathTest extends TestCase {
           int expected =
               new BigDecimal(valueOf(p)).divide(new BigDecimal(valueOf(q)), 0, mode).intValue();
           assertEquals(p + "/" + q, force32(expected), IntMath.divide(p, q, mode));
+          // Check the assertions we make in the javadoc.
+          if (mode == DOWN) {
+            assertEquals(p + "/" + q, p / q, IntMath.divide(p, q, mode));
+          } else if (mode == FLOOR) {
+            assertEquals("⌊" + p + "/" + q + "⌋", Math.floorDiv(p, q), IntMath.divide(p, q, mode));
+          }
         }
       }
     }
@@ -581,14 +591,14 @@ public class IntMathTest extends TestCase {
 
   public void testBinomialOutside() {
     for (int i = 0; i <= 50; i++) {
-      final int n = i;
+      int n = i;
       assertThrows(IllegalArgumentException.class, () -> IntMath.binomial(n, -1));
       assertThrows(IllegalArgumentException.class, () -> IntMath.binomial(n, n + 1));
     }
   }
 
   public void testBinomialNegative() {
-    for (final int n : NEGATIVE_INTEGER_CANDIDATES) {
+    for (int n : NEGATIVE_INTEGER_CANDIDATES) {
       assertThrows(IllegalArgumentException.class, () -> IntMath.binomial(n, 0));
     }
   }
@@ -655,10 +665,9 @@ public class IntMathTest extends TestCase {
   private static int computeMeanSafely(int x, int y) {
     BigInteger bigX = BigInteger.valueOf(x);
     BigInteger bigY = BigInteger.valueOf(y);
-    BigDecimal bigMean =
-        new BigDecimal(bigX.add(bigY)).divide(BigDecimal.valueOf(2), BigDecimal.ROUND_FLOOR);
-    // parseInt blows up on overflow as opposed to intValue() which does not.
-    return Integer.parseInt(bigMean.toString());
+    BigDecimal two = BigDecimal.valueOf(2); // Android doesn't have BigDecimal.TWO yet
+    BigDecimal bigMean = new BigDecimal(bigX.add(bigY)).divide(two, RoundingMode.FLOOR);
+    return bigMean.intValueExact();
   }
 
   private static boolean fitsInInt(BigInteger big) {
@@ -688,6 +697,17 @@ public class IntMathTest extends TestCase {
       int n = rand.nextInt(Integer.MAX_VALUE);
       assertEquals(LongMath.isPrime(n), IntMath.isPrime(n));
     }
+  }
+
+  public void testSaturatedAbs() {
+    assertEquals(Integer.MAX_VALUE, IntMath.saturatedAbs(Integer.MIN_VALUE));
+    assertEquals(Integer.MAX_VALUE, IntMath.saturatedAbs(Integer.MAX_VALUE));
+    assertEquals(Integer.MAX_VALUE, IntMath.saturatedAbs(-Integer.MAX_VALUE));
+    assertEquals(0, IntMath.saturatedAbs(0));
+    assertEquals(1, IntMath.saturatedAbs(1));
+    assertEquals(1, IntMath.saturatedAbs(-1));
+    assertEquals(10, IntMath.saturatedAbs(10));
+    assertEquals(10, IntMath.saturatedAbs(-10));
   }
 
   private static int force32(int value) {

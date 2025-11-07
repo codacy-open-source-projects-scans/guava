@@ -22,18 +22,20 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@code ObjectArrays}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ObjectArraysTest extends TestCase {
 
   @J2ktIncompatible
@@ -55,7 +57,7 @@ public class ObjectArraysTest extends TestCase {
     String[] array = ObjectArrays.newArray(String.class, 2);
     assertEquals(String[].class, array.getClass());
     assertThat(array).hasLength(2);
-    assertNull(array[0]);
+    assertThat(array[0]).isNull();
   }
 
   @J2ktIncompatible // Array<String>::class literal not available in Kotlin KMP
@@ -64,7 +66,7 @@ public class ObjectArraysTest extends TestCase {
     String[][] array = ObjectArrays.newArray(String[].class, 1);
     assertEquals(String[][].class, array.getClass());
     assertThat(array).hasLength(1);
-    assertNull(array[0]);
+    assertThat(array[0]).isNull();
   }
 
   public void testNewArray_fromArray_empty() {
@@ -77,14 +79,14 @@ public class ObjectArraysTest extends TestCase {
     String[] array = ObjectArrays.newArray(new String[0], 2);
     assertEquals(String[].class, array.getClass());
     assertThat(array).hasLength(2);
-    assertNull(array[0]);
+    assertThat(array[0]).isNull();
   }
 
   public void testNewArray_fromArray_ofArray() {
     String[][] array = ObjectArrays.newArray(new String[0][0], 1);
     assertEquals(String[][].class, array.getClass());
     assertThat(array).hasLength(1);
-    assertNull(array[0]);
+    assertThat(array[0]).isNull();
   }
 
   @GwtIncompatible // ObjectArrays.concat(Object[], Object[], Class)
@@ -123,7 +125,7 @@ public class ObjectArraysTest extends TestCase {
   }
 
   public void testToArrayImpl1() {
-    doTestToArrayImpl1(Lists.<Integer>newArrayList());
+    doTestToArrayImpl1(new ArrayList<Integer>());
     doTestToArrayImpl1(Lists.newArrayList(1));
     doTestToArrayImpl1(Lists.<@Nullable Integer>newArrayList(1, null, 3));
   }
@@ -132,12 +134,12 @@ public class ObjectArraysTest extends TestCase {
     Object[] reference = list.toArray();
     Object[] target = ObjectArrays.toArrayImpl(list);
     assertEquals(reference.getClass(), target.getClass());
-    assertTrue(Arrays.equals(reference, target));
+    assertThat(target).isEqualTo(reference);
   }
 
   public void testToArrayImpl2() {
-    doTestToArrayImpl2(Lists.<Integer>newArrayList(), new Integer[0], false);
-    doTestToArrayImpl2(Lists.<Integer>newArrayList(), new Integer[1], true);
+    doTestToArrayImpl2(new ArrayList<Integer>(), new Integer[0], false);
+    doTestToArrayImpl2(new ArrayList<Integer>(), new Integer[1], true);
 
     doTestToArrayImpl2(Lists.newArrayList(1), new Integer[0], false);
     doTestToArrayImpl2(Lists.newArrayList(1), new Integer[1], true);
@@ -151,20 +153,18 @@ public class ObjectArraysTest extends TestCase {
   private void doTestToArrayImpl2(List<Integer> list, Integer[] array1, boolean expectModify) {
     Integer[] starting = Arrays.copyOf(array1, array1.length);
     Integer[] array2 = Arrays.copyOf(array1, array1.length);
-    // TODO b/283448200 - Remove temporary variable when Kotlin smartcast issue is resolved.
-    Integer[] array1Tmp = array1;
-    Object[] reference = list.toArray(array1Tmp);
+    Object[] reference = list.toArray(array1);
 
     Object[] target = ObjectArrays.toArrayImpl(list, array2);
 
     assertEquals(reference.getClass(), target.getClass());
-    assertTrue(Arrays.equals(reference, target));
-    assertTrue(Arrays.equals(reference, target));
+    assertThat(target).isEqualTo(reference);
+    assertThat(target).isEqualTo(reference);
 
     Object[] expectedArray1 = expectModify ? reference : starting;
     Object[] expectedArray2 = expectModify ? target : starting;
-    assertTrue(Arrays.equals(expectedArray1, array1));
-    assertTrue(Arrays.equals(expectedArray2, array2));
+    assertThat(array1).isEqualTo(expectedArray1);
+    assertThat(array2).isEqualTo(expectedArray2);
   }
 
   public void testPrependZeroElements() {

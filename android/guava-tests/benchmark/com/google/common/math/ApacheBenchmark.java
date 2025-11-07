@@ -25,6 +25,7 @@ import static com.google.common.math.MathBenchmarking.randomNonNegativeBigIntege
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Benchmarks against the Apache Commons Math utilities.
@@ -33,6 +34,7 @@ import com.google.caliper.Param;
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ApacheBenchmark {
   private enum Impl {
     GUAVA {
@@ -97,21 +99,21 @@ public class ApacheBenchmark {
       }
     };
 
-    public abstract double factorialDouble(int n);
+    abstract double factorialDouble(int n);
 
-    public abstract long binomialCoefficient(int n, int k);
+    abstract long binomialCoefficient(int n, int k);
 
-    public abstract int gcdInt(int a, int b);
+    abstract int gcdInt(int a, int b);
 
-    public abstract long gcdLong(long a, long b);
+    abstract long gcdLong(long a, long b);
 
-    public abstract boolean noAddOverflow(int a, int b);
+    abstract boolean noAddOverflow(int a, int b);
 
-    public abstract boolean noAddOverflow(long a, long b);
+    abstract boolean noAddOverflow(long a, long b);
 
-    public abstract boolean noMulOverflow(int a, int b);
+    abstract boolean noMulOverflow(int a, int b);
 
-    public abstract boolean noMulOverflow(long a, long b);
+    abstract boolean noMulOverflow(long a, long b);
   }
 
   private final int[] factorials = new int[ARRAY_SIZE];

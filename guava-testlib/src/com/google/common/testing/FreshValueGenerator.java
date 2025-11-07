@@ -124,8 +124,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Generates fresh instances of types that are different from each other (if possible).
@@ -134,6 +134,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtIncompatible
 @J2ktIncompatible
+@NullUnmarked
+@SuppressWarnings("nullness")
 class FreshValueGenerator {
 
   private static final ImmutableMap<Class<?>, Method> GENERATORS;
@@ -195,7 +197,7 @@ class FreshValueGenerator {
     return Primitives.wrap(type).cast(generateFresh(TypeToken.of(type)));
   }
 
-  final <T> T newFreshProxy(final Class<T> interfaceType) {
+  final <T> T newFreshProxy(Class<T> interfaceType) {
     T proxy = newProxy(interfaceType);
     freshness.incrementAndGet();
     return proxy;
@@ -270,7 +272,7 @@ class FreshValueGenerator {
     return ArbitraryInstances.get(rawType);
   }
 
-  private <T> T newProxy(final Class<T> interfaceType) {
+  private <T> T newProxy(Class<T> interfaceType) {
     return Reflection.newProxy(interfaceType, new FreshInvocationHandler(interfaceType));
   }
 
@@ -295,8 +297,8 @@ class FreshValueGenerator {
     }
 
     @Override
-    @CheckForNull
-    protected Object handleInvocation(Object proxy, Method method, @Nullable Object[] args) {
+    protected @Nullable Object handleInvocation(
+        Object proxy, Method method, @Nullable Object[] args) {
       return interfaceMethodCalled(interfaceType, method);
     }
 
@@ -321,8 +323,7 @@ class FreshValueGenerator {
   }
 
   /** Subclasses can override to provide different return value for proxied interface methods. */
-  @CheckForNull
-  Object interfaceMethodCalled(Class<?> interfaceType, Method method) {
+  @Nullable Object interfaceMethodCalled(Class<?> interfaceType, Method method) {
     throw new UnsupportedOperationException();
   }
 
@@ -675,14 +676,14 @@ class FreshValueGenerator {
 
   @Generates
   static <E> ArrayList<E> generateArrayList(@Nullable E freshElement) {
-    ArrayList<E> list = Lists.newArrayList();
+    ArrayList<E> list = new ArrayList<>();
     list.add(freshElement);
     return list;
   }
 
   @Generates
   static <E> LinkedList<E> generateLinkedList(@Nullable E freshElement) {
-    LinkedList<E> list = Lists.newLinkedList();
+    LinkedList<E> list = new LinkedList<>();
     list.add(freshElement);
     return list;
   }
@@ -709,7 +710,7 @@ class FreshValueGenerator {
 
   @Generates
   static <E> LinkedHashSet<E> generateLinkedHashSet(@Nullable E freshElement) {
-    LinkedHashSet<E> set = Sets.newLinkedHashSet();
+    LinkedHashSet<E> set = new LinkedHashSet<>();
     set.add(freshElement);
     return set;
   }
@@ -796,7 +797,7 @@ class FreshValueGenerator {
 
   @Generates
   static <K, V> LinkedHashMap<K, V> generateLinkedHashMap(@Nullable K key, @Nullable V value) {
-    LinkedHashMap<K, V> map = Maps.newLinkedHashMap();
+    LinkedHashMap<K, V> map = new LinkedHashMap<>();
     map.put(key, value);
     return map;
   }

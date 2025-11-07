@@ -20,7 +20,8 @@ import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This abstract base class for testers allows the framework to inject needed information after
@@ -33,8 +34,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     parameterize the test.
  * @author George van den Driessche
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class AbstractTester<G> extends TestCase {
   private G subjectGenerator;
   private String suiteName;
@@ -86,7 +87,7 @@ public class AbstractTester<G> extends TestCase {
   @GwtIncompatible // not used under GWT, and super.getName() is not available under J2CL
   @Override
   public String getName() {
-    return Platform.format("%s[%s]", super.getName(), suiteName);
+    return super.getName() + '[' + suiteName + ']';
   }
 
   /**

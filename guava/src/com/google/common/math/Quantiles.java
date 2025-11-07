@@ -38,26 +38,26 @@ import java.util.Map;
  *
  * <p>To compute the median:
  *
- * <pre>{@code
+ * {@snippet :
  * double myMedian = median().compute(myDataset);
- * }</pre>
+ * }
  *
  * where {@link #median()} has been statically imported.
  *
  * <p>To compute the 99th percentile:
  *
- * <pre>{@code
+ * {@snippet :
  * double myPercentile99 = percentiles().index(99).compute(myDataset);
- * }</pre>
+ * }
  *
  * where {@link #percentiles()} has been statically imported.
  *
  * <p>To compute median and the 90th and 99th percentiles:
  *
- * <pre>{@code
+ * {@snippet :
  * Map<Integer, Double> myPercentiles =
  *     percentiles().indexes(50, 90, 99).compute(myDataset);
- * }</pre>
+ * }
  *
  * where {@link #percentiles()} has been statically imported: {@code myPercentiles} maps the keys
  * 50, 90, and 99, to their corresponding quantile values.
@@ -128,7 +128,6 @@ import java.util.Map;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class Quantiles {
   /**
    * Constructor for a type that is not meant to be instantiated.

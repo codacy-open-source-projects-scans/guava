@@ -53,9 +53,11 @@ import java.util.jar.Manifest;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.Test;
 
 /** Functional tests of {@link ClassPath}. */
+@NullUnmarked
 public class ClassPathTest extends TestCase {
   private static final Logger log = Logger.getLogger(ClassPathTest.class.getName());
   private static final File FILE = new File(".");
@@ -466,10 +468,6 @@ public class ClassPathTest extends TestCase {
       System.setProperty(PATH_SEPARATOR.key(), oldPathSeparator);
       System.setProperty(JAVA_CLASS_PATH.key(), oldClassPath);
     }
-  }
-
-  private static boolean contentEquals(URL left, URL right) throws IOException {
-    return Resources.asByteSource(left).contentEquals(Resources.asByteSource(right));
   }
 
   private static class Nested {}

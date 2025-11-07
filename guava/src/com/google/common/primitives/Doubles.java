@@ -19,11 +19,10 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 import static com.google.common.base.Strings.lenientFormat;
-import static java.lang.Double.NEGATIVE_INFINITY;
-import static java.lang.Double.POSITIVE_INFINITY;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code double} primitives, that are not already found in
@@ -48,34 +47,28 @@ import javax.annotation.CheckForNull;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Doubles extends DoublesMethodsForWeb {
   private Doubles() {}
 
   /**
    * The number of bytes required to represent a primitive {@code double} value.
    *
-   * <p><b>Java 8+ users:</b> use {@link Double#BYTES} instead.
+   * <p>Prefer {@link Double#BYTES} instead.
    *
    * @since 10.0
    */
-  public static final int BYTES = Double.SIZE / Byte.SIZE;
+  public static final int BYTES = Double.BYTES;
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Double)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Double#hashCode(double)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Double#hashCode(double)}.
    *
    * @param value a primitive {@code double} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Double.hashCode(value)")
   public static int hashCode(double value) {
-    return ((Double) value).hashCode();
-    // TODO(kevinb): do it this way when we can (GWT problem):
-    // long bits = Double.doubleToLongBits(value);
-    // return (int) (bits ^ (bits >>> 32));
+    return Double.hashCode(value);
   }
 
   /**
@@ -101,12 +94,13 @@ public final class Doubles extends DoublesMethodsForWeb {
    * Returns {@code true} if {@code value} represents a real number. This is equivalent to, but not
    * necessarily implemented as, {@code !(Double.isInfinite(value) || Double.isNaN(value))}.
    *
-   * <p><b>Java 8+ users:</b> use {@link Double#isFinite(double)} instead.
+   * <p>Prefer {@link Double#isFinite(double)} instead.
    *
    * @since 10.0
    */
+  @InlineMe(replacement = "Double.isFinite(value)")
   public static boolean isFinite(double value) {
-    return NEGATIVE_INFINITY < value && value < POSITIVE_INFINITY;
+    return Double.isFinite(value);
   }
 
   /**
@@ -323,7 +317,7 @@ public final class Doubles extends DoublesMethodsForWeb {
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   /**
@@ -585,8 +579,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     return new DoubleArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class DoubleArrayAsList extends AbstractList<Double>
+  private static final class DoubleArrayAsList extends AbstractList<Double>
       implements RandomAccess, Serializable {
     final double[] array;
     final int start;
@@ -624,14 +617,14 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Double)
           && Doubles.indexOf(array, (Double) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.indexOf(array, (Double) target, start, end);
@@ -643,7 +636,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Double) {
         int i = Doubles.lastIndexOf(array, (Double) target, start, end);
@@ -674,7 +667,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -698,7 +691,7 @@ public final class Doubles extends DoublesMethodsForWeb {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Doubles.hashCode(array[i]);
+        result = 31 * result + Double.hashCode(array[i]);
       }
       return result;
     }
@@ -717,7 +710,7 @@ public final class Doubles extends DoublesMethodsForWeb {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -772,8 +765,7 @@ public final class Doubles extends DoublesMethodsForWeb {
    * @since 14.0
    */
   @GwtIncompatible // regular expressions
-  @CheckForNull
-  public static Double tryParse(String string) {
+  public static @Nullable Double tryParse(String string) {
     if (FLOATING_POINT_PATTERN.matcher(string).matches()) {
       // TODO(lowasser): could be potentially optimized, but only with
       // extensive testing

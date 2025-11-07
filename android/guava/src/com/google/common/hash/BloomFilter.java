@@ -16,18 +16,18 @@ package com.google.common.hash;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Byte.toUnsignedInt;
 import static java.lang.Math.max;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.hash.BloomFilterStrategies.LockFreeBitArray;
 import com.google.common.math.DoubleMath;
-import com.google.common.math.LongMath;
 import com.google.common.primitives.SignedBytes;
 import com.google.common.primitives.UnsignedBytes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.InlineMe;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -37,9 +37,9 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A Bloom filter for instances of {@code T}. A Bloom filter offers an approximate containment test
@@ -69,14 +69,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 11.0 (thread-safe since 23.0)
  */
 @Beta
-@ElementTypesAreNonnullByDefault
 public final class BloomFilter<T extends @Nullable Object> implements Predicate<T>, Serializable {
   /**
    * A strategy to translate T instances, to {@code numHashFunctions} bit indexes.
    *
    * <p>Implementations should be collections of pure functions (i.e. stateless).
    */
-  interface Strategy extends java.io.Serializable {
+  interface Strategy extends Serializable {
 
     /**
      * Sets {@code numHashFunctions} bits of the given bit array, by hashing a user element.
@@ -161,6 +160,7 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
    * @deprecated Provided only to satisfy the {@link Predicate} interface; use {@link #mightContain}
    *     instead.
    */
+  @InlineMe(replacement = "this.mightContain(input)")
   @Deprecated
   @Override
   public boolean apply(@ParametricNullness T input) {
@@ -209,7 +209,7 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
     long bitSize = bits.bitSize();
     long bitCount = bits.bitCount();
 
-    /**
+    /*
      * Each insertion is expected to reduce the # of clear bits by a factor of
      * `numHashFunctions/bitSize`. So, after n insertions, expected bitCount is `bitSize * (1 - (1 -
      * numHashFunctions/bitSize)^n)`. Solving that for n, and approximating `ln x` as `x - 1` when x
@@ -286,7 +286,7 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
   }
 
   @Override
-  public boolean equals(@CheckForNull Object object) {
+  public boolean equals(@Nullable Object object) {
     if (object == this) {
       return true;
     }
@@ -302,7 +302,7 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(numHashFunctions, funnel, strategy, bits);
+    return Objects.hash(numHashFunctions, funnel, strategy, bits);
   }
 
   /**
@@ -326,7 +326,6 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
    * @return a {@code Collector} generating a {@code BloomFilter} of the received elements
    * @since 33.4.0 (but since 23.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static <T extends @Nullable Object> Collector<T, ?, BloomFilter<T>> toBloomFilter(
       Funnel<? super T> funnel, long expectedInsertions) {
@@ -355,7 +354,6 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
    * @return a {@code Collector} generating a {@code BloomFilter} of the received elements
    * @since 33.4.0 (but since 23.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using streams.
   public static <T extends @Nullable Object> Collector<T, ?, BloomFilter<T>> toBloomFilter(
       Funnel<? super T> funnel, long expectedInsertions, double fpp) {
@@ -545,15 +543,15 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
     return (long) (-n * Math.log(p) / SQUARED_LOG_TWO);
   }
 
-  private Object writeReplace() {
+    private Object writeReplace() {
     return new SerialForm<T>(this);
   }
 
-  private void readObject(ObjectInputStream stream) throws InvalidObjectException {
+    private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
 
-  private static class SerialForm<T extends @Nullable Object> implements Serializable {
+  private static final class SerialForm<T extends @Nullable Object> implements Serializable {
     final long[] data;
     final int numHashFunctions;
     final Funnel<? super T> funnel;
@@ -620,12 +618,17 @@ public final class BloomFilter<T extends @Nullable Object> implements Predicate<
       // add non-stateless strategies (for which we've reserved negative ordinals; see
       // Strategy.ordinal()).
       strategyOrdinal = din.readByte();
-      numHashFunctions = UnsignedBytes.toInt(din.readByte());
+      numHashFunctions = toUnsignedInt(din.readByte());
       dataLength = din.readInt();
 
+      /*
+       * We document in BloomFilterStrategies that we must not change the ordering, and we have a
+       * test that verifies that we don't do so.
+       */
+      @SuppressWarnings("EnumOrdinal")
       Strategy strategy = BloomFilterStrategies.values()[strategyOrdinal];
 
-      LockFreeBitArray dataArray = new LockFreeBitArray(LongMath.checkedMultiply(dataLength, 64L));
+      LockFreeBitArray dataArray = new LockFreeBitArray(Math.multiplyExact(dataLength, 64L));
       for (int i = 0; i < dataLength; i++) {
         dataArray.putData(i, din.readLong());
       }

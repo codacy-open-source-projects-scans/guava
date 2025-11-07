@@ -18,7 +18,6 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.singletonIterator;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.collect.testing.Helpers.testComparator;
 import static com.google.common.testing.SerializableTester.reserialize;
@@ -41,6 +40,7 @@ import com.google.common.collect.Ordering.IncomparableValueException;
 import com.google.common.collect.testing.Helpers;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,16 +49,17 @@ import java.util.List;
 import java.util.Random;
 import java.util.RandomAccess;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit tests for {@code Ordering}.
  *
  * @author Jesse Wilson
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class OrderingTest extends TestCase {
   // TODO(cpovirk): some of these are inexplicably slow (20-30s) under GWT
 
@@ -85,11 +86,11 @@ public class OrderingTest extends TestCase {
     Ordering<@Nullable Iterable<@Nullable Integer>> example =
         Ordering.<Integer>natural()
             .<Integer>nullsFirst()
-            .reverse()
-            .lexicographical()
+            .<@Nullable Integer>reverse()
+            .<@Nullable Integer>lexicographical()
             .reverse()
             .<Iterable<@Nullable Integer>>nullsLast();
-    List<@Nullable Integer> list1 = Lists.newArrayList();
+    List<@Nullable Integer> list1 = new ArrayList<>();
     List<@Nullable Integer> list2 = Lists.newArrayList(1);
     List<@Nullable Integer> list3 = Lists.newArrayList(1, 1);
     List<@Nullable Integer> list4 = Lists.newArrayList(1, 2);
@@ -111,7 +112,7 @@ public class OrderingTest extends TestCase {
             Lists.newArrayList(1, 2),
             Lists.newArrayList(1),
             Lists.newArrayList(2),
-            Lists.newArrayList(),
+            new ArrayList<>(),
             null)
         .inOrder();
   }
@@ -132,7 +133,7 @@ public class OrderingTest extends TestCase {
     assertTrue(caseInsensitiveOrdering.compare("a", "B") < 0);
     assertTrue(caseInsensitiveOrdering.compare("B", "a") > 0);
 
-    @SuppressWarnings("deprecation") // test of deprecated method
+    @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
     Ordering<String> orderingFromOrdering = Ordering.from(Ordering.<String>natural());
     new EqualsTester()
         .addEqualityGroup(caseInsensitiveOrdering, Ordering.from(String.CASE_INSENSITIVE_ORDER))
@@ -161,7 +162,7 @@ public class OrderingTest extends TestCase {
   public void testExplicitMax_b297601553() {
     Ordering<Integer> c = Ordering.explicit(1, 2, 3);
 
-    // TODO(b/297601553): this should probably throw an CCE since 0 isn't explicitly listed
+    // TODO(b/297601553): this should probably throw CCE since 0 isn't explicitly listed
     assertEquals(0, (int) c.max(asList(0)));
     IncomparableValueException expected =
         assertThrows(IncomparableValueException.class, () -> c.max(asList(0, 1)));
@@ -201,7 +202,7 @@ public class OrderingTest extends TestCase {
   // actual public API.
   @J2ktIncompatible // Ordering.arbitrary
   public void testArbitrary_withoutCollisions() {
-    List<Object> list = Lists.newArrayList();
+    List<Object> list = new ArrayList<>();
     for (int i = 0; i < 50; i++) {
       list.add(new Object());
     }
@@ -218,7 +219,7 @@ public class OrderingTest extends TestCase {
 
   @J2ktIncompatible // ArbitraryOrdering
   public void testArbitrary_withCollisions() {
-    List<Integer> list = Lists.newArrayList();
+    List<Integer> list = new ArrayList<>();
     for (int i = 0; i < 50; i++) {
       list.add(i);
     }
@@ -357,7 +358,7 @@ public class OrderingTest extends TestCase {
   }
 
   private enum StringLengthFunction implements Function<String, Integer> {
-    StringLength;
+    STRING_LENGTH;
 
     @Override
     public Integer apply(String string) {
@@ -369,35 +370,35 @@ public class OrderingTest extends TestCase {
 
   public void testOnResultOf_natural() {
     Comparator<String> comparator =
-        Ordering.<Integer>natural().onResultOf(StringLengthFunction.StringLength);
+        Ordering.<Integer>natural().onResultOf(StringLengthFunction.STRING_LENGTH);
     assertTrue(comparator.compare("to", "be") == 0);
     assertTrue(comparator.compare("or", "not") < 0);
     assertTrue(comparator.compare("that", "to") > 0);
 
     new EqualsTester()
         .addEqualityGroup(
-            comparator, Ordering.<Integer>natural().onResultOf(StringLengthFunction.StringLength))
+            comparator, Ordering.<Integer>natural().onResultOf(StringLengthFunction.STRING_LENGTH))
         .addEqualityGroup(DECREASING_INTEGER)
         .testEquals();
     reserializeAndAssert(comparator);
-    assertEquals("Ordering.natural().onResultOf(StringLength)", comparator.toString());
+    assertEquals("Ordering.natural().onResultOf(STRING_LENGTH)", comparator.toString());
   }
 
   public void testOnResultOf_chained() {
     Comparator<String> comparator =
-        DECREASING_INTEGER.onResultOf(StringLengthFunction.StringLength);
+        DECREASING_INTEGER.onResultOf(StringLengthFunction.STRING_LENGTH);
     assertTrue(comparator.compare("to", "be") == 0);
     assertTrue(comparator.compare("not", "or") < 0);
     assertTrue(comparator.compare("to", "that") > 0);
 
     new EqualsTester()
         .addEqualityGroup(
-            comparator, DECREASING_INTEGER.onResultOf(StringLengthFunction.StringLength))
+            comparator, DECREASING_INTEGER.onResultOf(StringLengthFunction.STRING_LENGTH))
         .addEqualityGroup(DECREASING_INTEGER.onResultOf(Functions.constant(1)))
         .addEqualityGroup(Ordering.natural())
         .testEquals();
     reserializeAndAssert(comparator);
-    assertEquals("Ordering.natural().reverse().onResultOf(StringLength)", comparator.toString());
+    assertEquals("Ordering.natural().reverse().onResultOf(STRING_LENGTH)", comparator.toString());
   }
 
   public void testLexicographical() {
@@ -441,6 +442,7 @@ public class OrderingTest extends TestCase {
         .testEquals();
   }
 
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testBinarySearch() {
     List<Integer> ints = Lists.newArrayList(0, 2, 3, 5, 7, 9);
     assertEquals(4, numberOrdering.binarySearch(ints, 7));
@@ -695,7 +697,7 @@ public class OrderingTest extends TestCase {
     Ordering<Integer> ordering = Ordering.natural();
 
     for (int i = 0; i < iterations; i++) {
-      List<Integer> list = Lists.newArrayList();
+      List<Integer> list = new ArrayList<>();
       for (int j = 0; j < elements; j++) {
         list.add(random.nextInt(10 * i + j + 1));
       }
@@ -839,7 +841,7 @@ public class OrderingTest extends TestCase {
       return other instanceof NumberOrdering;
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /*
@@ -889,7 +891,7 @@ public class OrderingTest extends TestCase {
       Ordering<? super T> ordering, T... strictlyOrderedElements) {
     checkArgument(
         strictlyOrderedElements.length >= 3,
-        "strictlyOrderedElements " + "requires at least 3 elements");
+        "strictlyOrderedElements requires at least 3 elements");
     List<T> list = asList(strictlyOrderedElements);
 
     // for use calling Collection.toArray later
@@ -941,7 +943,7 @@ public class OrderingTest extends TestCase {
 
     // generic arrays and unchecked cast
     void testMinAndMax() {
-      List<T> shuffledList = Lists.newArrayList(strictlyOrderedList);
+      List<T> shuffledList = new ArrayList<>(strictlyOrderedList);
       shuffledList = shuffledCopy(shuffledList, new Random(5));
 
       T min = strictlyOrderedList.get(0);
@@ -965,17 +967,18 @@ public class OrderingTest extends TestCase {
       assertEquals(max, ordering.max(max, min));
     }
 
+    @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
     void testBinarySearch() {
       for (int i = 0; i < strictlyOrderedList.size(); i++) {
         assertEquals(i, ordering.binarySearch(strictlyOrderedList, strictlyOrderedList.get(i)));
       }
-      List<T> newList = Lists.newArrayList(strictlyOrderedList);
+      List<T> newList = new ArrayList<>(strictlyOrderedList);
       T valueNotInList = newList.remove(1);
       assertEquals(-2, ordering.binarySearch(newList, valueNotInList));
     }
 
     void testSortedCopy() {
-      List<T> shuffledList = Lists.newArrayList(strictlyOrderedList);
+      List<T> shuffledList = new ArrayList<>(strictlyOrderedList);
       shuffledList = shuffledCopy(shuffledList, new Random(5));
 
       assertEquals(strictlyOrderedList, ordering.sortedCopy(shuffledList));
@@ -996,7 +999,7 @@ public class OrderingTest extends TestCase {
     REVERSE {
       @Override
       <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
-        List<T> newList = Lists.newArrayList(scenario.strictlyOrderedList);
+        List<T> newList = new ArrayList<>(scenario.strictlyOrderedList);
         Collections.reverse(newList);
         return new Scenario<T>(scenario.ordering.reverse(), newList, scenario.emptyArray);
       }
@@ -1016,7 +1019,7 @@ public class OrderingTest extends TestCase {
     NULLS_LAST {
       @Override
       <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
-        List<T> newList = Lists.newArrayList();
+        List<T> newList = new ArrayList<>();
         for (T t : scenario.strictlyOrderedList) {
           if (t != null) {
             newList.add(t);
@@ -1028,7 +1031,7 @@ public class OrderingTest extends TestCase {
     },
     ON_RESULT_OF {
       @Override
-      <T extends @Nullable Object> Scenario<?> mutate(final Scenario<T> scenario) {
+      <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
         Ordering<Integer> ordering =
             scenario.ordering.onResultOf(
                 new Function<Integer, T>() {
@@ -1037,7 +1040,7 @@ public class OrderingTest extends TestCase {
                     return scenario.strictlyOrderedList.get(from);
                   }
                 });
-        List<Integer> list = Lists.newArrayList();
+        List<Integer> list = new ArrayList<>();
         for (int i = 0; i < scenario.strictlyOrderedList.size(); i++) {
           list.add(i);
         }
@@ -1048,7 +1051,7 @@ public class OrderingTest extends TestCase {
       @SuppressWarnings("unchecked") // generic arrays
       @Override
       <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
-        List<Composite<T>> composites = Lists.newArrayList();
+        List<Composite<T>> composites = new ArrayList<>();
         for (T t : scenario.strictlyOrderedList) {
           composites.add(new Composite<T>(t, 1));
           composites.add(new Composite<T>(t, 2));
@@ -1066,7 +1069,7 @@ public class OrderingTest extends TestCase {
       @SuppressWarnings("unchecked") // generic arrays
       @Override
       <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
-        List<Composite<T>> composites = Lists.newArrayList();
+        List<Composite<T>> composites = new ArrayList<>();
         for (T t : scenario.strictlyOrderedList) {
           composites.add(new Composite<T>(t, 1));
         }
@@ -1084,7 +1087,7 @@ public class OrderingTest extends TestCase {
       @SuppressWarnings("unchecked") // generic arrays
       @Override
       <T extends @Nullable Object> Scenario<?> mutate(Scenario<T> scenario) {
-        List<Iterable<T>> words = Lists.newArrayList();
+        List<Iterable<T>> words = new ArrayList<>();
         words.add(Collections.<T>emptyList());
         for (T t : scenario.strictlyOrderedList) {
           words.add(asList(t));
@@ -1142,8 +1145,8 @@ public class OrderingTest extends TestCase {
   }
 
   private static <T extends @Nullable Object> List<T> shuffledCopy(List<T> in, Random random) {
-    List<T> mutable = newArrayList(in);
-    List<T> out = newArrayList();
+    List<T> mutable = new ArrayList<>(in);
+    List<T> out = new ArrayList<>();
     while (!mutable.isEmpty()) {
       out.add(mutable.remove(random.nextInt(mutable.size())));
     }

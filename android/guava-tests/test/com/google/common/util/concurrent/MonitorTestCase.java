@@ -20,12 +20,14 @@ import com.google.common.testing.NullPointerTester;
 import com.google.common.testing.TearDownStack;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link Monitor}, either interruptible or uninterruptible.
  *
  * @author Justin T. Sampson
  */
+@NullUnmarked
 public abstract class MonitorTestCase extends TestCase {
 
   public class TestGuard extends Monitor.Guard {
@@ -48,7 +50,7 @@ public abstract class MonitorTestCase extends TestCase {
 
   private final boolean interruptible;
   private Monitor monitor;
-  private final TearDownStack tearDownStack = new TearDownStack(true);
+  private final TearDownStack tearDownStack = new TearDownStack();
   private TestThread<Monitor> thread1;
   private TestThread<Monitor> thread2;
 

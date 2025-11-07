@@ -16,7 +16,6 @@ package com.google.common.io;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.ByteStreams.createBuffer;
 import static com.google.common.io.ByteStreams.skipUpTo;
 import static java.lang.Math.min;
 
@@ -41,7 +40,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A readable source of bytes, such as a file. Unlike an {@link InputStream}, a {@code ByteSource}
@@ -76,7 +75,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public abstract class ByteSource {
 
   /** Constructor for use by subclasses. */
@@ -231,7 +229,7 @@ public abstract class ByteSource {
   }
 
   /** Counts the bytes in the given input stream using skip if possible. */
-  private long countBySkipping(InputStream in) throws IOException {
+  private static long countBySkipping(InputStream in) throws IOException {
     long count = 0;
     long skipped;
     while ((skipped = skipUpTo(in, Integer.MAX_VALUE)) > 0) {
@@ -351,22 +349,10 @@ public abstract class ByteSource {
   public boolean contentEquals(ByteSource other) throws IOException {
     checkNotNull(other);
 
-    byte[] buf1 = createBuffer();
-    byte[] buf2 = createBuffer();
-
     Closer closer = Closer.create();
     try {
-      InputStream in1 = closer.register(openStream());
-      InputStream in2 = closer.register(other.openStream());
-      while (true) {
-        int read1 = ByteStreams.read(in1, buf1, 0, buf1.length);
-        int read2 = ByteStreams.read(in2, buf2, 0, buf2.length);
-        if (read1 != read2 || !Arrays.equals(buf1, buf2)) {
-          return false;
-        } else if (read1 != buf1.length) {
-          return true;
-        }
-      }
+      return ByteStreams.contentsEqual(
+          closer.register(openStream()), closer.register(other.openStream()));
     } catch (Throwable e) {
       throw closer.rethrow(e);
     } finally {

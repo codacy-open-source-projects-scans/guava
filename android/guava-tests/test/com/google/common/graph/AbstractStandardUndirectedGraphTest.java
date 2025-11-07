@@ -19,16 +19,17 @@ package com.google.common.graph;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import com.google.common.testing.EqualsTester;
 import java.util.Set;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.After;
 import org.junit.Test;
 
 /**
  * Abstract base class for testing undirected {@link Graph} implementations defined in this package.
  */
+@NullUnmarked
 public abstract class AbstractStandardUndirectedGraphTest extends AbstractGraphTest {
 
   @After
@@ -150,6 +151,18 @@ public abstract class AbstractStandardUndirectedGraphTest extends AbstractGraphT
     putEdge(N1, N2);
     assertThat(graph.hasEdgeConnecting(EndpointPair.ordered(N1, N2))).isFalse();
     assertThat(graph.hasEdgeConnecting(EndpointPair.ordered(N2, N1))).isFalse();
+  }
+
+  @Test
+  public void hasEdgeConnecting_missingNode() {
+    // both nodes missing
+    assertThat(
+            graph.hasEdgeConnecting(EndpointPair.unordered(NODE_NOT_IN_GRAPH, NODE_NOT_IN_GRAPH)))
+        .isFalse();
+
+    // one node present, the other missing
+    assertThat(graph.hasEdgeConnecting(EndpointPair.unordered(NODE_NOT_IN_GRAPH, N4))).isFalse();
+    assertThat(graph.hasEdgeConnecting(EndpointPair.unordered(N4, NODE_NOT_IN_GRAPH))).isFalse();
   }
 
   @Test
@@ -346,9 +359,9 @@ public abstract class AbstractStandardUndirectedGraphTest extends AbstractGraphT
     assume().that(graphIsMutable()).isTrue();
 
     graphAsMutableGraph.addNode(N1);
-    assertTrue(graphAsMutableGraph.putEdge(N1, N5));
-    assertTrue(graphAsMutableGraph.putEdge(N4, N1));
-    assertTrue(graphAsMutableGraph.putEdge(N2, N3));
+    assertThat(graphAsMutableGraph.putEdge(N1, N5)).isTrue();
+    assertThat(graphAsMutableGraph.putEdge(N4, N1)).isTrue();
+    assertThat(graphAsMutableGraph.putEdge(N2, N3)).isTrue();
     assertThat(graph.nodes()).containsExactly(N1, N5, N4, N2, N3).inOrder();
     assertThat(graph.adjacentNodes(N1)).containsExactly(N4, N5);
     assertThat(graph.adjacentNodes(N2)).containsExactly(N3);

@@ -16,6 +16,7 @@
 
 package com.google.common.util.concurrent;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.GeneratedMonitorTest.startThread;
 import static com.google.common.util.concurrent.Uninterruptibles.joinUninterruptibly;
 import static org.junit.Assert.assertThrows;
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Supplemental tests for {@link Monitor}.
@@ -34,6 +36,7 @@ import junit.framework.TestCase;
  *
  * @author Justin T. Sampson
  */
+@NullUnmarked
 public class SupplementalMonitorTest extends TestCase {
 
   public void testLeaveWithoutEnterThrowsIMSE() {
@@ -99,14 +102,14 @@ public class SupplementalMonitorTest extends TestCase {
   }
 
   private static void verifyOccupiedMethodsInAnotherThread(
-      final Monitor monitor,
+      Monitor monitor,
       boolean expectedIsOccupied,
       boolean expectedIsOccupiedByCurrentThread,
       int expectedOccupiedDepth) {
-    final AtomicBoolean actualIsOccupied = new AtomicBoolean();
-    final AtomicBoolean actualIsOccupiedByCurrentThread = new AtomicBoolean();
-    final AtomicInteger actualOccupiedDepth = new AtomicInteger();
-    final AtomicReference<Throwable> thrown = new AtomicReference<>();
+    AtomicBoolean actualIsOccupied = new AtomicBoolean();
+    AtomicBoolean actualIsOccupiedByCurrentThread = new AtomicBoolean();
+    AtomicInteger actualOccupiedDepth = new AtomicInteger();
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
     joinUninterruptibly(
         startThread(
             new Runnable() {
@@ -121,7 +124,7 @@ public class SupplementalMonitorTest extends TestCase {
                 }
               }
             }));
-    assertNull(thrown.get());
+    assertThat(thrown.get()).isNull();
     assertEquals(expectedIsOccupied, actualIsOccupied.get());
     assertEquals(expectedIsOccupiedByCurrentThread, actualIsOccupiedByCurrentThread.get());
     assertEquals(expectedOccupiedDepth, actualOccupiedDepth.get());

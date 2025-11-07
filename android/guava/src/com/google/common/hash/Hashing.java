@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
-import javax.annotation.CheckForNull;
 import javax.crypto.spec.SecretKeySpec;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static methods to obtain {@link HashFunction} instances, and other static hashing-related
@@ -42,7 +42,6 @@ import javax.crypto.spec.SecretKeySpec;
  * @author Kurt Alfred Kluever
  * @since 11.0
  */
-@ElementTypesAreNonnullByDefault
 public final class Hashing {
   /**
    * Returns a general-purpose, <b>temporary-use</b>, non-cryptographic hash function. The algorithm
@@ -105,6 +104,7 @@ public final class Hashing {
    *     #murmur3_32_fixed(int)} instead.
    */
   @Deprecated
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_32(int seed) {
     return new Murmur3_32HashFunction(seed, /* supplementaryPlaneFix= */ false);
   }
@@ -123,6 +123,7 @@ public final class Hashing {
    *     #murmur3_32_fixed()} instead.
    */
   @Deprecated
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_32() {
     return Murmur3_32HashFunction.MURMUR3_32;
   }
@@ -139,6 +140,7 @@ public final class Hashing {
    *
    * @since 31.0
    */
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_32_fixed(int seed) {
     return new Murmur3_32HashFunction(seed, /* supplementaryPlaneFix= */ true);
   }
@@ -155,6 +157,7 @@ public final class Hashing {
    *
    * @since 31.0
    */
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_32_fixed() {
     return Murmur3_32HashFunction.MURMUR3_32_FIXED;
   }
@@ -166,6 +169,7 @@ public final class Hashing {
    *
    * <p>The exact C++ equivalent is the MurmurHash3_x64_128 function (Murmur3F).
    */
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_128(int seed) {
     return new Murmur3_128HashFunction(seed);
   }
@@ -177,6 +181,7 @@ public final class Hashing {
    *
    * <p>The exact C++ equivalent is the MurmurHash3_x64_128 function (Murmur3F).
    */
+  @SuppressWarnings("IdentifierName") // the best we could do for adjacent digit blocks
   public static HashFunction murmur3_128() {
     return Murmur3_128HashFunction.MURMUR3_128;
   }
@@ -218,7 +223,7 @@ public final class Hashing {
     return Md5Holder.MD5;
   }
 
-  private static class Md5Holder {
+  private static final class Md5Holder {
     static final HashFunction MD5 = new MessageDigestHashFunction("MD5", "Hashing.md5()");
   }
 
@@ -239,7 +244,7 @@ public final class Hashing {
     return Sha1Holder.SHA_1;
   }
 
-  private static class Sha1Holder {
+  private static final class Sha1Holder {
     static final HashFunction SHA_1 = new MessageDigestHashFunction("SHA-1", "Hashing.sha1()");
   }
 
@@ -248,7 +253,7 @@ public final class Hashing {
     return Sha256Holder.SHA_256;
   }
 
-  private static class Sha256Holder {
+  private static final class Sha256Holder {
     static final HashFunction SHA_256 =
         new MessageDigestHashFunction("SHA-256", "Hashing.sha256()");
   }
@@ -262,7 +267,7 @@ public final class Hashing {
     return Sha384Holder.SHA_384;
   }
 
-  private static class Sha384Holder {
+  private static final class Sha384Holder {
     static final HashFunction SHA_384 =
         new MessageDigestHashFunction("SHA-384", "Hashing.sha384()");
   }
@@ -272,7 +277,7 @@ public final class Hashing {
     return Sha512Holder.SHA_512;
   }
 
-  private static class Sha512Holder {
+  private static final class Sha512Holder {
     static final HashFunction SHA_512 =
         new MessageDigestHashFunction("SHA-512", "Hashing.sha512()");
   }
@@ -716,7 +721,7 @@ public final class Hashing {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object instanceof ConcatenatedHashFunction) {
         ConcatenatedHashFunction other = (ConcatenatedHashFunction) object;
         return Arrays.equals(functions, other.functions);
@@ -737,11 +742,11 @@ public final class Hashing {
   private static final class LinearCongruentialGenerator {
     private long state;
 
-    public LinearCongruentialGenerator(long seed) {
+    LinearCongruentialGenerator(long seed) {
       this.state = seed;
     }
 
-    public double nextDouble() {
+    double nextDouble() {
       state = 2862933555777941757L * state + 1;
       return ((double) ((int) (state >>> 33) + 1)) / 0x1.0p31;
     }

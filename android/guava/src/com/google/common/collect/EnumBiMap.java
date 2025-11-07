@@ -40,9 +40,8 @@ import java.util.Map;
  * @author Mike Bostock
  * @since 2.0
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
 public final class EnumBiMap<K extends Enum<K>, V extends Enum<V>> extends AbstractBiMap<K, V> {
   /*
    * J2CL's EnumMap does not need the Class instance, so we can use Object.class instead. (Or we
@@ -155,10 +154,9 @@ public final class EnumBiMap<K extends Enum<K>, V extends Enum<V>> extends Abstr
     keyTypeOrObjectUnderJ2cl = (Class<K>) requireNonNull(stream.readObject());
     valueTypeOrObjectUnderJ2cl = (Class<V>) requireNonNull(stream.readObject());
     setDelegates(
-        new EnumMap<K, V>(keyTypeOrObjectUnderJ2cl), new EnumMap<V, K>(valueTypeOrObjectUnderJ2cl));
+        new EnumMap<>(keyTypeOrObjectUnderJ2cl), new EnumMap<>(valueTypeOrObjectUnderJ2cl));
     Serialization.populateMap(this, stream);
   }
 
-  @GwtIncompatible // not needed in emulated source.
-  private static final long serialVersionUID = 0;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
 }

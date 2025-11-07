@@ -16,7 +16,6 @@
 
 package com.google.common.collect;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.sort;
 import static java.util.Collections.unmodifiableMap;
 
@@ -24,12 +23,16 @@ import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.common.collect.CollectionBenchmarkSampleData.Element;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * A microbenchmark that tests the performance of get() and iteration on various map
@@ -37,6 +40,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  *
  * @author Nicholaus Shupe
  */
+@NullUnmarked
 public class MapBenchmark {
   @Param({"Hash", "LinkedHM", "MapMaker1", "Immutable"})
   private Impl impl;
@@ -45,7 +49,7 @@ public class MapBenchmark {
     Hash {
       @Override
       Map<Element, Element> create(Collection<Element> keys) {
-        Map<Element, Element> map = Maps.newHashMap();
+        Map<Element, Element> map = new HashMap<>();
         for (Element element : keys) {
           map.put(element, element);
         }
@@ -55,7 +59,7 @@ public class MapBenchmark {
     LinkedHM {
       @Override
       Map<Element, Element> create(Collection<Element> keys) {
-        Map<Element, Element> map = Maps.newLinkedHashMap();
+        Map<Element, Element> map = new LinkedHashMap<>();
         for (Element element : keys) {
           map.put(element, element);
         }
@@ -187,7 +191,7 @@ public class MapBenchmark {
         new CollectionBenchmarkSampleData(isUserTypeFast, random, hitRate, size);
 
     if (sortedData) {
-      List<Element> valueList = newArrayList(sampleData.getValuesInSet());
+      List<Element> valueList = new ArrayList<>(sampleData.getValuesInSet());
       sort(valueList);
       values = valueList;
     } else {

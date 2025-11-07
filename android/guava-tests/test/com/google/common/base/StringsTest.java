@@ -24,14 +24,15 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Unit test for {@link Strings}.
  *
  * @author Kevin Bourrillion
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class StringsTest extends TestCase {
   public void testNullToEmpty() {
     assertEquals("", Strings.nullToEmpty(null));
@@ -40,8 +41,8 @@ public class StringsTest extends TestCase {
   }
 
   public void testEmptyToNull() {
-    assertNull(Strings.emptyToNull(null));
-    assertNull(Strings.emptyToNull(""));
+    assertThat(Strings.emptyToNull(null)).isNull();
+    assertThat(Strings.emptyToNull("")).isNull();
     assertEquals("a", Strings.emptyToNull("a"));
   }
 
@@ -212,6 +213,8 @@ public class StringsTest extends TestCase {
     assertEquals("5 + 6 = 11", Strings.lenientFormat("5 + %s = 11", 6));
     assertEquals("5 + 6 = 11", Strings.lenientFormat("5 + 6 = %s", 11));
     assertEquals("5 + 6 = 11", Strings.lenientFormat("%s + %s = %s", 5, 6, 11));
+    assertEquals(
+        "5 + 6 = 11", Strings.lenientFormat("%s + %s = %s", (Object[]) new Integer[] {5, 6, 11}));
     assertEquals("null [null, null]", Strings.lenientFormat("%s", null, null, null));
     assertEquals("null [5, 6]", Strings.lenientFormat(null, 5, 6));
     assertEquals("null", Strings.lenientFormat("%s", (Object) null));

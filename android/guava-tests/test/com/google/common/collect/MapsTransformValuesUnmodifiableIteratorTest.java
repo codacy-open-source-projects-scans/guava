@@ -19,17 +19,21 @@ package com.google.common.collect;
 import static com.google.common.collect.Maps.immutableEntry;
 import static com.google.common.collect.Maps.transformValues;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.testing.MapInterfaceTest;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link Maps#transformValues} when the backing map's views have iterators that don't
@@ -38,7 +42,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jared Levy
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTest<String, String> {
   // TODO(jlevy): Move shared code of this class and MapsTransformValuesTest
   // to a superclass.
@@ -137,14 +141,14 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
 
   @Override
   protected Map<String, String> makeEmptyMap() {
-    Map<String, Integer> underlying = Maps.newHashMap();
+    Map<String, Integer> underlying = new HashMap<>();
     return transformValues(
         new UnmodifiableIteratorMap<String, Integer>(underlying), Functions.toStringFunction());
   }
 
   @Override
   protected Map<String, String> makePopulatedMap() {
-    Map<String, Integer> underlying = Maps.newHashMap();
+    Map<String, Integer> underlying = new HashMap<>();
     underlying.put("a", 1);
     underlying.put("b", 2);
     underlying.put("c", 3);
@@ -180,7 +184,7 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
   public void testTransformEmptyMapEquality() {
     Map<String, String> map =
         transformValues(ImmutableMap.<String, Integer>of(), Functions.toStringFunction());
-    assertMapsEqual(Maps.newHashMap(), map);
+    assertMapsEqual(new HashMap<>(), map);
   }
 
   public void testTransformSingletonMapEquality() {
@@ -210,15 +214,15 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
   }
 
   public void testTransformRemoveEntry() {
-    Map<String, Integer> underlying = Maps.newHashMap();
+    Map<String, Integer> underlying = new HashMap<>();
     underlying.put("a", 1);
     Map<String, String> map = transformValues(underlying, Functions.toStringFunction());
     assertEquals("1", map.remove("a"));
-    assertNull(map.remove("b"));
+    assertThat(map.remove("b")).isNull();
   }
 
   public void testTransformEqualityOfMapsWithNullValues() {
-    Map<String, @Nullable String> underlying = Maps.newHashMap();
+    Map<String, @Nullable String> underlying = new HashMap<>();
     underlying.put("a", null);
     underlying.put("b", "");
 
@@ -242,7 +246,7 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
   }
 
   public void testTransformReflectsUnderlyingMap() {
-    Map<String, Integer> underlying = Maps.newHashMap();
+    Map<String, Integer> underlying = new HashMap<>();
     underlying.put("a", 1);
     underlying.put("b", 2);
     underlying.put("c", 3);
@@ -262,7 +266,7 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
   }
 
   public void testTransformChangesAreReflectedInUnderlyingMap() {
-    Map<String, Integer> underlying = Maps.newLinkedHashMap();
+    Map<String, Integer> underlying = new LinkedHashMap<>();
     underlying.put("a", 1);
     underlying.put("b", 2);
     underlying.put("c", 3);
@@ -334,7 +338,7 @@ public class MapsTransformValuesUnmodifiableIteratorTest extends MapInterfaceTes
   }
 
   public void testTransformEntrySetContains() {
-    Map<@Nullable String, @Nullable Boolean> underlying = Maps.newHashMap();
+    Map<@Nullable String, @Nullable Boolean> underlying = new HashMap<>();
     underlying.put("a", null);
     underlying.put("b", true);
     underlying.put(null, true);

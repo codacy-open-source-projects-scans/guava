@@ -15,6 +15,7 @@
 package com.google.common.util.concurrent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtIncompatible;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The {@code CycleDetectingLockFactory} creates {@link ReentrantLock} instances and {@link
@@ -160,7 +161,6 @@ import javax.annotation.CheckForNull;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public class CycleDetectingLockFactory {
 
   /**
@@ -338,7 +338,7 @@ public class CycleDetectingLockFactory {
    * corresponding to smaller values of {@link Enum#ordinal()} should only be acquired before locks
    * with larger ordinals. Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * enum MyLockOrder {
    *   FIRST, SECOND, THIRD;
    * }
@@ -353,7 +353,7 @@ public class CycleDetectingLockFactory {
    * lock1.lock();
    * lock3.lock();
    * lock2.lock();  // will throw an IllegalStateException
-   * }</pre>
+   * }
    *
    * <p>As with all locks created by instances of {@code CycleDetectingLockFactory} explicitly
    * ordered locks participate in general cycle detection with all other cycle detecting locks, and
@@ -365,7 +365,7 @@ public class CycleDetectingLockFactory {
    * attempting to acquire multiple locks with the same Enum value (within the same thread) will
    * result in an IllegalStateException regardless of the factory's policy. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CycleDetectingLockFactory.WithExplicitOrdering<MyLockOrder> factory1 =
    *   CycleDetectingLockFactory.newInstanceWithExplicitOrdering(...);
    * CycleDetectingLockFactory.WithExplicitOrdering<MyLockOrder> factory2 =
@@ -381,7 +381,7 @@ public class CycleDetectingLockFactory {
    * lockC.lock();  // will throw an IllegalStateException
    *
    * lockA.lock();  // reentrant acquisition is okay
-   * }</pre>
+   * }
    *
    * <p>It is the responsibility of the application to ensure that multiple lock instances with the
    * same rank are never acquired in the same thread.
@@ -460,11 +460,11 @@ public class CycleDetectingLockFactory {
    */
   // This is logically a Set, but an ArrayList is used to minimize the amount
   // of allocation done on lock()/unlock().
-  private static final ThreadLocal<ArrayList<LockGraphNode>> acquiredLocks =
-      new ThreadLocal<ArrayList<LockGraphNode>>() {
+  private static final ThreadLocal<List<LockGraphNode>> acquiredLocks =
+      new ThreadLocal<List<LockGraphNode>>() {
         @Override
-        protected ArrayList<LockGraphNode> initialValue() {
-          return Lists.<LockGraphNode>newArrayListWithCapacity(3);
+        protected List<LockGraphNode> initialValue() {
+          return newArrayListWithCapacity(3);
         }
       };
 
@@ -564,10 +564,14 @@ public class CycleDetectingLockFactory {
    */
   private interface CycleDetectingLock {
 
-    /** @return the {@link LockGraphNode} associated with this lock. */
+    /**
+     * @return the {@link LockGraphNode} associated with this lock.
+     */
     LockGraphNode getLockGraphNode();
 
-    /** @return {@code true} if the current thread has acquired this lock. */
+    /**
+     * @return {@code true} if the current thread has acquired this lock.
+     */
     boolean isAcquiredByCurrentThread();
   }
 
@@ -575,7 +579,7 @@ public class CycleDetectingLockFactory {
    * A {@code LockGraphNode} associated with each lock instance keeps track of the directed edges in
    * the lock acquisition graph.
    */
-  private static class LockGraphNode {
+  private static final class LockGraphNode {
 
     /**
      * The map tracking the locks that are known to be acquired before this lock, each associated
@@ -678,8 +682,7 @@ public class CycleDetectingLockFactory {
      * @return If a path was found, a chained {@link ExampleStackTrace} illustrating the path to the
      *     {@code lock}, or {@code null} if no path was found.
      */
-    @CheckForNull
-    private ExampleStackTrace findPathTo(LockGraphNode node, Set<LockGraphNode> seen) {
+    private @Nullable ExampleStackTrace findPathTo(LockGraphNode node, Set<LockGraphNode> seen) {
       if (!seen.add(this)) {
         return null; // Already traversed this node.
       }
@@ -711,7 +714,7 @@ public class CycleDetectingLockFactory {
   private void aboutToAcquire(CycleDetectingLock lock) {
     if (!lock.isAcquiredByCurrentThread()) {
       // requireNonNull accommodates Android's @RecentlyNullable annotation on ThreadLocal.get
-      ArrayList<LockGraphNode> acquiredLockList = requireNonNull(acquiredLocks.get());
+      List<LockGraphNode> acquiredLockList = requireNonNull(acquiredLocks.get());
       LockGraphNode node = lock.getLockGraphNode();
       node.checkAcquiredLocks(policy, acquiredLockList);
       acquiredLockList.add(node);
@@ -726,7 +729,7 @@ public class CycleDetectingLockFactory {
   private static void lockStateChanged(CycleDetectingLock lock) {
     if (!lock.isAcquiredByCurrentThread()) {
       // requireNonNull accommodates Android's @RecentlyNullable annotation on ThreadLocal.get
-      ArrayList<LockGraphNode> acquiredLockList = requireNonNull(acquiredLocks.get());
+      List<LockGraphNode> acquiredLockList = requireNonNull(acquiredLocks.get());
       LockGraphNode node = lock.getLockGraphNode();
       // Iterate in reverse because locks are usually locked/unlocked in a
       // LIFO order.
@@ -856,7 +859,7 @@ public class CycleDetectingLockFactory {
     }
   }
 
-  private class CycleDetectingReentrantReadLock extends ReentrantReadWriteLock.ReadLock {
+  private final class CycleDetectingReentrantReadLock extends ReentrantReadWriteLock.ReadLock {
 
     @Weak final CycleDetectingReentrantReadWriteLock readWriteLock;
 
@@ -915,7 +918,7 @@ public class CycleDetectingLockFactory {
     }
   }
 
-  private class CycleDetectingReentrantWriteLock extends ReentrantReadWriteLock.WriteLock {
+  private final class CycleDetectingReentrantWriteLock extends ReentrantReadWriteLock.WriteLock {
 
     @Weak final CycleDetectingReentrantReadWriteLock readWriteLock;
 

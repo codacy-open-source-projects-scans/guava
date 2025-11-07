@@ -24,16 +24,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.cache.LocalCache.Strength;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A specification of a {@link CacheBuilder} configuration.
@@ -84,11 +83,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @SuppressWarnings("GoodTime") // lots of violations (nanosecond math)
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class CacheBuilderSpec {
   /** Parses a single value. */
   private interface ValueParser {
-    void parse(CacheBuilderSpec spec, String key, @CheckForNull String value);
+    void parse(CacheBuilderSpec spec, String key, @Nullable String value);
   }
 
   /** Splits each key-value pair. */
@@ -114,19 +112,20 @@ public final class CacheBuilderSpec {
           .put("refreshInterval", new RefreshDurationParser())
           .buildOrThrow();
 
-  @VisibleForTesting @CheckForNull Integer initialCapacity;
-  @VisibleForTesting @CheckForNull Long maximumSize;
-  @VisibleForTesting @CheckForNull Long maximumWeight;
-  @VisibleForTesting @CheckForNull Integer concurrencyLevel;
-  @VisibleForTesting @CheckForNull Strength keyStrength;
-  @VisibleForTesting @CheckForNull Strength valueStrength;
-  @VisibleForTesting @CheckForNull Boolean recordStats;
+  @VisibleForTesting @Nullable Integer initialCapacity;
+  @VisibleForTesting @Nullable Long maximumSize;
+  @VisibleForTesting @Nullable Long maximumWeight;
+  @VisibleForTesting @Nullable Integer concurrencyLevel;
+  @VisibleForTesting @Nullable Strength keyStrength;
+  @VisibleForTesting @Nullable Strength valueStrength;
+  @VisibleForTesting @Nullable Boolean recordStats;
   @VisibleForTesting long writeExpirationDuration;
-  @VisibleForTesting @CheckForNull TimeUnit writeExpirationTimeUnit;
+  @VisibleForTesting @Nullable TimeUnit writeExpirationTimeUnit;
   @VisibleForTesting long accessExpirationDuration;
-  @VisibleForTesting @CheckForNull TimeUnit accessExpirationTimeUnit;
+  @VisibleForTesting @Nullable TimeUnit accessExpirationTimeUnit;
   @VisibleForTesting long refreshDuration;
-  @VisibleForTesting @CheckForNull TimeUnit refreshTimeUnit;
+  @VisibleForTesting @Nullable TimeUnit refreshTimeUnit;
+
   /** Specification; used for toParseableString(). */
   private final String specification;
 
@@ -241,7 +240,7 @@ public final class CacheBuilderSpec {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(
+    return Objects.hash(
         initialCapacity,
         maximumSize,
         maximumWeight,
@@ -255,7 +254,7 @@ public final class CacheBuilderSpec {
   }
 
   @Override
-  public boolean equals(@CheckForNull Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (this == obj) {
       return true;
     }
@@ -263,20 +262,20 @@ public final class CacheBuilderSpec {
       return false;
     }
     CacheBuilderSpec that = (CacheBuilderSpec) obj;
-    return Objects.equal(initialCapacity, that.initialCapacity)
-        && Objects.equal(maximumSize, that.maximumSize)
-        && Objects.equal(maximumWeight, that.maximumWeight)
-        && Objects.equal(concurrencyLevel, that.concurrencyLevel)
-        && Objects.equal(keyStrength, that.keyStrength)
-        && Objects.equal(valueStrength, that.valueStrength)
-        && Objects.equal(recordStats, that.recordStats)
-        && Objects.equal(
+    return Objects.equals(initialCapacity, that.initialCapacity)
+        && Objects.equals(maximumSize, that.maximumSize)
+        && Objects.equals(maximumWeight, that.maximumWeight)
+        && Objects.equals(concurrencyLevel, that.concurrencyLevel)
+        && Objects.equals(keyStrength, that.keyStrength)
+        && Objects.equals(valueStrength, that.valueStrength)
+        && Objects.equals(recordStats, that.recordStats)
+        && Objects.equals(
             durationInNanos(writeExpirationDuration, writeExpirationTimeUnit),
             durationInNanos(that.writeExpirationDuration, that.writeExpirationTimeUnit))
-        && Objects.equal(
+        && Objects.equals(
             durationInNanos(accessExpirationDuration, accessExpirationTimeUnit),
             durationInNanos(that.accessExpirationDuration, that.accessExpirationTimeUnit))
-        && Objects.equal(
+        && Objects.equals(
             durationInNanos(refreshDuration, refreshTimeUnit),
             durationInNanos(that.refreshDuration, that.refreshTimeUnit));
   }
@@ -285,8 +284,7 @@ public final class CacheBuilderSpec {
    * Converts an expiration duration/unit pair into a single Long for hashing and equality. Uses
    * nanos to match CacheBuilder implementation.
    */
-  @CheckForNull
-  private static Long durationInNanos(long duration, @CheckForNull TimeUnit unit) {
+  private static @Nullable Long durationInNanos(long duration, @Nullable TimeUnit unit) {
     return (unit == null) ? null : unit.toNanos(duration);
   }
 
@@ -327,7 +325,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse initialCapacity */
-  static class InitialCapacityParser extends IntegerParser {
+  private static final class InitialCapacityParser extends IntegerParser {
     @Override
     protected void parseInteger(CacheBuilderSpec spec, int value) {
       checkArgument(
@@ -339,7 +337,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse maximumSize */
-  static class MaximumSizeParser extends LongParser {
+  private static final class MaximumSizeParser extends LongParser {
     @Override
     protected void parseLong(CacheBuilderSpec spec, long value) {
       checkArgument(
@@ -351,7 +349,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse maximumWeight */
-  static class MaximumWeightParser extends LongParser {
+  private static final class MaximumWeightParser extends LongParser {
     @Override
     protected void parseLong(CacheBuilderSpec spec, long value) {
       checkArgument(
@@ -363,7 +361,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse concurrencyLevel */
-  static class ConcurrencyLevelParser extends IntegerParser {
+  private static final class ConcurrencyLevelParser extends IntegerParser {
     @Override
     protected void parseInteger(CacheBuilderSpec spec, int value) {
       checkArgument(
@@ -375,7 +373,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse weakKeys */
-  static class KeyStrengthParser implements ValueParser {
+  private static final class KeyStrengthParser implements ValueParser {
     private final Strength strength;
 
     public KeyStrengthParser(Strength strength) {
@@ -383,7 +381,7 @@ public final class CacheBuilderSpec {
     }
 
     @Override
-    public void parse(CacheBuilderSpec spec, String key, @CheckForNull String value) {
+    public void parse(CacheBuilderSpec spec, String key, @Nullable String value) {
       checkArgument(value == null, "key %s does not take values", key);
       checkArgument(spec.keyStrength == null, "%s was already set to %s", key, spec.keyStrength);
       spec.keyStrength = strength;
@@ -391,7 +389,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse weakValues and softValues */
-  static class ValueStrengthParser implements ValueParser {
+  private static final class ValueStrengthParser implements ValueParser {
     private final Strength strength;
 
     public ValueStrengthParser(Strength strength) {
@@ -399,7 +397,7 @@ public final class CacheBuilderSpec {
     }
 
     @Override
-    public void parse(CacheBuilderSpec spec, String key, @CheckForNull String value) {
+    public void parse(CacheBuilderSpec spec, String key, @Nullable String value) {
       checkArgument(value == null, "key %s does not take values", key);
       checkArgument(
           spec.valueStrength == null, "%s was already set to %s", key, spec.valueStrength);
@@ -409,10 +407,10 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse recordStats */
-  static class RecordStatsParser implements ValueParser {
+  private static final class RecordStatsParser implements ValueParser {
 
     @Override
-    public void parse(CacheBuilderSpec spec, String key, @CheckForNull String value) {
+    public void parse(CacheBuilderSpec spec, String key, @Nullable String value) {
       checkArgument(value == null, "recordStats does not take values");
       checkArgument(spec.recordStats == null, "recordStats already set");
       spec.recordStats = true;
@@ -424,7 +422,7 @@ public final class CacheBuilderSpec {
     protected abstract void parseDuration(CacheBuilderSpec spec, long duration, TimeUnit unit);
 
     @Override
-    public void parse(CacheBuilderSpec spec, String key, @CheckForNull String value) {
+    public void parse(CacheBuilderSpec spec, String key, @Nullable String value) {
       if (isNullOrEmpty(value)) {
         throw new IllegalArgumentException("value of key " + key + " omitted");
       }
@@ -459,7 +457,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse expireAfterAccess */
-  static class AccessDurationParser extends DurationParser {
+  private static final class AccessDurationParser extends DurationParser {
     @Override
     protected void parseDuration(CacheBuilderSpec spec, long duration, TimeUnit unit) {
       checkArgument(spec.accessExpirationTimeUnit == null, "expireAfterAccess already set");
@@ -469,7 +467,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse expireAfterWrite */
-  static class WriteDurationParser extends DurationParser {
+  private static final class WriteDurationParser extends DurationParser {
     @Override
     protected void parseDuration(CacheBuilderSpec spec, long duration, TimeUnit unit) {
       checkArgument(spec.writeExpirationTimeUnit == null, "expireAfterWrite already set");
@@ -479,7 +477,7 @@ public final class CacheBuilderSpec {
   }
 
   /** Parse refreshAfterWrite */
-  static class RefreshDurationParser extends DurationParser {
+  private static final class RefreshDurationParser extends DurationParser {
     @Override
     protected void parseDuration(CacheBuilderSpec spec, long duration, TimeUnit unit) {
       checkArgument(spec.refreshTimeUnit == null, "refreshAfterWrite already set");

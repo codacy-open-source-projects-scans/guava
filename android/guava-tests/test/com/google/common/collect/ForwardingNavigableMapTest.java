@@ -17,6 +17,7 @@
 package com.google.common.collect;
 
 import static com.google.common.collect.Maps.immutableEntry;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Function;
 import com.google.common.collect.testing.NavigableMapTestSuiteBuilder;
@@ -39,7 +40,8 @@ import java.util.SortedMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code ForwardingNavigableMap}.
@@ -47,6 +49,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Robert Konigsberg
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingNavigableMapTest extends TestCase {
   static class StandardImplForwardingNavigableMap<K, V> extends ForwardingNavigableMap<K, V> {
     private final NavigableMap<K, V> backingMap;
@@ -248,6 +251,7 @@ public class ForwardingNavigableMapTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -292,7 +296,7 @@ public class ForwardingNavigableMapTest extends TestCase {
   public void testStandardLastEntry() {
     NavigableMap<String, Integer> forwarding =
         new StandardLastEntryForwardingNavigableMap<>(new SafeTreeMap<String, Integer>());
-    assertNull(forwarding.lastEntry());
+    assertThat(forwarding.lastEntry()).isNull();
     forwarding.put("b", 2);
     assertEquals(immutableEntry("b", 2), forwarding.lastEntry());
     forwarding.put("c", 3);
@@ -325,7 +329,7 @@ public class ForwardingNavigableMapTest extends TestCase {
         .testEquals();
   }
 
-  private static <K, V> NavigableMap<K, V> wrap(final NavigableMap<K, V> delegate) {
+  private static <K, V> NavigableMap<K, V> wrap(NavigableMap<K, V> delegate) {
     return new ForwardingNavigableMap<K, V>() {
       @Override
       protected NavigableMap<K, V> delegate() {

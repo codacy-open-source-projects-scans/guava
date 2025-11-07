@@ -41,7 +41,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A striped {@code Lock/Semaphore/ReadWriteLock}. This offers the underlying lock striping similar
@@ -84,7 +84,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public abstract class Striped<L> {
   /**
    * If there are at least this many stripes, we assume the memory usage of a ConcurrentMap will be
@@ -193,8 +192,9 @@ public abstract class Striped<L> {
    * @param stripes the minimum number of stripes (locks) required
    * @param supplier a {@code Supplier<L>} object to obtain locks from
    * @return a new {@code Striped<L>}
+   * @since 33.5.0
    */
-  static <L> Striped<L> custom(int stripes, Supplier<L> supplier) {
+  public static <L> Striped<L> custom(int stripes, Supplier<L> supplier) {
     return new CompactStriped<>(stripes, supplier);
   }
 
@@ -279,6 +279,7 @@ public abstract class Striped<L> {
   public static Striped<ReadWriteLock> lazyWeakReadWriteLock(int stripes) {
     return lazyWeakCustom(stripes, WeakSafeReadWriteLock::new);
   }
+
   /**
    * ReadWriteLock implementation whose read and write locks retain a reference back to this lock.
    * Otherwise, a reference to just the read lock or just the write lock would not suffice to ensure
@@ -368,7 +369,7 @@ public abstract class Striped<L> {
    * Implementation of Striped where 2^k stripes are represented as an array of the same length,
    * eagerly initialized.
    */
-  private static class CompactStriped<L> extends PowerOfTwoStriped<L> {
+  private static final class CompactStriped<L> extends PowerOfTwoStriped<L> {
     /** Size is a power of two. */
     private final Object[] array;
 
@@ -400,7 +401,7 @@ public abstract class Striped<L> {
    * user key's (smeared) hashCode(). The stripes are lazily initialized and are weakly referenced.
    */
   @VisibleForTesting
-  static class SmallLazyStriped<L> extends PowerOfTwoStriped<L> {
+  static final class SmallLazyStriped<L> extends PowerOfTwoStriped<L> {
     final AtomicReferenceArray<@Nullable ArrayReference<? extends L>> locks;
     final Supplier<L> supplier;
     final int size;
@@ -472,7 +473,7 @@ public abstract class Striped<L> {
    * user key's (smeared) hashCode(). The stripes are lazily initialized and are weakly referenced.
    */
   @VisibleForTesting
-  static class LargeLazyStriped<L> extends PowerOfTwoStriped<L> {
+  static final class LargeLazyStriped<L> extends PowerOfTwoStriped<L> {
     final ConcurrentMap<Integer, L> locks;
     final Supplier<L> supplier;
     final int size;
@@ -525,7 +526,7 @@ public abstract class Striped<L> {
     return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
   }
 
-  private static class PaddedLock extends ReentrantLock {
+  private static final class PaddedLock extends ReentrantLock {
     /*
      * Padding from 40 into 64 bytes, same size as cache line. Might be beneficial to add a fourth
      * long here, to minimize chance of interference between consecutive locks, but I couldn't
@@ -540,7 +541,7 @@ public abstract class Striped<L> {
     }
   }
 
-  private static class PaddedSemaphore extends Semaphore {
+  private static final class PaddedSemaphore extends Semaphore {
     // See PaddedReentrantLock comment
     long unused1;
     long unused2;

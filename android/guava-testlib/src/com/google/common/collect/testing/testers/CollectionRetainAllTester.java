@@ -46,7 +46,7 @@ import org.junit.Ignore;
 public class CollectionRetainAllTester<E> extends AbstractCollectionTester<E> {
 
   /** A collection of elements to retain, along with a description for use in failure messages. */
-  private class Target {
+  private final class Target {
     private final Collection<E> toRetain;
     private final String description;
 
@@ -89,7 +89,7 @@ public class CollectionRetainAllTester<E> extends AbstractCollectionTester<E> {
     containsDuplicates =
         new Target(MinimalCollection.of(e0(), e0(), e3(), e3()), "containsDuplicates");
     partialOverlap = new Target(MinimalCollection.of(e2(), e3()), "partialOverlap");
-    nullSingleton = new Target(Collections.<E>singleton(null), "nullSingleton");
+    nullSingleton = new Target(Collections.singleton(null), "nullSingleton");
   }
 
   // retainAll(empty)

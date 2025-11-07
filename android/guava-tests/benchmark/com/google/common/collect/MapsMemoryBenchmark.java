@@ -29,9 +29,12 @@ import com.google.common.collect.BenchmarkHelpers.MapImpl;
 import com.google.common.collect.BenchmarkHelpers.MapsImplEnum;
 import com.google.common.collect.BenchmarkHelpers.SortedMapImpl;
 import com.google.common.collect.CollectionBenchmarkSampleData.Element;
+import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Benchmarks for memory consumption of map implementations. */
+@NullUnmarked
 public class MapsMemoryBenchmark {
   static final Map<String, MapsImplEnum> mapEnums =
       uniqueIndex(
@@ -78,7 +81,7 @@ public class MapsMemoryBenchmark {
   public void prepareContents() throws Exception {
     mapsImpl = mapEnums.get(implName);
     elems = new CollectionBenchmarkSampleData(elements);
-    contents = Maps.newHashMap();
+    contents = new HashMap<>();
     for (Element key : elems.getValuesInSet()) {
       contents.put(key, key);
     }

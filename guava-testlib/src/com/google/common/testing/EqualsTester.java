@@ -23,11 +23,12 @@ import static junit.framework.Assert.assertTrue;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.google.common.testing.RelationshipTester.Item;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.ArrayList;
 import java.util.List;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tester for equals() and hashCode() methods of a class.
@@ -76,16 +77,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 10.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public final class EqualsTester {
   private static final int REPETITIONS = 3;
 
-  private final List<List<Object>> equalityGroups = Lists.newArrayList();
+  private final List<List<Object>> equalityGroups = new ArrayList<>();
   private final RelationshipTester.ItemReporter itemReporter;
 
   /** Constructs an empty EqualsTester instance */
   public EqualsTester() {
-    this(new RelationshipTester.ItemReporter());
+    this(/* itemReporter= */ Item::toString);
   }
 
   EqualsTester(RelationshipTester.ItemReporter itemReporter) {

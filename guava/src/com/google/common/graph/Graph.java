@@ -20,7 +20,7 @@ import com.google.common.annotations.Beta;
 import com.google.errorprone.annotations.DoNotMock;
 import java.util.Collection;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An interface for <a
@@ -57,9 +57,9 @@ import javax.annotation.CheckForNull;
  * create an instance of one of the built-in implementations of {@code Graph}, use the {@link
  * GraphBuilder} class:
  *
- * <pre>{@code
+ * {@snippet :
  * MutableGraph<Integer> graph = GraphBuilder.undirected().build();
- * }</pre>
+ * }
  *
  * <p>{@link GraphBuilder#build()} returns an instance of {@link MutableGraph}, which is a subtype
  * of {@code Graph} that provides methods for adding and removing nodes and edges. If you do not
@@ -69,9 +69,9 @@ import javax.annotation.CheckForNull;
  * <p>You can create an immutable copy of an existing {@code Graph} using {@link
  * ImmutableGraph#copyOf(Graph)}:
  *
- * <pre>{@code
+ * {@snippet :
  * ImmutableGraph<Integer> immutableGraph = ImmutableGraph.copyOf(graph);
- * }</pre>
+ * }
  *
  * <p>Instances of {@link ImmutableGraph} do not implement {@link MutableGraph} (obviously!) and are
  * contractually guaranteed to be unmodifiable and thread-safe.
@@ -103,7 +103,6 @@ import javax.annotation.CheckForNull;
  */
 @Beta
 @DoNotMock("Use GraphBuilder to create a real instance")
-@ElementTypesAreNonnullByDefault
 public interface Graph<N> extends BaseGraph<N> {
   //
   // Graph-level accessors
@@ -339,7 +338,7 @@ public interface Graph<N> extends BaseGraph<N> {
    * <p>A reference implementation of this is provided by {@link AbstractGraph#equals(Object)}.
    */
   @Override
-  boolean equals(@CheckForNull Object object);
+  boolean equals(@Nullable Object object);
 
   /**
    * Returns the hash code for this graph. The hash code of a graph is defined as the hash code of

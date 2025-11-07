@@ -28,7 +28,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A reference queue with an associated background thread that dequeues references and invokes
@@ -45,7 +45,7 @@ import javax.annotation.CheckForNull;
  * its {@code close} method. You <em>could</em> use a finalizer to accomplish this, but that has a
  * number of well-known problems. Here is how you might use this class instead:
  *
- * <pre>{@code
+ * {@snippet :
  * public class MyServer implements Closeable {
  *   private static final FinalizableReferenceQueue frq = new FinalizableReferenceQueue();
  *   // You might also share this between several objects.
@@ -87,12 +87,12 @@ import javax.annotation.CheckForNull;
  *     serverSocket.close();
  *   }
  * }
- * }</pre>
+ * }
  *
  * <p id="cleaner">Here is how you might achieve the same thing using {@link java.lang.ref.Cleaner
  * Cleaner}, if you are using a Java version where that is available:
  *
- * <pre>{@code
+ * {@snippet :
  * public class MyServer implements Closeable {
  *   private static final Cleaner cleaner = Cleaner.create();
  *   // You might also share this between several objects.
@@ -126,7 +126,7 @@ import javax.annotation.CheckForNull;
  *     cleanable.clean();
  *   }
  * }
- * }</pre>
+ * }
  *
  * <p>Some care is needed when using {@code Cleaner} to ensure that the callback passed to {@code
  * register} does not have a reference to the object (in this case, {@code MyServer}) that may be
@@ -138,7 +138,6 @@ import javax.annotation.CheckForNull;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public class FinalizableReferenceQueue implements Closeable {
   /*
    * The Finalizer thread keeps a phantom reference to this object. When the client (for example, a
@@ -278,22 +277,20 @@ public class FinalizableReferenceQueue implements Closeable {
      *
      * @throws SecurityException if we don't have the appropriate privileges
      */
-    @CheckForNull
-    Class<?> loadFinalizer();
+    @Nullable Class<?> loadFinalizer();
   }
 
   /**
    * Tries to load Finalizer from the system class loader. If Finalizer is in the system class path,
    * we needn't create a separate loader.
    */
-  static class SystemLoader implements FinalizerLoader {
+  static final class SystemLoader implements FinalizerLoader {
     // This is used by the ClassLoader-leak test in FinalizableReferenceQueueTest to disable
     // finding Finalizer on the system class path even if it is there.
     @VisibleForTesting static boolean disabled;
 
     @Override
-    @CheckForNull
-    public Class<?> loadFinalizer() {
+    public @Nullable Class<?> loadFinalizer() {
       if (disabled) {
         return null;
       }
@@ -330,8 +327,7 @@ public class FinalizableReferenceQueue implements Closeable {
             + "issue, or move Guava to your system class path.";
 
     @Override
-    @CheckForNull
-    public Class<?> loadFinalizer() {
+    public @Nullable Class<?> loadFinalizer() {
       /*
        * We use URLClassLoader because it's the only concrete class loader implementation in the
        * JDK. If we used our own ClassLoader subclass, Finalizer would indirectly reference this
@@ -380,7 +376,7 @@ public class FinalizableReferenceQueue implements Closeable {
    * Loads Finalizer directly using the current class loader. We won't be able to garbage collect
    * this class loader, but at least the world doesn't end.
    */
-  static class DirectLoader implements FinalizerLoader {
+  private static final class DirectLoader implements FinalizerLoader {
     @Override
     public Class<?> loadFinalizer() {
       try {

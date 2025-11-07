@@ -21,7 +21,8 @@ import static java.util.Collections.singletonMap;
 import com.google.common.annotations.GwtCompatible;
 import java.util.Map.Entry;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code AbstractMapEntry}.
@@ -29,13 +30,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Mike Bostock
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public class AbstractMapEntryTest extends TestCase {
   private static final @Nullable String NK = null;
   private static final @Nullable Integer NV = null;
 
   private static <K extends @Nullable Object, V extends @Nullable Object> Entry<K, V> entry(
-      final K key, final V value) {
+      K key, V value) {
     return new AbstractMapEntry<K, V>() {
       @Override
       public K getKey() {

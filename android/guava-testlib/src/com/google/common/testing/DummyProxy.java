@@ -22,7 +22,6 @@ import static com.google.common.testing.NullPointerTester.isNullable;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.google.common.reflect.Invokable;
 import com.google.common.reflect.Parameter;
@@ -30,8 +29,11 @@ import com.google.common.reflect.TypeToken;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Generates a dummy interface proxy that simply returns a dummy value for each method.
@@ -40,7 +42,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtIncompatible
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 abstract class DummyProxy {
 
   /**
@@ -48,8 +50,23 @@ abstract class DummyProxy {
    * other if the {@link DummyProxy} instance that created the proxies are equal.
    */
   final <T> T newProxy(TypeToken<T> interfaceType) {
-    Set<Class<?>> interfaceClasses = Sets.newLinkedHashSet();
-    interfaceClasses.addAll(interfaceType.getTypes().interfaces().rawTypes());
+    Set<Class<?>> interfaceClasses = new LinkedHashSet<>();
+    Set<Class<? super T>> allInterfaceClasses = interfaceType.getTypes().interfaces().rawTypes();
+    for (Class<? super T> itf : allInterfaceClasses) {
+      Iterator<Class<?>> iterator = interfaceClasses.iterator();
+      boolean addToSet = true;
+      while (iterator.hasNext()) {
+        Class<?> current = iterator.next();
+        if (current == itf || itf.isAssignableFrom(current)) {
+          // Skip any super interface of the ones that are already included.
+          addToSet = false;
+          break;
+        }
+      }
+      if (addToSet) {
+        interfaceClasses.add(itf);
+      }
+    }
     // Make the proxy serializable to work with SerializableTester
     interfaceClasses.add(Serializable.class);
     Object dummy =
@@ -65,7 +82,7 @@ abstract class DummyProxy {
   /** Returns the dummy return value for {@code returnType}. */
   abstract <R> @Nullable R dummyReturnValue(TypeToken<R> returnType);
 
-  private class DummyHandler extends AbstractInvocationHandler implements Serializable {
+  private final class DummyHandler extends AbstractInvocationHandler implements Serializable {
     private final TypeToken<?> interfaceType;
 
     DummyHandler(TypeToken<?> interfaceType) {
@@ -112,7 +129,7 @@ abstract class DummyProxy {
 
     // Since type variables aren't serializable, reduce the type down to raw type before
     // serialization.
-    private Object writeReplace() {
+        private Object writeReplace() {
       return new DummyHandler(TypeToken.of(interfaceType.getRawType()));
     }
   }

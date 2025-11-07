@@ -14,14 +14,14 @@
 
 package com.google.common.reflect;
 
-import com.google.common.collect.Sets;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.HashSet;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Based on what a {@link Type} is, dispatch it to the corresponding {@code visit*} method. By
@@ -29,7 +29,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * recursion by calling {@link #visit} for any {@code Type} while visitation is in progress. For
  * example, this can be used to reject wildcards or type variables contained in a type as in:
  *
- * <pre>{@code
+ * {@snippet :
  * new TypeVisitor() {
  *   protected void visitParameterizedType(ParameterizedType t) {
  *     visit(t.getOwnerType());
@@ -45,7 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     throw new IllegalArgumentException("Cannot contain wildcard type.");
  *   }
  * }.visit(type);
- * }</pre>
+ * }
  *
  * <p>One {@code Type} is visited at most once. The second time the same type is visited, it's
  * ignored by {@link #visit}. This avoids infinite recursion caused by recursive type bounds.
@@ -54,10 +54,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @author Ben Yu
  */
-@ElementTypesAreNonnullByDefault
 abstract class TypeVisitor {
 
-  private final Set<Type> visited = Sets.newHashSet();
+  private final Set<Type> visited = new HashSet<>();
 
   /**
    * Visits the given types. Null types are ignored. This allows subclasses to call {@code

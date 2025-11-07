@@ -27,9 +27,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Useful suppliers.
@@ -40,8 +40,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Harry Heymann
  * @since 2.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Suppliers {
   private Suppliers() {}
 
@@ -56,7 +55,8 @@ public final class Suppliers {
     return new SupplierComposition<>(function, supplier);
   }
 
-  private static class SupplierComposition<F extends @Nullable Object, T extends @Nullable Object>
+  private static final class SupplierComposition<
+          F extends @Nullable Object, T extends @Nullable Object>
       implements Supplier<T>, Serializable {
     final Function<? super F, T> function;
     final Supplier<F> supplier;
@@ -73,7 +73,7 @@ public final class Suppliers {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof SupplierComposition) {
         SupplierComposition<?, ?> that = (SupplierComposition<?, ?>) obj;
         return function.equals(that.function) && supplier.equals(that.supplier);
@@ -83,7 +83,7 @@ public final class Suppliers {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(function, supplier);
+      return Objects.hash(function, supplier);
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class Suppliers {
       return "Suppliers.compose(" + function + ", " + supplier + ")";
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -121,14 +121,15 @@ public final class Suppliers {
   }
 
   @VisibleForTesting
-  static class MemoizingSupplier<T extends @Nullable Object> implements Supplier<T>, Serializable {
+  static final class MemoizingSupplier<T extends @Nullable Object>
+      implements Supplier<T>, Serializable {
     private transient Object lock = new Object();
 
     final Supplier<T> delegate;
     transient volatile boolean initialized;
     // "value" does not need to be volatile; visibility piggy-backs
     // on volatile read of "initialized".
-    @CheckForNull transient T value;
+    transient @Nullable T value;
 
     MemoizingSupplier(Supplier<T> delegate) {
       this.delegate = checkNotNull(delegate);
@@ -161,29 +162,29 @@ public final class Suppliers {
           + ")";
     }
 
-    @GwtIncompatible // serialization
-    @J2ktIncompatible // serialization
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    @GwtIncompatible
+    @J2ktIncompatible
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
       lock = new Object();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
-  @VisibleForTesting
-  static class NonSerializableMemoizingSupplier<T extends @Nullable Object> implements Supplier<T> {
+  private static final class NonSerializableMemoizingSupplier<T extends @Nullable Object>
+      implements Supplier<T> {
     private final Object lock = new Object();
 
     @SuppressWarnings("UnnecessaryLambda") // Must be a fixed singleton object
-    private static final Supplier<Void> SUCCESSFULLY_COMPUTED =
+    private static final Supplier<@Nullable Void> SUCCESSFULLY_COMPUTED =
         () -> {
           throw new IllegalStateException(); // Should never get called.
         };
 
     private volatile Supplier<T> delegate;
     // "value" does not need to be volatile; visibility piggy-backs on volatile read of "delegate".
-    @CheckForNull private T value;
+    private @Nullable T value;
 
     NonSerializableMemoizingSupplier(Supplier<T> delegate) {
       this.delegate = checkNotNull(delegate);
@@ -270,7 +271,6 @@ public final class Suppliers {
    */
   @J2ktIncompatible
   @GwtIncompatible // java.time.Duration
-  @SuppressWarnings("Java7ApiChecker") // no more dangerous that wherever the user got the Duration
   @IgnoreJRERequirement
   public static <T extends @Nullable Object> Supplier<T> memoizeWithExpiration(
       Supplier<T> delegate, Duration duration) {
@@ -283,13 +283,13 @@ public final class Suppliers {
 
   @VisibleForTesting
   @SuppressWarnings("GoodTime") // lots of violations
-  static class ExpiringMemoizingSupplier<T extends @Nullable Object>
+  static final class ExpiringMemoizingSupplier<T extends @Nullable Object>
       implements Supplier<T>, Serializable {
     private transient Object lock = new Object();
 
     final Supplier<T> delegate;
     final long durationNanos;
-    @CheckForNull transient volatile T value;
+    transient volatile @Nullable T value;
     // The special value 0 means "not yet initialized".
     transient volatile long expirationNanos;
 
@@ -335,23 +335,29 @@ public final class Suppliers {
       return "Suppliers.memoizeWithExpiration(" + delegate + ", " + durationNanos + ", NANOS)";
     }
 
-    @GwtIncompatible // serialization
-    @J2ktIncompatible // serialization
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    @GwtIncompatible
+    @J2ktIncompatible
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
       in.defaultReadObject();
       lock = new Object();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
-  /** Returns a supplier that always supplies {@code instance}. */
+  /**
+   * Returns a supplier that always supplies {@code instance}.
+   *
+   * <p><b>Discouraged:</b> Prefer using {@code () -> instance}, but note that lambdas do not have
+   * human-readable {@link #toString()} representations and are not serializable. If you need a
+   * supplier that is serializable, use {@code (Supplier<T> & Serializable) () -> instance}.
+   */
   public static <T extends @Nullable Object> Supplier<T> ofInstance(
       @ParametricNullness T instance) {
     return new SupplierOfInstance<>(instance);
   }
 
-  private static class SupplierOfInstance<T extends @Nullable Object>
+  private static final class SupplierOfInstance<T extends @Nullable Object>
       implements Supplier<T>, Serializable {
     @ParametricNullness final T instance;
 
@@ -366,17 +372,17 @@ public final class Suppliers {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof SupplierOfInstance) {
         SupplierOfInstance<?> that = (SupplierOfInstance<?>) obj;
-        return Objects.equal(instance, that.instance);
+        return Objects.equals(instance, that.instance);
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(instance);
+      return Objects.hash(instance);
     }
 
     @Override
@@ -384,7 +390,7 @@ public final class Suppliers {
       return "Suppliers.ofInstance(" + instance + ")";
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -398,7 +404,7 @@ public final class Suppliers {
   }
 
   @J2ktIncompatible
-  private static class ThreadSafeSupplier<T extends @Nullable Object>
+  private static final class ThreadSafeSupplier<T extends @Nullable Object>
       implements Supplier<T>, Serializable {
     final Supplier<T> delegate;
 
@@ -419,14 +425,16 @@ public final class Suppliers {
       return "Suppliers.synchronizedSupplier(" + delegate + ")";
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
    * Returns a function that accepts a supplier and returns the result of invoking {@link
    * Supplier#get} on that supplier.
    *
-   * <p><b>Java 8+ users:</b> use the method reference {@code Supplier::get} instead.
+   * <p>Prefer to use the method reference {@code Supplier::get} instead, though note that it is not
+   * serializable unless you explicitly make it {@link Serializable}, typically by writing {@code
+   * (Function<Supplier<T>, T> & Serializable) Supplier::get}.
    *
    * @since 8.0
    */
@@ -443,8 +451,7 @@ public final class Suppliers {
 
     // Note: This makes T a "pass-through type"
     @Override
-    @CheckForNull
-    public Object apply(Supplier<@Nullable Object> input) {
+    public @Nullable Object apply(Supplier<@Nullable Object> input) {
       return input.get();
     }
 

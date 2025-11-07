@@ -26,7 +26,6 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.AbstractInvocationHandler;
 import com.google.common.reflect.Reflection;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -34,9 +33,11 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tester to ensure forwarding wrapper works by delegating calls to the corresponding method with
@@ -44,20 +45,20 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <p>For example:
  *
- * <pre>{@code
+ * {@snippet :
  * new ForwardingWrapperTester().testForwarding(Foo.class, new Function<Foo, Foo>() {
  *   public Foo apply(Foo foo) {
  *     return new ForwardingFoo(foo);
  *   }
  * });
- * }</pre>
+ * }
  *
  * @author Ben Yu
  * @since 14.0
  */
 @GwtIncompatible
 @J2ktIncompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public final class ForwardingWrapperTester {
 
   private boolean testsEquals = false;
@@ -179,7 +180,7 @@ public final class ForwardingWrapperTester {
 
   private static @Nullable Object[] getParameterValues(Method method) {
     FreshValueGenerator paramValues = new FreshValueGenerator();
-    List<@Nullable Object> passedArgs = Lists.newArrayList();
+    List<@Nullable Object> passedArgs = new ArrayList<>();
     for (Class<?> paramType : method.getParameterTypes()) {
       passedArgs.add(paramValues.generateFresh(paramType));
     }

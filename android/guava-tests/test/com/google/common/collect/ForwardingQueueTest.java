@@ -25,11 +25,13 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.testing.ForwardingWrapperTester;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Queue;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@code ForwardingQueue}.
@@ -37,6 +39,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Robert Konigsberg
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class ForwardingQueueTest extends TestCase {
 
   static final class StandardImplForwardingQueue<T> extends ForwardingQueue<T> {
@@ -117,6 +120,7 @@ public class ForwardingQueueTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -127,7 +131,7 @@ public class ForwardingQueueTest extends TestCase {
 
                   @Override
                   protected Queue<String> create(String[] elements) {
-                    return new StandardImplForwardingQueue<>(Lists.newLinkedList(asList(elements)));
+                    return new StandardImplForwardingQueue<>(new LinkedList<>(asList(elements)));
                   }
                 })
             .named("ForwardingQueue[LinkedList] with standard implementations")
@@ -153,7 +157,7 @@ public class ForwardingQueueTest extends TestCase {
             });
   }
 
-  private static <T> Queue<T> wrap(final Queue<T> delegate) {
+  private static <T> Queue<T> wrap(Queue<T> delegate) {
     return new ForwardingQueue<T>() {
       @Override
       protected Queue<T> delegate() {

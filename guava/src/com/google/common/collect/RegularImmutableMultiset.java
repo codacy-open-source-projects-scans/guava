@@ -15,19 +15,19 @@
 package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.asImmutableList;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.collect.Multisets.ImmutableEntry;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.Arrays;
 import java.util.Collection;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@link ImmutableMultiset} with zero or more elements.
@@ -35,10 +35,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jared Levy
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true, serializable = true)
+@GwtCompatible
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
-@ElementTypesAreNonnullByDefault
-class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
+final class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
   private static final ImmutableEntry<?>[] EMPTY_ARRAY = new ImmutableEntry<?>[0];
   static final ImmutableMultiset<Object> EMPTY = create(ImmutableList.<Entry<Object>>of());
 
@@ -52,8 +51,7 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
     int tableSize = Hashing.closedTableSize(distinct, MAX_LOAD_FACTOR);
     int mask = tableSize - 1;
     @SuppressWarnings({"unchecked", "rawtypes"})
-    @Nullable
-    ImmutableEntry<E>[] hashTable = new @Nullable ImmutableEntry[tableSize];
+    @Nullable ImmutableEntry<E>[] hashTable = new @Nullable ImmutableEntry[tableSize];
 
     int index = 0;
     int hashCode = 0;
@@ -82,7 +80,7 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
     }
 
     return hashFloodingDetected(hashTable)
-        ? JdkBackedImmutableMultiset.create(ImmutableList.asImmutableList(entryArray))
+        ? JdkBackedImmutableMultiset.create(asImmutableList(entryArray))
         : new RegularImmutableMultiset<E>(
             entryArray, hashTable, Ints.saturatedCast(size), hashCode, null);
   }
@@ -124,14 +122,14 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
   private final transient int size;
   private final transient int hashCode;
 
-  @LazyInit @CheckForNull private transient ImmutableSet<E> elementSet;
+  @LazyInit private transient @Nullable ImmutableSet<E> elementSet;
 
   private RegularImmutableMultiset(
       ImmutableEntry<E>[] entries,
       @Nullable ImmutableEntry<?>[] hashTable,
       int size,
       int hashCode,
-      @CheckForNull ImmutableSet<E> elementSet) {
+      @Nullable ImmutableSet<E> elementSet) {
     this.entries = entries;
     this.hashTable = hashTable;
     this.size = size;
@@ -159,7 +157,7 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
   }
 
   @Override
-  public int count(@CheckForNull Object element) {
+  public int count(@Nullable Object element) {
     @Nullable ImmutableEntry<?>[] hashTable = this.hashTable;
     if (element == null || hashTable.length == 0) {
       return 0;
@@ -169,7 +167,7 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
     for (ImmutableEntry<?> entry = hashTable[hash & mask];
         entry != null;
         entry = entry.nextInBucket()) {
-      if (Objects.equal(element, entry.getElement())) {
+      if (Objects.equals(element, entry.getElement())) {
         return entry.getCount();
       }
     }
@@ -200,9 +198,9 @@ class RegularImmutableMultiset<E> extends ImmutableMultiset<E> {
   // redeclare to help optimizers with b/310253115
   @SuppressWarnings("RedundantOverride")
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     return super.writeReplace();
   }
 }

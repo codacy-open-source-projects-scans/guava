@@ -29,6 +29,7 @@ import static com.google.common.math.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static java.math.BigInteger.valueOf;
+import static java.math.RoundingMode.DOWN;
 import static java.math.RoundingMode.FLOOR;
 import static java.math.RoundingMode.UNNECESSARY;
 
@@ -42,13 +43,15 @@ import java.math.RoundingMode;
 import java.util.EnumSet;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for LongMath.
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class LongMathTest extends TestCase {
   @SuppressWarnings("ConstantOverflow")
   public void testMaxSignedPowerOfTwo() {
@@ -97,9 +100,9 @@ public class LongMathTest extends TestCase {
   @GwtIncompatible // TODO
   public void testConstantMaxPowerOfSqrt2Unsigned() {
     assertEquals(
-        /*expected=*/ BigIntegerMath.sqrt(BigInteger.ZERO.setBit(2 * Long.SIZE - 1), FLOOR)
+        /* expected= */ BigIntegerMath.sqrt(BigInteger.ZERO.setBit(2 * Long.SIZE - 1), FLOOR)
             .longValue(),
-        /*actual=*/ LongMath.MAX_POWER_OF_SQRT2_UNSIGNED);
+        /* actual= */ LongMath.MAX_POWER_OF_SQRT2_UNSIGNED);
   }
 
   @GwtIncompatible // BigIntegerMath // TODO(cpovirk): GWT-enable BigIntegerMath
@@ -129,14 +132,14 @@ public class LongMathTest extends TestCase {
     }
     BigInteger nextBigger =
         BigIntegerMath.sqrt(BigInteger.TEN.pow(2 * LongMath.halfPowersOf10.length + 1), FLOOR);
-    assertTrue(nextBigger.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0);
+    assertThat(nextBigger).isGreaterThan(BigInteger.valueOf(Long.MAX_VALUE));
   }
 
   @GwtIncompatible // TODO
   public void testConstantsSqrtMaxLong() {
     assertEquals(
-        /*expected=*/ LongMath.sqrt(Long.MAX_VALUE, FLOOR),
-        /*actual=*/ LongMath.FLOOR_SQRT_MAX_LONG);
+        /* expected= */ LongMath.sqrt(Long.MAX_VALUE, FLOOR),
+        /* actual= */ LongMath.FLOOR_SQRT_MAX_LONG);
   }
 
   @GwtIncompatible // TODO
@@ -170,7 +173,7 @@ public class LongMathTest extends TestCase {
   @GwtIncompatible // TODO
   public void testConstantsBiggestSimpleBinomials() {
     for (int i = 0; i < LongMath.biggestSimpleBinomials.length; i++) {
-      final int k = i;
+      int k = i;
       assertTrue(LongMath.biggestSimpleBinomials[k] <= LongMath.biggestBinomials[k]);
       long unused = simpleBinomial(LongMath.biggestSimpleBinomials[k], k); // mustn't throw
       if (LongMath.biggestSimpleBinomials[k] < Integer.MAX_VALUE) {
@@ -335,7 +338,7 @@ public class LongMathTest extends TestCase {
     for (long x : POSITIVE_LONG_CANDIDATES) {
       long sqrtFloor = LongMath.sqrt(x, FLOOR);
       // We only expect an exception if x was not a perfect square.
-      boolean isPerfectSquare = (sqrtFloor * sqrtFloor == x);
+      boolean isPerfectSquare = sqrtFloor * sqrtFloor == x;
       try {
         assertEquals(sqrtFloor, LongMath.sqrt(x, UNNECESSARY));
         assertTrue(isPerfectSquare);
@@ -366,6 +369,12 @@ public class LongMathTest extends TestCase {
           long actual = LongMath.divide(p, q, mode);
           if (expected != actual) {
             failFormat("expected divide(%s, %s, %s) = %s; got %s", p, q, mode, expected, actual);
+          }
+          // Check the assertions we make in the javadoc.
+          if (mode == DOWN) {
+            assertEquals(p / q, LongMath.divide(p, q, mode));
+          } else if (mode == FLOOR) {
+            assertEquals(Math.floorDiv(p, q), LongMath.divide(p, q, mode));
           }
         }
       }
@@ -676,14 +685,14 @@ public class LongMathTest extends TestCase {
 
   public void testBinomialOutside() {
     for (int i = 0; i <= 50; i++) {
-      final int n = i;
+      int n = i;
       assertThrows(IllegalArgumentException.class, () -> LongMath.binomial(n, -1));
       assertThrows(IllegalArgumentException.class, () -> LongMath.binomial(n, n + 1));
     }
   }
 
   public void testBinomialNegative() {
-    for (final int n : NEGATIVE_INTEGER_CANDIDATES) {
+    for (int n : NEGATIVE_INTEGER_CANDIDATES) {
       assertThrows(IllegalArgumentException.class, () -> LongMath.binomial(n, 0));
     }
   }
@@ -694,7 +703,7 @@ public class LongMathTest extends TestCase {
   public void testSqrtOfPerfectSquareAsDoubleIsPerfect() {
     // This takes just over a minute on my machine.
     for (long n = 0; n <= LongMath.FLOOR_SQRT_MAX_LONG; n++) {
-      long actual = (long) Math.sqrt(n * n);
+      long actual = (long) Math.sqrt((double) (n * n));
       assertTrue(actual == n);
     }
   }
@@ -766,10 +775,9 @@ public class LongMathTest extends TestCase {
   private static long computeMeanSafely(long x, long y) {
     BigInteger bigX = BigInteger.valueOf(x);
     BigInteger bigY = BigInteger.valueOf(y);
-    BigDecimal bigMean =
-        new BigDecimal(bigX.add(bigY)).divide(BigDecimal.valueOf(2), BigDecimal.ROUND_FLOOR);
-    // parseInt blows up on overflow as opposed to intValue() which does not.
-    return Long.parseLong(bigMean.toString());
+    BigDecimal two = BigDecimal.valueOf(2); // Android doesn't have BigDecimal.TWO yet
+    BigDecimal bigMean = new BigDecimal(bigX.add(bigY)).divide(two, RoundingMode.FLOOR);
+    return bigMean.longValueExact();
   }
 
   private static boolean fitsInLong(BigInteger big) {
@@ -919,6 +927,17 @@ public class LongMathTest extends TestCase {
             ArithmeticException.class, () -> LongMath.roundToDouble(candidate, UNNECESSARY));
       }
     }
+  }
+
+  public void testSaturatedAbs() {
+    assertEquals(Long.MAX_VALUE, LongMath.saturatedAbs(Long.MIN_VALUE));
+    assertEquals(Long.MAX_VALUE, LongMath.saturatedAbs(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, LongMath.saturatedAbs(-Long.MAX_VALUE));
+    assertEquals(0, LongMath.saturatedAbs(0));
+    assertEquals(1, LongMath.saturatedAbs(1));
+    assertEquals(1, LongMath.saturatedAbs(-1));
+    assertEquals(10, LongMath.saturatedAbs(10));
+    assertEquals(10, LongMath.saturatedAbs(-10));
   }
 
   private static void failFormat(String template, Object... args) {

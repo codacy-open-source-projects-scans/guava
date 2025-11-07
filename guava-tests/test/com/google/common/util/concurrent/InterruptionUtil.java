@@ -25,6 +25,7 @@ import com.google.common.testing.TearDown;
 import com.google.common.testing.TearDownAccepter;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Utilities for performing thread interruption in tests
@@ -32,6 +33,7 @@ import java.util.logging.Logger;
  * @author Kevin Bourrillion
  * @author Chris Povirk
  */
+@NullUnmarked
 final class InterruptionUtil {
   private static final Logger logger = Logger.getLogger(InterruptionUtil.class.getName());
 
@@ -67,9 +69,9 @@ final class InterruptionUtil {
   }
 
   /** Interrupts the current thread after sleeping for the specified delay. */
-  static void requestInterruptIn(final long time, final TimeUnit unit) {
+  static void requestInterruptIn(long time, TimeUnit unit) {
     checkNotNull(unit);
-    final Thread interruptee = Thread.currentThread();
+    Thread interruptee = Thread.currentThread();
     new Thread(
             new Runnable() {
               @Override
@@ -87,9 +89,9 @@ final class InterruptionUtil {
 
   static void repeatedlyInterruptTestThread(
       long interruptPeriodMillis, TearDownAccepter tearDownAccepter) {
-    final Interruptenator interruptingTask =
+    Interruptenator interruptingTask =
         new Interruptenator(Thread.currentThread(), interruptPeriodMillis);
-    final Thread interruptingThread = new Thread(interruptingTask);
+    Thread interruptingThread = new Thread(interruptingTask);
     interruptingThread.start();
     tearDownAccepter.addTearDown(
         new TearDown() {
@@ -135,4 +137,6 @@ final class InterruptionUtil {
       }
     }
   }
+
+  private InterruptionUtil() {}
 }

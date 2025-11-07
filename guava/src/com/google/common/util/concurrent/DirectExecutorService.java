@@ -18,8 +18,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
+import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 /** See newDirectExecutorService javadoc for behavioral notes. */
 @J2ktIncompatible // Emulated
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 final class DirectExecutorService extends AbstractListeningExecutorService {
 
   /** Lock used whenever accessing the state variables (runningTasks, shutdown) of the executor */
@@ -77,7 +76,7 @@ final class DirectExecutorService extends AbstractListeningExecutorService {
   @Override
   public List<Runnable> shutdownNow() {
     shutdown();
-    return Collections.emptyList();
+    return ImmutableList.of();
   }
 
   @Override

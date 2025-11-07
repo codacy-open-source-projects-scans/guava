@@ -22,19 +22,20 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Objects;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
+import java.util.Objects;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Test cases for {@link Table} read operations.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public abstract class AbstractTableReadTest<C extends @Nullable Character> extends TestCase {
   protected Table<String, Integer, C> table;
 
@@ -100,12 +101,12 @@ public abstract class AbstractTableReadTest<C extends @Nullable Character> exten
     assertEquals((Character) 'a', table.get("foo", 1));
     assertEquals((Character) 'b', table.get("bar", 1));
     assertEquals((Character) 'c', table.get("foo", 3));
-    assertNull(table.get("foo", 2));
-    assertNull(table.get("bar", 3));
-    assertNull(table.get("cat", 1));
-    assertNull(table.get("foo", null));
-    assertNull(table.get(null, 1));
-    assertNull(table.get(null, null));
+    assertThat(table.get("foo", 2)).isNull();
+    assertThat(table.get("bar", 3)).isNull();
+    assertThat(table.get("cat", 1)).isNull();
+    assertThat(table.get("foo", null)).isNull();
+    assertThat(table.get(null, 1)).isNull();
+    assertThat(table.get(null, null)).isNull();
   }
 
   public void testIsEmpty() {
@@ -141,9 +142,7 @@ public abstract class AbstractTableReadTest<C extends @Nullable Character> exten
   public void testHashCode() {
     table = create("foo", 1, 'a', "bar", 1, 'b', "foo", 3, 'c');
     int expected =
-        Objects.hashCode("foo", 1, 'a')
-            + Objects.hashCode("bar", 1, 'b')
-            + Objects.hashCode("foo", 3, 'c');
+        Objects.hash("foo", 1, 'a') + Objects.hash("bar", 1, 'b') + Objects.hash("foo", 3, 'c');
     assertEquals(expected, table.hashCode());
   }
 

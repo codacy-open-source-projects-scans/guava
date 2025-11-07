@@ -16,6 +16,8 @@
 
 package com.google.common.hash;
 
+import static com.google.common.hash.BloomFilter.toBloomFilter;
+import static com.google.common.hash.Funnels.unencodedCharsFunnel;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -37,14 +39,17 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for SimpleGenericBloomFilter and derived BloomFilter views.
  *
  * @author Dimitris Andreou
  */
+@NullUnmarked
 public class BloomFilterTest extends TestCase {
   private static final int NUM_PUTS = 100_000;
   private static final ThreadLocal<Random> random =
@@ -270,14 +275,15 @@ public class BloomFilterTest extends TestCase {
   public void testOptimalSize() {
     for (int n = 1; n < 1000; n++) {
       for (double fpp = Double.MIN_VALUE; fpp < 1.0; fpp += 0.001) {
-        assertTrue(BloomFilter.optimalNumOfBits(n, fpp) >= 0);
+        assertThat(BloomFilter.optimalNumOfBits(n, fpp)).isAtLeast(0);
       }
     }
 
     // some random values
     Random random = new Random(0);
     for (int repeats = 0; repeats < 10000; repeats++) {
-      assertTrue(BloomFilter.optimalNumOfBits(random.nextInt(1 << 16), random.nextDouble()) >= 0);
+      assertThat(BloomFilter.optimalNumOfBits(random.nextInt(1 << 16), random.nextDouble()))
+          .isAtLeast(0);
     }
 
     // and some crazy values (this used to be capped to Integer.MAX_VALUE, now it can go bigger
@@ -302,14 +308,17 @@ public class BloomFilterTest extends TestCase {
     unused = BloomFilter.create(Funnels.unencodedCharsFunnel(), 45L * Integer.MAX_VALUE, 0.99);
   }
 
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   private static void checkSanity(BloomFilter<Object> bf) {
     assertFalse(bf.mightContain(new Object()));
     assertFalse(bf.apply(new Object()));
+    assertFalse(bf.test(new Object()));
     for (int i = 0; i < 100; i++) {
       Object o = new Object();
       bf.put(o);
       assertTrue(bf.mightContain(o));
       assertTrue(bf.apply(o));
+      assertTrue(bf.test(o));
     }
   }
 
@@ -403,7 +412,7 @@ public class BloomFilterTest extends TestCase {
 
     @Override
     public boolean equals(@Nullable Object object) {
-      return (object instanceof CustomFunnel);
+      return object instanceof CustomFunnel;
     }
 
     @Override
@@ -510,6 +519,8 @@ public class BloomFilterTest extends TestCase {
    * This test will fail whenever someone updates/reorders the BloomFilterStrategies constants. Only
    * appending a new constant is allowed.
    */
+  // This test ensures that our reliance on the ordering elsewhere is safe.
+  @SuppressWarnings("EnumOrdinal")
   public void testBloomFilterStrategies() {
     assertThat(BloomFilterStrategies.values()).hasLength(2);
     assertEquals(BloomFilterStrategies.MURMUR128_MITZ_32, BloomFilterStrategies.values()[0]);
@@ -518,7 +529,7 @@ public class BloomFilterTest extends TestCase {
 
 
   public void testNoRaceConditions() throws Exception {
-    final BloomFilter<Integer> bloomFilter =
+    BloomFilter<Integer> bloomFilter =
         BloomFilter.create(Funnels.integerFunnel(), 15_000_000, 0.01);
 
     // This check has to be BEFORE the loop because the random insertions can
@@ -531,8 +542,8 @@ public class BloomFilterTest extends TestCase {
     bloomFilter.put(GOLDEN_PRESENT_KEY);
 
     int numThreads = 12;
-    final double safetyFalsePositiveRate = 0.1;
-    final Stopwatch stopwatch = Stopwatch.createStarted();
+    double safetyFalsePositiveRate = 0.1;
+    Stopwatch stopwatch = Stopwatch.createStarted();
 
     Runnable task =
         new Runnable() {
@@ -568,7 +579,7 @@ public class BloomFilterTest extends TestCase {
 
   private static List<Throwable> runThreadsAndReturnExceptions(int numThreads, Runnable task) {
     List<Thread> threads = new ArrayList<>(numThreads);
-    final List<Throwable> exceptions = new ArrayList<>(numThreads);
+    List<Throwable> exceptions = new ArrayList<>(numThreads);
     for (int i = 0; i < numThreads; i++) {
       Thread thread = new Thread(task);
       thread.setUncaughtExceptionHandler(
@@ -595,5 +606,14 @@ public class BloomFilterTest extends TestCase {
       key = random.get().nextInt();
     } while (key == GOLDEN_PRESENT_KEY);
     return key;
+  }
+
+  public void testToBloomFilter() {
+    BloomFilter<String> bf1 = BloomFilter.create(unencodedCharsFunnel(), 2);
+    bf1.put("1");
+    bf1.put("2");
+
+    assertEquals(bf1, Stream.of("1", "2").collect(toBloomFilter(unencodedCharsFunnel(), 2)));
+    assertEquals(bf1, Stream.of("2", "1").collect(toBloomFilter(unencodedCharsFunnel(), 2)));
   }
 }

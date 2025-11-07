@@ -23,12 +23,10 @@ import com.google.j2objc.annotations.ReflectionSupport;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @ReflectionSupport(value = ReflectionSupport.Level.FULL)
-@ElementTypesAreNonnullByDefault
 // Some Android 5.0.x Samsung devices have bugs in JDK reflection APIs that cause
 // getDeclaredField to throw a NoSuchFieldException when the field is definitely there.
 // Since this class only needs CAS on one field, we can avoid this bug by extending AtomicReference
@@ -38,7 +36,7 @@ abstract class InterruptibleTask<T extends @Nullable Object>
     extends AtomicReference<@Nullable Runnable> implements Runnable {
   static {
     // Prevent rare disastrous classloading in first call to LockSupport.park.
-    // See: https://bugs.openjdk.java.net/browse/JDK-8074773
+    // See: https://bugs.openjdk.org/browse/JDK-8074773
     @SuppressWarnings("unused")
     Class<?> ensureLoaded = LockSupport.class;
   }
@@ -47,6 +45,7 @@ abstract class InterruptibleTask<T extends @Nullable Object>
     @Override
     public void run() {}
   }
+
   // The thread executing the task publishes itself to the superclass' reference and the thread
   // interrupting sets DONE when it has finished interrupting.
   private static final Runnable DONE = new DoNothingRunnable();
@@ -204,7 +203,7 @@ abstract class InterruptibleTask<T extends @Nullable Object>
       if (compareAndSet(currentRunner, blocker)) {
         // Thread.interrupt can throw arbitrary exceptions due to the nio InterruptibleChannel API
         // This will make sure that tasks don't get stuck busy waiting.
-        // Some of this is fixed in jdk11 (see https://bugs.openjdk.java.net/browse/JDK-8198692) but
+        // Some of this is fixed in jdk11 (see https://bugs.openjdk.org/browse/JDK-8198692) but
         // not all.  See the test cases for examples on how this can happen.
         try {
           ((Thread) currentRunner).interrupt();
@@ -239,8 +238,7 @@ abstract class InterruptibleTask<T extends @Nullable Object>
     }
 
     @VisibleForTesting
-    @CheckForNull
-    Thread getOwner() {
+    @Nullable Thread getOwner() {
       return super.getExclusiveOwnerThread();
     }
 

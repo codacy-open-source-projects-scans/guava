@@ -16,15 +16,9 @@ package com.google.common.cache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNotSame;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertSame;
-import static junit.framework.Assert.assertTrue;
 
 import com.google.common.base.Preconditions;
 import com.google.common.cache.LocalCache.LocalLoadingCache;
@@ -33,19 +27,20 @@ import com.google.common.cache.LocalCache.ValueReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.FakeTicker;
 import java.lang.ref.Reference;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A collection of utilities for {@link Cache} testing.
@@ -53,7 +48,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author mike nonemacher
  */
 @SuppressWarnings("GuardedBy") // TODO(b/35466881): Fix or suppress.
-class CacheTesting {
+@NullUnmarked
+final class CacheTesting {
 
   /**
    * Poke into the Cache internals to simulate garbage collection of the value associated with the
@@ -126,7 +122,7 @@ class CacheTesting {
    * without throwing an exception.
    */
   static boolean hasLocalCache(Cache<?, ?> cache) {
-    return (checkNotNull(cache) instanceof LocalLoadingCache);
+    return checkNotNull(cache) instanceof LocalLoadingCache;
   }
 
   static void drainRecencyQueues(Cache<?, ?> cache) {
@@ -168,9 +164,9 @@ class CacheTesting {
     }
   }
 
-  static int getTotalSegmentSize(Cache<?, ?> cache) {
+  static long getTotalSegmentSize(Cache<?, ?> cache) {
     LocalCache<?, ?> map = toLocalCache(cache);
-    int totalSize = 0;
+    long totalSize = 0;
     for (Segment<?, ?> segment : map.segments) {
       totalSize += segment.maxSegmentWeight;
     }
@@ -192,16 +188,16 @@ class CacheTesting {
   static void checkValidState(LocalCache<?, ?> cchm) {
     for (Segment<?, ?> segment : cchm.segments) {
       segment.cleanUp();
-      assertFalse(segment.isLocked());
+      assertThat(segment.isLocked()).isFalse();
       Map<?, ?> table = segmentTable(segment);
       // cleanup and then check count after we have a strong reference to all entries
       segment.cleanUp();
       // under high memory pressure keys/values may be nulled out but not yet enqueued
       assertThat(table.size()).isAtMost(segment.count);
       for (Entry<?, ?> entry : table.entrySet()) {
-        assertNotNull(entry.getKey());
-        assertNotNull(entry.getValue());
-        assertSame(entry.getValue(), cchm.get(entry.getKey()));
+        assertThat(entry.getKey()).isNotNull();
+        assertThat(entry.getValue()).isNotNull();
+        assertThat(cchm.get(entry.getKey())).isSameInstanceAs(entry.getValue());
       }
     }
     checkEviction(cchm);
@@ -226,21 +222,21 @@ class CacheTesting {
 
         ReferenceEntry<?, ?> prev = null;
         for (ReferenceEntry<?, ?> current : segment.writeQueue) {
-          assertTrue(entries.add(current));
+          assertThat(entries.add(current)).isTrue();
           if (prev != null) {
-            assertSame(prev, current.getPreviousInWriteQueue());
-            assertSame(prev.getNextInWriteQueue(), current);
+            assertThat(current.getPreviousInWriteQueue()).isSameInstanceAs(prev);
+            assertThat(current).isSameInstanceAs(prev.getNextInWriteQueue());
             assertThat(prev.getWriteTime()).isAtMost(current.getWriteTime());
           }
           Object key = current.getKey();
           if (key != null) {
-            assertSame(current, segment.getEntry(key, current.getHash()));
+            assertThat(segment.getEntry(key, current.getHash())).isSameInstanceAs(current);
           }
           prev = current;
         }
-        assertEquals(segment.count, entries.size());
+        assertThat(entries).hasSize(segment.count);
       } else {
-        assertTrue(segment.writeQueue.isEmpty());
+        assertThat(segment.writeQueue.isEmpty()).isTrue();
       }
 
       if (cchm.usesAccessQueue()) {
@@ -248,24 +244,25 @@ class CacheTesting {
 
         ReferenceEntry<?, ?> prev = null;
         for (ReferenceEntry<?, ?> current : segment.accessQueue) {
-          assertTrue(entries.add(current));
+          assertThat(entries.add(current)).isTrue();
           if (prev != null) {
-            assertSame(prev, current.getPreviousInAccessQueue());
-            assertSame(prev.getNextInAccessQueue(), current);
+            assertThat(current.getPreviousInAccessQueue()).isSameInstanceAs(prev);
+            assertThat(current).isSameInstanceAs(prev.getNextInAccessQueue());
             // read accesses may be slightly misordered
-            assertTrue(
-                prev.getAccessTime() <= current.getAccessTime()
-                    || prev.getAccessTime() - current.getAccessTime() < 1000);
+            assertThat(
+                    prev.getAccessTime() <= current.getAccessTime()
+                        || prev.getAccessTime() - current.getAccessTime() < 1000)
+                .isTrue();
           }
           Object key = current.getKey();
           if (key != null) {
-            assertSame(current, segment.getEntry(key, current.getHash()));
+            assertThat(segment.getEntry(key, current.getHash())).isSameInstanceAs(current);
           }
           prev = current;
         }
-        assertEquals(segment.count, entries.size());
+        assertThat(entries).hasSize(segment.count);
       } else {
-        assertTrue(segment.accessQueue.isEmpty());
+        assertThat(segment.accessQueue).isEmpty();
       }
     }
   }
@@ -285,25 +282,25 @@ class CacheTesting {
     if (map.evictsBySize()) {
       for (Segment<?, ?> segment : map.segments) {
         drainRecencyQueue(segment);
-        assertEquals(0, segment.recencyQueue.size());
-        assertEquals(0, segment.readCount.get());
+        assertThat(segment.recencyQueue).isEmpty();
+        assertThat(segment.readCount.get()).isEqualTo(0);
 
         ReferenceEntry<?, ?> prev = null;
         for (ReferenceEntry<?, ?> current : segment.accessQueue) {
           if (prev != null) {
-            assertSame(prev, current.getPreviousInAccessQueue());
-            assertSame(prev.getNextInAccessQueue(), current);
+            assertThat(current.getPreviousInAccessQueue()).isSameInstanceAs(prev);
+            assertThat(current).isSameInstanceAs(prev.getNextInAccessQueue());
           }
           Object key = current.getKey();
           if (key != null) {
-            assertSame(current, segment.getEntry(key, current.getHash()));
+            assertThat(segment.getEntry(key, current.getHash())).isSameInstanceAs(current);
           }
           prev = current;
         }
       }
     } else {
       for (Segment<?, ?> segment : map.segments) {
-        assertEquals(0, segment.recencyQueue.size());
+        assertThat(segment.recencyQueue).isEmpty();
       }
     }
   }
@@ -315,13 +312,13 @@ class CacheTesting {
 
   static <K, V> Map<K, V> segmentTable(Segment<K, V> segment) {
     AtomicReferenceArray<? extends ReferenceEntry<K, V>> table = segment.table;
-    Map<K, V> map = Maps.newLinkedHashMap();
+    Map<K, V> map = new LinkedHashMap<>();
     for (int i = 0; i < table.length(); i++) {
       for (ReferenceEntry<K, V> entry = table.get(i); entry != null; entry = entry.getNext()) {
         K key = entry.getKey();
         V value = entry.getValueReference().get();
         if (key != null && value != null) {
-          assertNull(map.put(key, value));
+          assertThat(map.put(key, value)).isNull();
         }
       }
     }
@@ -388,8 +385,8 @@ class CacheTesting {
       LocalCache<Integer, Integer> cchm = toLocalCache(cache);
       Segment<?, ?> segment = cchm.segments[0];
       drainRecencyQueue(segment);
-      assertEquals(maxSize, accessQueueSize(cache));
-      assertEquals(maxSize, cache.size());
+      assertThat(accessQueueSize(cache)).isEqualTo(maxSize);
+      assertThat(cache.size()).isEqualTo(maxSize);
 
       ReferenceEntry<?, ?> originalHead = segment.accessQueue.peek();
       @SuppressWarnings("unchecked")
@@ -397,8 +394,8 @@ class CacheTesting {
       operation.accept(entry);
       drainRecencyQueue(segment);
 
-      assertNotSame(originalHead, segment.accessQueue.peek());
-      assertEquals(cache.size(), accessQueueSize(cache));
+      assertThat(segment.accessQueue.peek()).isNotSameInstanceAs(originalHead);
+      assertThat(accessQueueSize(cache)).isEqualTo(cache.size());
     }
   }
 
@@ -426,9 +423,13 @@ class CacheTesting {
     long now = ticker.read();
     for (Segment<?, ?> segment : cchm.segments) {
       expireEntries(segment, now);
-      assertEquals("Expiration queue must be empty by now", 0, writeQueueSize(segment));
-      assertEquals("Expiration queue must be empty by now", 0, accessQueueSize(segment));
-      assertEquals("Segments must be empty by now", 0, segmentSize(segment));
+      assertWithMessage("Expiration queue must be empty by now")
+          .that(writeQueueSize(segment))
+          .isEqualTo(0);
+      assertWithMessage("Expiration queue must be empty by now")
+          .that(accessQueueSize(segment))
+          .isEqualTo(0);
+      assertWithMessage("Segments must be empty by now").that(segmentSize(segment)).isEqualTo(0);
     }
     cchm.processPendingNotifications();
   }
@@ -444,11 +445,11 @@ class CacheTesting {
   }
 
   static void checkEmpty(Cache<?, ?> cache) {
-    assertEquals(0, cache.size());
-    assertFalse(cache.asMap().containsKey(null));
-    assertFalse(cache.asMap().containsKey(6));
-    assertFalse(cache.asMap().containsValue(null));
-    assertFalse(cache.asMap().containsValue(6));
+    assertThat(cache.size()).isEqualTo(0);
+    assertThat(cache.asMap().containsKey(null)).isFalse();
+    assertThat(cache.asMap().containsKey(6)).isFalse();
+    assertThat(cache.asMap().containsValue(null)).isFalse();
+    assertThat(cache.asMap().containsValue(6)).isFalse();
     checkEmpty(cache.asMap());
   }
 
@@ -456,29 +457,29 @@ class CacheTesting {
     checkEmpty(map.keySet());
     checkEmpty(map.values());
     checkEmpty(map.entrySet());
-    assertEquals(ImmutableMap.of(), map);
-    assertEquals(ImmutableMap.of().hashCode(), map.hashCode());
-    assertEquals(ImmutableMap.of().toString(), map.toString());
+    assertThat(map).isEqualTo(ImmutableMap.of());
+    assertThat(map.hashCode()).isEqualTo(ImmutableMap.of().hashCode());
+    assertThat(map.toString()).isEqualTo(ImmutableMap.of().toString());
 
     if (map instanceof LocalCache) {
       LocalCache<?, ?> cchm = (LocalCache<?, ?>) map;
 
       checkValidState(cchm);
-      assertTrue(cchm.isEmpty());
-      assertEquals(0, cchm.size());
+      assertThat(cchm.isEmpty()).isTrue();
+      assertThat(cchm).isEmpty();
       for (LocalCache.Segment<?, ?> segment : cchm.segments) {
-        assertEquals(0, segment.count);
-        assertEquals(0, segmentSize(segment));
-        assertTrue(segment.writeQueue.isEmpty());
-        assertTrue(segment.accessQueue.isEmpty());
+        assertThat(segment.count).isEqualTo(0);
+        assertThat(segmentSize(segment)).isEqualTo(0);
+        assertThat(segment.writeQueue.isEmpty()).isTrue();
+        assertThat(segment.accessQueue.isEmpty()).isTrue();
       }
     }
   }
 
   static void checkEmpty(Collection<?> collection) {
-    assertTrue(collection.isEmpty());
-    assertEquals(0, collection.size());
-    assertFalse(collection.iterator().hasNext());
+    assertThat(collection.isEmpty()).isTrue();
+    assertThat(collection).isEmpty();
+    assertThat(collection.iterator().hasNext()).isFalse();
     assertThat(collection.toArray()).isEmpty();
     assertThat(collection.toArray(new Object[0])).isEmpty();
     if (collection instanceof Set) {
@@ -493,4 +494,6 @@ class CacheTesting {
           .testEquals();
     }
   }
+
+  private CacheTesting() {}
 }

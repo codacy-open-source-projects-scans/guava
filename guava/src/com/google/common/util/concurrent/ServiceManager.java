@@ -29,11 +29,11 @@ import static com.google.common.util.concurrent.Service.State.RUNNING;
 import static com.google.common.util.concurrent.Service.State.STARTING;
 import static com.google.common.util.concurrent.Service.State.STOPPING;
 import static com.google.common.util.concurrent.Service.State.TERMINATED;
+import static java.util.Collections.sort;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Collections2;
@@ -56,7 +56,7 @@ import com.google.j2objc.annotations.J2ObjCIncompatible;
 import com.google.j2objc.annotations.WeakOuter;
 import java.lang.ref.WeakReference;
 import java.time.Duration;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -80,7 +80,7 @@ import java.util.logging.Level;
  *
  * <p>Here is a simple example of how to use a {@code ServiceManager} to start a server.
  *
- * <pre>{@code
+ * {@snippet :
  * class Server {
  *   public static void main(String[] args) {
  *     Set<Service> services = ...;
@@ -112,7 +112,7 @@ import java.util.logging.Level;
  *     manager.startAsync();  // start all the services asynchronously
  *   }
  * }
- * }</pre>
+ * }
  *
  * <p>This class uses the ServiceManager's methods to start all of its services, to respond to
  * service failure and to ensure that when the JVM is shutting down all the services are stopped.
@@ -122,7 +122,6 @@ import java.util.logging.Level;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class ServiceManager implements ServiceManagerBridge {
   private static final LazyLogger logger = new LazyLogger(ServiceManager.class);
   private static final ListenerCallQueue.Event<Listener> HEALTHY_EVENT =
@@ -217,7 +216,7 @@ public final class ServiceManager implements ServiceManagerBridge {
               "ServiceManager configured with no services.  Is your application configured"
                   + " properly?",
               new EmptyServiceManagerWarning());
-      copy = ImmutableList.<Service>of(new NoOpService());
+      copy = ImmutableList.of(new NoOpService());
     }
     this.state = new ServiceManagerState(copy);
     this.services = copy;
@@ -561,7 +560,7 @@ public final class ServiceManager implements ServiceManagerBridge {
           ready = true;
         } else {
           // This should be an extremely rare race condition.
-          List<Service> servicesInBadStates = Lists.newArrayList();
+          List<Service> servicesInBadStates = new ArrayList<>();
           for (Service service : servicesByState().values()) {
             if (service.state() != NEW) {
               servicesInBadStates.add(service);
@@ -655,16 +654,7 @@ public final class ServiceManager implements ServiceManagerBridge {
       } finally {
         monitor.leave();
       }
-      Collections.sort(
-          loadTimes,
-          Ordering.natural()
-              .onResultOf(
-                  new Function<Entry<Service, Long>, Long>() {
-                    @Override
-                    public Long apply(Entry<Service, Long> input) {
-                      return input.getValue();
-                    }
-                  }));
+      sort(loadTimes, Ordering.natural().onResultOf(Entry::getValue));
       return ImmutableMap.copyOf(loadTimes);
     }
 
@@ -680,7 +670,7 @@ public final class ServiceManager implements ServiceManagerBridge {
      *   <li>Run the listeners (outside of the lock)
      * </ol>
      */
-    void transitionService(final Service service, State from, State to) {
+    void transitionService(Service service, State from, State to) {
       checkNotNull(service);
       checkArgument(from != to);
       monitor.enter();
@@ -743,7 +733,7 @@ public final class ServiceManager implements ServiceManagerBridge {
       listeners.enqueue(HEALTHY_EVENT);
     }
 
-    void enqueueFailedEvent(final Service service) {
+    void enqueueFailedEvent(Service service) {
       listeners.enqueue(
           new ListenerCallQueue.Event<Listener>() {
             @Override

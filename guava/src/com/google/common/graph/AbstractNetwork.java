@@ -37,7 +37,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This class provides a skeletal implementation of {@link Network}. It is recommended to extend
@@ -52,7 +52,6 @@ import javax.annotation.CheckForNull;
  * @since 20.0
  */
 @Beta
-@ElementTypesAreNonnullByDefault
 public abstract class AbstractNetwork<N, E> implements Network<N, E> {
   /** Constructor for use by subclasses. */
   public AbstractNetwork() {}
@@ -89,7 +88,7 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
           // Network<LinkedList>.
           @SuppressWarnings("unchecked")
           @Override
-          public boolean contains(@CheckForNull Object obj) {
+          public boolean contains(@Nullable Object obj) {
             if (!(obj instanceof EndpointPair)) {
               return false;
             }
@@ -188,13 +187,8 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
     return edgesConnecting(endpoints.nodeU(), endpoints.nodeV());
   }
 
-  private Predicate<E> connectedPredicate(final N nodePresent, final N nodeToCheck) {
-    return new Predicate<E>() {
-      @Override
-      public boolean apply(E edge) {
-        return incidentNodes(edge).adjacentNode(nodePresent).equals(nodeToCheck);
-      }
-    };
+  private Predicate<E> connectedPredicate(N nodePresent, N nodeToCheck) {
+    return edge -> incidentNodes(edge).adjacentNode(nodePresent).equals(nodeToCheck);
   }
 
   @Override
@@ -209,8 +203,7 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
   }
 
   @Override
-  @CheckForNull
-  public E edgeConnectingOrNull(N nodeU, N nodeV) {
+  public @Nullable E edgeConnectingOrNull(N nodeU, N nodeV) {
     Set<E> edgesConnecting = edgesConnecting(nodeU, nodeV);
     switch (edgesConnecting.size()) {
       case 0:
@@ -223,8 +216,7 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
   }
 
   @Override
-  @CheckForNull
-  public E edgeConnectingOrNull(EndpointPair<N> endpoints) {
+  public @Nullable E edgeConnectingOrNull(EndpointPair<N> endpoints) {
     validateEndpoints(endpoints);
     return edgeConnectingOrNull(endpoints.nodeU(), endpoints.nodeV());
   }
@@ -259,7 +251,7 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
   }
 
   @Override
-  public final boolean equals(@CheckForNull Object obj) {
+  public final boolean equals(@Nullable Object obj) {
     if (obj == this) {
       return true;
     }
@@ -328,7 +320,7 @@ public abstract class AbstractNetwork<N, E> implements Network<N, E> {
         () -> String.format(NODE_PAIR_REMOVED_FROM_GRAPH, nodeU, nodeV));
   }
 
-  private static <N, E> Map<E, EndpointPair<N>> edgeIncidentNodesMap(final Network<N, E> network) {
+  private static <N, E> Map<E, EndpointPair<N>> edgeIncidentNodesMap(Network<N, E> network) {
     return Maps.asMap(network.edges(), network::incidentNodes);
   }
 }

@@ -19,6 +19,7 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,27 +36,26 @@ import java.util.concurrent.Executor;
  *
  * <p>Usage example:
  *
- * <pre>{@code
+ * {@snippet :
  * CacheLoader<Key, Graph> loader = new CacheLoader<Key, Graph>() {
  *   public Graph load(Key key) throws AnyException {
  *     return createExpensiveGraph(key);
  *   }
  * };
  * LoadingCache<Key, Graph> cache = CacheBuilder.newBuilder().build(loader);
- * }</pre>
+ * }
  *
  * <p>Since this example doesn't support reloading or bulk loading, it can also be specified much
  * more simply:
  *
- * <pre>{@code
+ * {@snippet :
  * CacheLoader<Key, Graph> loader = CacheLoader.from(key -> createExpensiveGraph(key));
- * }</pre>
+ * }
  *
  * @author Charles Fry
  * @since 10.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class CacheLoader<K, V> {
   /** Constructor for use by subclasses. */
   protected CacheLoader() {}
@@ -160,7 +160,7 @@ public abstract class CacheLoader<K, V> {
       implements Serializable {
     private final Function<K, V> computingFunction;
 
-    public FunctionToCacheLoader(Function<K, V> computingFunction) {
+    FunctionToCacheLoader(Function<K, V> computingFunction) {
       this.computingFunction = checkNotNull(computingFunction);
     }
 
@@ -169,7 +169,7 @@ public abstract class CacheLoader<K, V> {
       return computingFunction.apply(checkNotNull(key));
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -183,7 +183,7 @@ public abstract class CacheLoader<K, V> {
    */
   @GwtIncompatible // Executor + Futures
   public static <K, V> CacheLoader<K, V> asyncReloading(
-      final CacheLoader<K, V> loader, final Executor executor) {
+      CacheLoader<K, V> loader, Executor executor) {
     checkNotNull(loader);
     checkNotNull(executor);
     return new CacheLoader<K, V>() {
@@ -193,7 +193,7 @@ public abstract class CacheLoader<K, V> {
       }
 
       @Override
-      public ListenableFuture<V> reload(final K key, final V oldValue) {
+      public ListenableFuture<V> reload(K key, V oldValue) {
         ListenableFutureTask<V> task =
             ListenableFutureTask.create(() -> loader.reload(key, oldValue).get());
         executor.execute(task);
@@ -211,7 +211,7 @@ public abstract class CacheLoader<K, V> {
       implements Serializable {
     private final Supplier<V> computingSupplier;
 
-    public SupplierToCacheLoader(Supplier<V> computingSupplier) {
+    SupplierToCacheLoader(Supplier<V> computingSupplier) {
       this.computingSupplier = checkNotNull(computingSupplier);
     }
 
@@ -221,7 +221,7 @@ public abstract class CacheLoader<K, V> {
       return computingSupplier.get();
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**

@@ -25,6 +25,7 @@ import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.Map.Entry;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * A generator of {@code TestSuite} instances for testing {@code CharSink} implementations.
@@ -33,6 +34,7 @@ import junit.framework.TestSuite;
  * @author Colin Decker
  */
 @AndroidIncompatible // TODO(b/230620681): Make this available (even though we won't run it).
+@NullUnmarked
 public class CharSinkTester extends SourceSinkTester<CharSink, String, CharSinkFactory> {
 
   private static final ImmutableList<Method> testMethods = getTestMethods(CharSinkTester.class);
@@ -50,7 +52,7 @@ public class CharSinkTester extends SourceSinkTester<CharSink, String, CharSinkF
   static TestSuite suiteForString(
       String name, CharSinkFactory factory, String string, String desc) {
     TestSuite stringSuite = new TestSuite(name + " [" + desc + "]");
-    for (final Method method : testMethods) {
+    for (Method method : testMethods) {
       stringSuite.addTest(new CharSinkTester(factory, string, name, desc, method));
     }
     return stringSuite;

@@ -16,16 +16,18 @@
 
 package com.google.common.eventbus;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test case for {@link AsyncEventBus}.
  *
  * @author Cliff Biffle
  */
+@NullUnmarked
 public class AsyncEventBusTest extends TestCase {
   private static final String EVENT = "Hello";
 
@@ -68,7 +70,7 @@ public class AsyncEventBusTest extends TestCase {
    * @author cbiffle
    */
   public static class FakeExecutor implements Executor {
-    List<Runnable> tasks = Lists.newArrayList();
+    List<Runnable> tasks = new ArrayList<>();
 
     @Override
     public void execute(Runnable task) {

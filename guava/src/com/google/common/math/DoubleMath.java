@@ -44,8 +44,7 @@ import java.util.Iterator;
  * @author Louis Wasserman
  * @since 11.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class DoubleMath {
   /*
    * This method returns a value y such that rounding y DOWN (towards zero) gives the same result as
@@ -252,7 +251,7 @@ public final class DoubleMath {
     switch (mode) {
       case UNNECESSARY:
         checkRoundingUnnecessary(isPowerOfTwo(x));
-        // fall through
+      // fall through
       case FLOOR:
         increment = false;
         break;

@@ -18,11 +18,13 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import java.util.Map;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Test cases for a {@link Table} implementation supporting reads and writes.
@@ -31,7 +33,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class AbstractTableTest<C extends @Nullable Character>
     extends AbstractTableReadTest<C> {
 
@@ -63,9 +65,9 @@ public abstract class AbstractTableTest<C extends @Nullable Character>
   }
 
   public void testPut() {
-    assertNull(table.put("foo", 1, cellValue('a')));
-    assertNull(table.put("bar", 1, cellValue('b')));
-    assertNull(table.put("foo", 3, cellValue('c')));
+    assertThat(table.put("foo", 1, cellValue('a'))).isNull();
+    assertThat(table.put("bar", 1, cellValue('b'))).isNull();
+    assertThat(table.put("foo", 3, cellValue('c'))).isNull();
     assertEquals((Character) 'a', table.put("foo", 1, cellValue('d')));
     assertEquals((Character) 'd', table.get("foo", 1));
     assertEquals((Character) 'b', table.get("bar", 1));
@@ -81,7 +83,7 @@ public abstract class AbstractTableTest<C extends @Nullable Character>
     assertThrows(NullPointerException.class, () -> table.put(null, 2, cellValue('d')));
     assertThrows(NullPointerException.class, () -> table.put("cat", null, cellValue('d')));
     if (supportsNullValues()) {
-      assertNull(table.put("cat", 2, null));
+      assertThat(table.put("cat", 2, null)).isNull();
       assertTrue(table.contains("cat", 2));
     } else {
       assertThrows(NullPointerException.class, () -> table.put("cat", 2, null));
@@ -94,7 +96,7 @@ public abstract class AbstractTableTest<C extends @Nullable Character>
 
     if (supportsNullValues()) {
       assertEquals((Character) 'b', table.put("bar", 1, nullableCellValue(null)));
-      assertNull(table.get("bar", 1));
+      assertThat(table.get("bar", 1)).isNull();
     } else {
       assertThrows(NullPointerException.class, () -> table.put("bar", 1, nullableCellValue(null)));
     }
@@ -118,17 +120,17 @@ public abstract class AbstractTableTest<C extends @Nullable Character>
   public void testRemove() {
     table = create("foo", 1, 'a', "bar", 1, 'b', "foo", 3, 'c');
     if (supportsRemove()) {
-      assertNull(table.remove("cat", 1));
-      assertNull(table.remove("bar", 3));
+      assertThat(table.remove("cat", 1)).isNull();
+      assertThat(table.remove("bar", 3)).isNull();
       assertEquals(3, table.size());
       assertEquals((Character) 'c', table.remove("foo", 3));
       assertEquals(2, table.size());
       assertEquals((Character) 'a', table.get("foo", 1));
       assertEquals((Character) 'b', table.get("bar", 1));
-      assertNull(table.get("foo", 3));
-      assertNull(table.remove(null, 1));
-      assertNull(table.remove("foo", null));
-      assertNull(table.remove(null, null));
+      assertThat(table.get("foo", 3)).isNull();
+      assertThat(table.remove(null, 1)).isNull();
+      assertThat(table.remove("foo", null)).isNull();
+      assertThat(table.remove(null, null)).isNull();
       assertSize(2);
     } else {
       assertThrows(UnsupportedOperationException.class, () -> table.remove("foo", 3));

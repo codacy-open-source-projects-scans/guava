@@ -24,6 +24,7 @@ import static com.google.common.base.CharMatcher.is;
 import static com.google.common.base.CharMatcher.isNot;
 import static com.google.common.base.CharMatcher.noneOf;
 import static com.google.common.base.CharMatcher.whitespace;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -37,14 +38,15 @@ import java.util.Random;
 import java.util.Set;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Unit test for {@link CharMatcher}.
  *
  * @author Kevin Bourrillion
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class CharMatcherTest extends TestCase {
 
   @J2ktIncompatible
@@ -292,6 +294,7 @@ public class CharMatcherTest extends TestCase {
     assertEquals(0, matcher.countIn(s));
   }
 
+  @SuppressWarnings("InlineMeInliner") // String.repeat unavailable under Java 8
   private void reallyTestAllMatches(CharMatcher matcher, CharSequence s) {
     assertTrue(matcher.matches(s.charAt(0)));
     assertEquals(0, matcher.indexIn(s));
@@ -360,7 +363,11 @@ public class CharMatcherTest extends TestCase {
     reallyTestMatchThenNoMatch(matcher.precomputed().negate(), s);
   }
 
-  @SuppressWarnings("deprecation") // intentionally testing apply() method
+  // intentionally testing apply() method
+  @SuppressWarnings({
+    "deprecation",
+    "InlineMeInliner",
+  })
   private void reallyTestOneCharMatch(CharMatcher matcher, String s) {
     assertTrue(matcher.matches(s.charAt(0)));
     assertTrue(matcher.apply(s.charAt(0)));
@@ -378,7 +385,11 @@ public class CharMatcherTest extends TestCase {
     assertEquals(1, matcher.countIn(s));
   }
 
-  @SuppressWarnings("deprecation") // intentionally testing apply() method
+  // intentionally testing apply() method
+  @SuppressWarnings({
+    "deprecation",
+    "InlineMeInliner",
+  })
   private void reallyTestOneCharNoMatch(CharMatcher matcher, String s) {
     assertFalse(matcher.matches(s.charAt(0)));
     assertFalse(matcher.apply(s.charAt(0)));
@@ -758,19 +769,46 @@ public class CharMatcherTest extends TestCase {
   }
 
   public void testToString() {
-    assertToStringWorks("CharMatcher.none()", CharMatcher.anyOf(""));
-    assertToStringWorks("CharMatcher.is('\\u0031')", CharMatcher.anyOf("1"));
-    assertToStringWorks("CharMatcher.isNot('\\u0031')", CharMatcher.isNot('1'));
-    assertToStringWorks("CharMatcher.anyOf(\"\\u0031\\u0032\")", CharMatcher.anyOf("12"));
-    assertToStringWorks("CharMatcher.anyOf(\"\\u0031\\u0032\\u0033\")", CharMatcher.anyOf("321"));
-    assertToStringWorks("CharMatcher.inRange('\\u0031', '\\u0033')", CharMatcher.inRange('1', '3'));
+    assertToStringWorks(CharMatcher.anyOf(""), "CharMatcher.none()");
+    assertToStringWorks(CharMatcher.anyOf("1"), "CharMatcher.is('\\u0031')");
+    assertToStringWorks(CharMatcher.isNot('1'), "CharMatcher.isNot('\\u0031')");
+    assertToStringWorks(CharMatcher.anyOf("12"), "CharMatcher.anyOf(\"\\u0031\\u0032\")");
+    assertToStringWorks(CharMatcher.anyOf("321"), "CharMatcher.anyOf(\"\\u0031\\u0032\\u0033\")");
+    assertToStringWorks(CharMatcher.inRange('1', '3'), "CharMatcher.inRange('\\u0031', '\\u0033')");
+    assertToStringWorks(
+        CharMatcher.is('0').or(is('1')),
+        /* expectedNormal= */ "CharMatcher.is('\\u0030').or(CharMatcher.is('\\u0031'))",
+        // .precomputed() optimizes
+        /* expectedPrecomputed= */ "CharMatcher.anyOf(\"\\u0030\\u0031\")");
+    assertToStringWorks(
+        CharMatcher.digit().and(CharMatcher.ascii()),
+        "CharMatcher.digit().and(CharMatcher.ascii())");
+    assertToStringWorks(
+        CharMatcher.inRange('a', 'z')
+            .or(CharMatcher.inRange('A', 'Z'))
+            .or(CharMatcher.inRange('0', '9'))
+            .or(CharMatcher.is('_')),
+        "CharMatcher.inRange('\\u0061', '\\u007A')"
+            + ".or(CharMatcher.inRange('\\u0041', '\\u005A'))"
+            + ".or(CharMatcher.inRange('\\u0030', '\\u0039'))"
+            + ".or(CharMatcher.is('\\u005F'))");
   }
 
-  private static void assertToStringWorks(String expected, CharMatcher matcher) {
-    assertEquals(expected, matcher.toString());
-    assertEquals(expected, matcher.precomputed().toString());
-    assertEquals(expected, matcher.negate().negate().toString());
-    assertEquals(expected, matcher.negate().precomputed().negate().toString());
-    assertEquals(expected, matcher.negate().precomputed().negate().precomputed().toString());
+  private static void assertToStringWorks(CharMatcher matcher, String expected) {
+    assertToStringWorks(matcher, expected, expected);
+  }
+
+  private static void assertToStringWorks(
+      CharMatcher matcher, String expectedNormal, String expectedPrecomputed) {
+    assertThat(matcher.toString()).isEqualTo(expectedNormal);
+    assertThat(matcher.negate().negate().toString()).isEqualTo(expectedNormal);
+
+    // The precomputed form is different on regular platforms but the same on j2cl and j2kt.
+    // Hence isAnyOf here.
+    assertThat(matcher.precomputed().toString()).isAnyOf(expectedNormal, expectedPrecomputed);
+    assertThat(matcher.negate().precomputed().negate().toString())
+        .isAnyOf(expectedNormal, expectedPrecomputed);
+    assertThat(matcher.negate().precomputed().negate().precomputed().toString())
+        .isAnyOf(expectedNormal, expectedPrecomputed);
   }
 }

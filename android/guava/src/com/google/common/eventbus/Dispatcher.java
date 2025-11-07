@@ -17,7 +17,7 @@ package com.google.common.eventbus;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.collect.Queues;
+import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  * @author Colin Decker
  */
-@ElementTypesAreNonnullByDefault
 abstract class Dispatcher {
 
   /**
@@ -77,15 +76,17 @@ abstract class Dispatcher {
     // This dispatcher matches the original dispatch behavior of EventBus.
 
     /** Per-thread queue of events to dispatch. */
+    @SuppressWarnings("ThreadLocalUsage") // Each Dispatcher needs its own state.
     private final ThreadLocal<Queue<Event>> queue =
         new ThreadLocal<Queue<Event>>() {
           @Override
           protected Queue<Event> initialValue() {
-            return Queues.newArrayDeque();
+            return new ArrayDeque<>();
           }
         };
 
     /** Per-thread dispatch state, used to avoid reentrant event dispatching. */
+    @SuppressWarnings("ThreadLocalUsage") // Each Dispatcher needs its own state.
     private final ThreadLocal<Boolean> dispatching =
         new ThreadLocal<Boolean>() {
           @Override
@@ -151,8 +152,7 @@ abstract class Dispatcher {
     // in some cases.
 
     /** Global event queue. */
-    private final ConcurrentLinkedQueue<EventWithSubscriber> queue =
-        Queues.newConcurrentLinkedQueue();
+    private final ConcurrentLinkedQueue<EventWithSubscriber> queue = new ConcurrentLinkedQueue<>();
 
     @Override
     void dispatch(Object event, Iterator<Subscriber> subscribers) {

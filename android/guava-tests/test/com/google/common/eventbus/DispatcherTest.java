@@ -19,18 +19,19 @@ package com.google.common.eventbus;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link Dispatcher} implementations.
  *
  * @author Colin Decker
  */
+@NullUnmarked
 public class DispatcherTest extends TestCase {
 
   private final EventBus bus = new EventBus();
@@ -51,8 +52,7 @@ public class DispatcherTest extends TestCase {
           subscriber(bus, s1, "handleString", String.class),
           subscriber(bus, s2, "handleString", String.class));
 
-  private final ConcurrentLinkedQueue<Object> dispatchedSubscribers =
-      Queues.newConcurrentLinkedQueue();
+  private final ConcurrentLinkedQueue<Object> dispatchedSubscribers = new ConcurrentLinkedQueue<>();
 
   private Dispatcher dispatcher;
 
@@ -78,8 +78,8 @@ public class DispatcherTest extends TestCase {
   public void testLegacyAsyncDispatcher() {
     dispatcher = Dispatcher.legacyAsync();
 
-    final CyclicBarrier barrier = new CyclicBarrier(2);
-    final CountDownLatch latch = new CountDownLatch(2);
+    CyclicBarrier barrier = new CyclicBarrier(2);
+    CountDownLatch latch = new CountDownLatch(2);
 
     new Thread(
             new Runnable() {

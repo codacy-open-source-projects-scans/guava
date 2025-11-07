@@ -27,7 +27,6 @@ import java.math.RoundingMode;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public class BigDecimalMath {
   private BigDecimalMath() {}
 
@@ -56,7 +55,7 @@ public class BigDecimalMath {
     return BigDecimalToDoubleRounder.INSTANCE.roundToDouble(x, mode);
   }
 
-  private static class BigDecimalToDoubleRounder extends ToDoubleRounder<BigDecimal> {
+  private static final class BigDecimalToDoubleRounder extends ToDoubleRounder<BigDecimal> {
     static final BigDecimalToDoubleRounder INSTANCE = new BigDecimalToDoubleRounder();
 
     private BigDecimalToDoubleRounder() {}

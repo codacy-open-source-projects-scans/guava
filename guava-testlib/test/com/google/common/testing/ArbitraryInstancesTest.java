@@ -17,6 +17,7 @@
 package com.google.common.testing;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertThrows;
@@ -62,6 +63,7 @@ import com.google.common.io.CharSource;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.AtomicDouble;
+import com.google.errorprone.annotations.Keep;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -133,18 +135,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link ArbitraryInstances}.
  *
  * @author Ben Yu
  */
+@NullUnmarked
 public class ArbitraryInstancesTest extends TestCase {
 
   public void testGet_primitives() {
-    assertNull(ArbitraryInstances.get(void.class));
-    assertNull(ArbitraryInstances.get(Void.class));
+    assertThat(ArbitraryInstances.get(void.class)).isNull();
+    assertThat(ArbitraryInstances.get(Void.class)).isNull();
     assertEquals(Boolean.FALSE, ArbitraryInstances.get(boolean.class));
     assertEquals(Boolean.FALSE, ArbitraryInstances.get(Boolean.class));
     assertEquals(Character.valueOf('\0'), ArbitraryInstances.get(char.class));
@@ -168,14 +172,14 @@ public class ArbitraryInstancesTest extends TestCase {
     assertEquals("", ArbitraryInstances.get(String.class));
     assertEquals("", ArbitraryInstances.get(CharSequence.class));
     assertEquals(SECONDS, ArbitraryInstances.get(TimeUnit.class));
-    assertNotNull(ArbitraryInstances.get(Object.class));
+    assertThat(ArbitraryInstances.get(Object.class)).isNotNull();
     assertEquals(0, ArbitraryInstances.get(Number.class));
     assertEquals(UTF_8, ArbitraryInstances.get(Charset.class));
     assertEquals(Optional.empty(), ArbitraryInstances.get(Optional.class));
     assertEquals(OptionalInt.empty(), ArbitraryInstances.get(OptionalInt.class));
     assertEquals(OptionalLong.empty(), ArbitraryInstances.get(OptionalLong.class));
     assertEquals(OptionalDouble.empty(), ArbitraryInstances.get(OptionalDouble.class));
-    assertNotNull(ArbitraryInstances.get(UUID.class));
+    assertThat(ArbitraryInstances.get(UUID.class)).isNotNull();
   }
 
   public void testGet_collections() {
@@ -235,14 +239,14 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   public void testGet_misc() {
-    assertNotNull(ArbitraryInstances.get(CharMatcher.class));
-    assertNotNull(ArbitraryInstances.get(Currency.class).getCurrencyCode());
-    assertNotNull(ArbitraryInstances.get(Locale.class));
-    assertNotNull(ArbitraryInstances.get(Joiner.class).join(ImmutableList.of("a")));
-    assertNotNull(ArbitraryInstances.get(Splitter.class).split("a,b"));
+    assertThat(ArbitraryInstances.get(CharMatcher.class)).isNotNull();
+    assertThat(ArbitraryInstances.get(Currency.class).getCurrencyCode()).isNotNull();
+    assertThat(ArbitraryInstances.get(Locale.class)).isNotNull();
+    assertThat(ArbitraryInstances.get(Joiner.class).join(ImmutableList.of("a"))).isNotNull();
+    assertThat(ArbitraryInstances.get(Splitter.class).split("a,b")).isNotNull();
     assertThat(ArbitraryInstances.get(com.google.common.base.Optional.class)).isAbsent();
     ArbitraryInstances.get(Stopwatch.class).start();
-    assertNotNull(ArbitraryInstances.get(Ticker.class));
+    assertThat(ArbitraryInstances.get(Ticker.class)).isNotNull();
     assertFreshInstanceReturned(Random.class);
     assertEquals(
         ArbitraryInstances.get(Random.class).nextInt(),
@@ -258,7 +262,7 @@ public class ArbitraryInstancesTest extends TestCase {
     assertTrue(ArbitraryInstances.get(ConcurrentMap.class).isEmpty());
     assertTrue(ArbitraryInstances.get(ConcurrentNavigableMap.class).isEmpty());
     ArbitraryInstances.get(Executor.class).execute(ArbitraryInstances.get(Runnable.class));
-    assertNotNull(ArbitraryInstances.get(ThreadFactory.class));
+    assertThat(ArbitraryInstances.get(ThreadFactory.class)).isNotNull();
     assertFreshInstanceReturned(
         BlockingQueue.class,
         BlockingDeque.class,
@@ -287,7 +291,7 @@ public class ArbitraryInstancesTest extends TestCase {
     @SuppressWarnings("unchecked") // The null value can compare with any Object
     Comparable<Object> comparable = ArbitraryInstances.get(Comparable.class);
     assertEquals(0, comparable.compareTo(comparable));
-    assertTrue(comparable.compareTo("") > 0);
+    assertThat(comparable.compareTo("")).isGreaterThan(0);
     assertThrows(NullPointerException.class, () -> comparable.compareTo(null));
   }
 
@@ -298,12 +302,12 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   public void testGet_enum() {
-    assertNull(ArbitraryInstances.get(EmptyEnum.class));
+    assertThat(ArbitraryInstances.get(EmptyEnum.class)).isNull();
     assertEquals(Direction.UP, ArbitraryInstances.get(Direction.class));
   }
 
   public void testGet_interface() {
-    assertNull(ArbitraryInstances.get(SomeInterface.class));
+    assertThat(ArbitraryInstances.get(SomeInterface.class)).isNull();
   }
 
   public void testGet_runnable() {
@@ -314,11 +318,11 @@ public class ArbitraryInstancesTest extends TestCase {
     assertSame(SomeAbstractClass.INSTANCE, ArbitraryInstances.get(SomeAbstractClass.class));
     assertSame(
         WithPrivateConstructor.INSTANCE, ArbitraryInstances.get(WithPrivateConstructor.class));
-    assertNull(ArbitraryInstances.get(NoDefaultConstructor.class));
+    assertThat(ArbitraryInstances.get(NoDefaultConstructor.class)).isNull();
     assertSame(
         WithExceptionalConstructor.INSTANCE,
         ArbitraryInstances.get(WithExceptionalConstructor.class));
-    assertNull(ArbitraryInstances.get(NonPublicClass.class));
+    assertThat(ArbitraryInstances.get(NonPublicClass.class)).isNull();
   }
 
   public void testGet_mutable() {
@@ -353,21 +357,21 @@ public class ArbitraryInstancesTest extends TestCase {
     assertEquals(0, ArbitraryInstances.get(DoubleBuffer.class).capacity());
     ArbitraryInstances.get(PrintStream.class).println("test");
     ArbitraryInstances.get(PrintWriter.class).println("test");
-    assertNotNull(ArbitraryInstances.get(File.class));
+    assertThat(ArbitraryInstances.get(File.class)).isNotNull();
     assertFreshInstanceReturned(
         ByteArrayOutputStream.class, OutputStream.class,
         Writer.class, StringWriter.class,
         PrintStream.class, PrintWriter.class);
     assertEquals(ByteSource.empty(), ArbitraryInstances.get(ByteSource.class));
     assertEquals(CharSource.empty(), ArbitraryInstances.get(CharSource.class));
-    assertNotNull(ArbitraryInstances.get(ByteSink.class));
-    assertNotNull(ArbitraryInstances.get(CharSink.class));
+    assertThat(ArbitraryInstances.get(ByteSink.class)).isNotNull();
+    assertThat(ArbitraryInstances.get(CharSink.class)).isNotNull();
   }
 
   public void testGet_reflect() {
-    assertNotNull(ArbitraryInstances.get(Type.class));
-    assertNotNull(ArbitraryInstances.get(AnnotatedElement.class));
-    assertNotNull(ArbitraryInstances.get(GenericDeclaration.class));
+    assertThat(ArbitraryInstances.get(Type.class)).isNotNull();
+    assertThat(ArbitraryInstances.get(AnnotatedElement.class)).isNotNull();
+    assertThat(ArbitraryInstances.get(GenericDeclaration.class)).isNotNull();
   }
 
   public void testGet_regex() {
@@ -388,40 +392,42 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   public void testGet_constantWithGenericsNotUsed() {
-    assertNull(ArbitraryInstances.get(WithGenericConstant.class));
+    assertThat(ArbitraryInstances.get(WithGenericConstant.class)).isNull();
   }
 
   public void testGet_nullConstant() {
-    assertNull(ArbitraryInstances.get(WithNullConstant.class));
+    assertThat(ArbitraryInstances.get(WithNullConstant.class)).isNull();
   }
 
   public void testGet_constantTypeDoesNotMatch() {
-    assertNull(ArbitraryInstances.get(ParentClassHasConstant.class));
+    assertThat(ArbitraryInstances.get(ParentClassHasConstant.class)).isNull();
   }
 
   public void testGet_nonPublicConstantNotUsed() {
-    assertNull(ArbitraryInstances.get(NonPublicConstantIgnored.class));
+    assertThat(ArbitraryInstances.get(NonPublicConstantIgnored.class)).isNull();
   }
 
   public void testGet_nonStaticFieldNotUsed() {
-    assertNull(ArbitraryInstances.get(NonStaticFieldIgnored.class));
+    assertThat(ArbitraryInstances.get(NonStaticFieldIgnored.class)).isNull();
   }
 
   public void testGet_constructorPreferredOverConstants() {
-    assertNotNull(ArbitraryInstances.get(WithPublicConstructorAndConstant.class));
+    assertThat(ArbitraryInstances.get(WithPublicConstructorAndConstant.class)).isNotNull();
     assertTrue(
         ArbitraryInstances.get(WithPublicConstructorAndConstant.class)
             != ArbitraryInstances.get(WithPublicConstructorAndConstant.class));
   }
 
   public void testGet_nonFinalFieldNotUsed() {
-    assertNull(ArbitraryInstances.get(NonFinalFieldIgnored.class));
+    assertThat(ArbitraryInstances.get(NonFinalFieldIgnored.class)).isNull();
   }
 
   private static void assertFreshInstanceReturned(Class<?>... mutableClasses) {
     for (Class<?> mutableClass : mutableClasses) {
       Object instance = ArbitraryInstances.get(mutableClass);
-      assertNotNull("Expected to return non-null for: " + mutableClass, instance);
+      assertWithMessage("Expected to return non-null for: " + mutableClass)
+          .that(instance)
+          .isNotNull();
       assertNotSame(
           "Expected to return fresh instance for: " + mutableClass,
           instance,
@@ -449,7 +455,7 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   private static class WithPrivateConstructor {
-    public static final WithPrivateConstructor INSTANCE = new WithPrivateConstructor();
+    @Keep public static final WithPrivateConstructor INSTANCE = new WithPrivateConstructor();
   }
 
   public static class NoDefaultConstructor {
@@ -468,7 +474,7 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   private static class WithPublicConstant {
-    public static final WithPublicConstant INSTANCE = new WithPublicConstant();
+    @Keep public static final WithPublicConstant INSTANCE = new WithPublicConstant();
   }
 
   private static class ParentClassHasConstant extends WithPublicConstant {}
@@ -493,19 +499,17 @@ public class ArbitraryInstancesTest extends TestCase {
   }
 
   private static class WithPublicConstants {
-    public static final WithPublicConstants FIRST = new WithPublicConstants();
+    @Keep public static final WithPublicConstants FIRST = new WithPublicConstants();
 
     // To test that we pick the first constant alphabetically
-    @SuppressWarnings("unused")
-    public static final WithPublicConstants SECOND = new WithPublicConstants();
+    @Keep public static final WithPublicConstants SECOND = new WithPublicConstants();
   }
 
   private static class FirstConstantIsNull {
     // To test that null constant is ignored
-    @SuppressWarnings("unused")
-    public static final @Nullable FirstConstantIsNull FIRST = null;
+    @Keep public static final @Nullable FirstConstantIsNull FIRST = null;
 
-    public static final FirstConstantIsNull SECOND = new FirstConstantIsNull();
+    @Keep public static final FirstConstantIsNull SECOND = new FirstConstantIsNull();
   }
 
   public static class NonFinalFieldIgnored {

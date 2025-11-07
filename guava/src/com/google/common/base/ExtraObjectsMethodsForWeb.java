@@ -20,6 +20,5 @@ import com.google.common.annotations.GwtCompatible;
  * Holder for extra methods of {@code Objects} only in web. Intended to be empty for regular
  * version.
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 abstract class ExtraObjectsMethodsForWeb {}

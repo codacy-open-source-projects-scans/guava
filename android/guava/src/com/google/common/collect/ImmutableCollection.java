@@ -38,8 +38,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link Collection} whose contents will never change, and which offers a few additional
@@ -145,7 +144,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <h4>Example usage</h4>
  *
- * <pre>{@code
+ * {@snippet :
  * class Foo {
  *   private static final ImmutableSet<String> RESERVED_CODES =
  *       ImmutableSet.of("AZ", "CQ", "ZX");
@@ -157,7 +156,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *     checkArgument(Collections.disjoint(this.codes, RESERVED_CODES));
  *   }
  * }
- * }</pre>
+ * }
  *
  * <h3>See also</h3>
  *
@@ -167,9 +166,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @DoNotMock("Use ImmutableList.of or another implementation")
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @SuppressWarnings("serial") // we're overriding default serialization
-@ElementTypesAreNonnullByDefault
 // TODO(kevinb): I think we should push everything down to "BaseImmutableCollection" or something,
 // just to do everything we can to emphasize the "practically an interface" nature of this class.
 public abstract class ImmutableCollection<E> extends AbstractCollection<E> implements Serializable {
@@ -178,7 +176,6 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
    * These are properties of the collection as a whole; SIZED and SUBSIZED are more properties of
    * the spliterator implementation.
    */
-  @SuppressWarnings("Java7ApiChecker")
   // @IgnoreJRERequirement is not necessary because this compiles down to a constant.
   // (which is fortunate because Animal Sniffer doesn't look for @IgnoreJRERequirement on fields)
   static final int SPLITERATOR_CHARACTERISTICS =
@@ -191,7 +188,6 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
   public abstract UnmodifiableIterator<E> iterator();
 
   @Override
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // used only from APIs with Java 8 types in them
   // (not used within guava-android as of this writing, but we include it in the jar as a test)
   public Spliterator<E> spliterator() {
@@ -239,9 +235,7 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
   }
 
   /** If this collection is backed by an array of its elements in insertion order, returns it. */
-  @CheckForNull
-  @Nullable
-  Object[] internalArray() {
+  @Nullable Object @Nullable [] internalArray() {
     return null;
   }
 
@@ -262,7 +256,7 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
   }
 
   @Override
-  public abstract boolean contains(@CheckForNull Object object);
+  public abstract boolean contains(@Nullable Object object);
 
   /**
    * Guaranteed to throw an exception and leave the collection unmodified.
@@ -288,7 +282,7 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  public final boolean remove(@CheckForNull Object object) {
+  public final boolean remove(@Nullable Object object) {
     throw new UnsupportedOperationException();
   }
 
@@ -381,9 +375,9 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
     return offset;
   }
 
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  Object writeReplace() {
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
     // We serialize by default to ImmutableList, the simplest thing that works.
     return new ImmutableList.SerializedForm(toArray());
   }
@@ -573,5 +567,5 @@ public abstract class ImmutableCollection<E> extends AbstractCollection<E> imple
     }
   }
 
-  private static final long serialVersionUID = 0xdecaf;
+  @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0xdecaf;
 }

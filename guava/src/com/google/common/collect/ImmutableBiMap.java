@@ -22,6 +22,7 @@ import static java.util.Arrays.sort;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -35,8 +36,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link BiMap} whose contents will never change, with many other important properties detailed
@@ -45,8 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jared Levy
  * @since 2.0
  */
-@GwtCompatible(serializable = true, emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements BiMap<K, V> {
 
   /**
@@ -228,6 +227,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
         entryOf(k8, v8),
         entryOf(k9, v9));
   }
+
   /**
    * Returns an immutable map containing the given entries, in order.
    *
@@ -312,14 +312,14 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
    * A builder for creating immutable bimap instances, especially {@code public static final} bimaps
    * ("constant bimaps"). Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * static final ImmutableBiMap<String, Integer> WORD_TO_INT =
    *     new ImmutableBiMap.Builder<String, Integer>()
    *         .put("one", 1)
    *         .put("two", 2)
    *         .put("three", 3)
    *         .buildOrThrow();
-   * }</pre>
+   * }
    *
    * <p>For <i>small</i> immutable bimaps, the {@code ImmutableBiMap.of()} methods are even more
    * convenient.
@@ -473,7 +473,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
                 (Entry<K, V>[]) entries, // Entries up to size are not null
                 0,
                 size,
-                Ordering.from(valueComparator).onResultOf(Maps.valueFunction()));
+                Ordering.from(valueComparator).onResultOf(Entry::getValue));
           }
           entriesUsed = true;
           return RegularImmutableBiMap.fromEntryArray(size, entries);
@@ -606,8 +606,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  @CheckForNull
-  public final V forcePut(K key, V value) {
+  public final @Nullable V forcePut(K key, V value) {
     throw new UnsupportedOperationException();
   }
 
@@ -620,7 +619,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
    * bimap and its inverse in sync during serialization, the way AbstractBiMap does.
    */
   @J2ktIncompatible // serialization
-  private static class SerializedForm<K, V> extends ImmutableMap.SerializedForm<K, V> {
+  private static final class SerializedForm<K, V> extends ImmutableMap.SerializedForm<K, V> {
     SerializedForm(ImmutableBiMap<K, V> bimap) {
       super(bimap);
     }
@@ -630,7 +629,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
       return new Builder<>(size);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   @Override
@@ -649,7 +648,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
    * ImmutableMap#toImmutableMap(Function, Function)} from consumers of {@code ImmutableBiMap}.
    *
    * @throws UnsupportedOperationException always
-   * @deprecated Use {@link ImmutableBiMap#toImmutableBiMap}.
+   * @deprecated Use {@link ImmutableBiMap#toImmutableBiMap(Function, Function)}.
    */
   @Deprecated
   @DoNotCall("Use toImmutableBiMap")
@@ -666,7 +665,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
    * {@code ImmutableBiMap}.
    *
    * @throws UnsupportedOperationException always
-   * @deprecated
+   * @deprecated Merging values does not make sense for a {@code BiMap}.
    */
   @Deprecated
   @DoNotCall("Use toImmutableBiMap")
@@ -678,5 +677,5 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
     throw new UnsupportedOperationException();
   }
 
-  private static final long serialVersionUID = 0xcafebabe;
+  @GwtIncompatible @J2ktIncompatible   private static final long serialVersionUID = 0xcafebabe;
 }

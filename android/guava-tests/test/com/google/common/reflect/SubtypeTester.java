@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.google.errorprone.annotations.Keep;
 import com.google.errorprone.annotations.RequiredModifiers;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -30,7 +31,8 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Comparator;
 import javax.lang.model.element.Modifier;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tester of subtyping relationships between two types.
@@ -41,7 +43,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>These declaration methods rely on Java static type checking to make sure what we want to
  * assert as subtypes are really subtypes according to javac. For example:
  *
- * <pre>{@code
+ * {@snippet :
  * class MySubtypeTests extends SubtypeTester {
  *   @TestSubtype(suppressGetSubtype = true, suppressGetSupertype = true)
  *   public <T> Iterable<? extends T> listIsSubtypeOfIterable(List<T> list) {
@@ -57,7 +59,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * public void testMySubtypes() throws Exception {
  *   new MySubtypeTests().testAllDeclarations();
  * }
- * }</pre>
+ * }
  *
  * The calls to {@link #isSubtype} and {@link #notSubtype} tells the framework what assertions need
  * to be made.
@@ -65,12 +67,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>The declaration methods must be public.
  */
 @AndroidIncompatible // only used by android incompatible tests.
+@NullUnmarked
 abstract class SubtypeTester implements Cloneable {
 
   /** Annotates a public method that declares subtype assertion. */
   @RequiredModifiers(Modifier.PUBLIC)
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
+  @Keep
   @interface TestSubtype {
     /** Suppresses the assertion on {@link TypeToken#getSubtype}. */
     boolean suppressGetSubtype() default false;

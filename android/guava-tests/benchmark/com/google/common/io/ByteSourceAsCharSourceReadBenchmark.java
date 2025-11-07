@@ -23,12 +23,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Random;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Benchmarks for various potential implementations of {@code ByteSource.asCharSource(...).read()}.
  */
 // These benchmarks allocate a lot of data so use a large heap
 @VmOptions({"-Xms12g", "-Xmx12g", "-d64"})
+@NullUnmarked
 public class ByteSourceAsCharSourceReadBenchmark {
   enum ReadStrategy {
     TO_BYTE_ARRAY_NEW_STRING {
@@ -126,9 +128,9 @@ public class ByteSourceAsCharSourceReadBenchmark {
   @Benchmark
   public int timeCopy(int reps) throws IOException {
     int r = 0;
-    final Charset localCharset = charset;
-    final ByteSource localData = data;
-    final ReadStrategy localStrategy = strategy;
+    Charset localCharset = charset;
+    ByteSource localData = data;
+    ReadStrategy localStrategy = strategy;
     for (int i = 0; i < reps; i++) {
       r += localStrategy.read(localData, localCharset).hashCode();
     }

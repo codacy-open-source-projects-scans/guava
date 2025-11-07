@@ -17,7 +17,7 @@ package com.google.common.hash;
 import com.google.common.annotations.Beta;
 import com.google.errorprone.annotations.DoNotMock;
 import java.io.Serializable;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An object which can send data from an object of type {@code T} into a {@code PrimitiveSink}.
@@ -28,7 +28,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * single-element enum to maintain serialization guarantees. See Effective Java (2nd Edition), Item
  * 3: "Enforce the singleton property with a private constructor or an enum type". For example:
  *
- * <pre>{@code
+ * {@snippet :
  * public enum PersonFunnel implements Funnel<Person> {
  *   INSTANCE;
  *   public void funnel(Person person, PrimitiveSink into) {
@@ -37,14 +37,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         .putInt(person.getAge());
  *   }
  * }
- * }</pre>
+ * }
  *
  * @author Dimitris Andreou
  * @since 11.0
  */
 @Beta
 @DoNotMock("Implement with a lambda")
-@ElementTypesAreNonnullByDefault
 public interface Funnel<T extends @Nullable Object> extends Serializable {
 
   /**

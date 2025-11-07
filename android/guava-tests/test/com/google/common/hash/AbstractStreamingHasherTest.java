@@ -16,26 +16,29 @@
 
 package com.google.common.hash;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.hash.HashTestUtils.RandomHasherAction;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for AbstractStreamingHasher.
  *
  * @author Dimitris Andreou
  */
+@NullUnmarked
 public class AbstractStreamingHasherTest extends TestCase {
   public void testBytes() {
     Sink sink = new Sink(4); // byte order insignificant here
@@ -129,7 +132,7 @@ public class AbstractStreamingHasherTest extends TestCase {
     Random random = new Random(0); // will iteratively make more debuggable, each time it breaks
     for (int totalInsertions = 0; totalInsertions < 200; totalInsertions++) {
 
-      List<Sink> sinks = Lists.newArrayList();
+      List<Sink> sinks = new ArrayList<>();
       for (int chunkSize = 4; chunkSize <= 32; chunkSize++) {
         for (int bufferSize = chunkSize; bufferSize <= chunkSize * 4; bufferSize += chunkSize) {
           // yes, that's a lot of sinks!
@@ -195,7 +198,7 @@ public class AbstractStreamingHasherTest extends TestCase {
     protected void process(ByteBuffer bb) {
       processCalled++;
       assertEquals(ByteOrder.LITTLE_ENDIAN, bb.order());
-      assertTrue(bb.remaining() >= chunkSize);
+      assertThat(bb.remaining()).isAtLeast(chunkSize);
       for (int i = 0; i < chunkSize; i++) {
         out.write(bb.get());
       }
@@ -206,8 +209,8 @@ public class AbstractStreamingHasherTest extends TestCase {
       assertFalse(remainingCalled);
       remainingCalled = true;
       assertEquals(ByteOrder.LITTLE_ENDIAN, bb.order());
-      assertTrue(bb.remaining() > 0);
-      assertTrue(bb.remaining() < bufferSize);
+      assertThat(bb.remaining()).isGreaterThan(0);
+      assertThat(bb.remaining()).isLessThan(bufferSize);
       int before = processCalled;
       super.processRemaining(bb);
       int after = processCalled;

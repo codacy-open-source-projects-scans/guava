@@ -36,15 +36,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link Shorts}.
  *
  * @author Kevin Bourrillion
  */
-@ElementTypesAreNonnullByDefault
-@GwtCompatible(emulated = true)
+@NullMarked
+@GwtCompatible
 public class ShortsTest extends TestCase {
   private static final short[] EMPTY = {};
   private static final short[] ARRAY1 = {(short) 1};
@@ -55,9 +56,11 @@ public class ShortsTest extends TestCase {
 
   private static final short[] VALUES = {LEAST, (short) -1, (short) 0, (short) 1, GREATEST};
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testHashCode() {
     for (short value : VALUES) {
-      assertThat(Shorts.hashCode(value)).isEqualTo(((Short) value).hashCode());
+      assertThat(Shorts.hashCode(value)).isEqualTo(Short.hashCode(value));
     }
   }
 
@@ -92,11 +95,13 @@ public class ShortsTest extends TestCase {
     }
   }
 
+  // We need to test that our method behaves like the JDK method.
+  @SuppressWarnings("InlineMeInliner")
   public void testCompare() {
     for (short x : VALUES) {
       for (short y : VALUES) {
-        // Only compare the sign of the result of compareTo().
-        int expected = Short.valueOf(x).compareTo(y);
+        // Only compare the sign of the result of compare().
+        int expected = Short.compare(x, y);
         int actual = Shorts.compare(x, y);
         if (expected == 0) {
           assertWithMessage(x + ", " + y).that(actual).isEqualTo(expected);
@@ -553,9 +558,9 @@ public class ShortsTest extends TestCase {
     List<Byte> bytes = Arrays.asList((byte) 0, (byte) 1, (byte) 2);
     List<Short> shorts = Arrays.asList((short) 0, (short) 1, (short) 2);
     List<Integer> ints = Arrays.asList(0, 1, 2);
-    List<Float> floats = Arrays.asList((float) 0, (float) 1, (float) 2);
-    List<Long> longs = Arrays.asList((long) 0, (long) 1, (long) 2);
-    List<Double> doubles = Arrays.asList((double) 0, (double) 1, (double) 2);
+    List<Float> floats = Arrays.asList(0.0f, 1.0f, 2.0f);
+    List<Long> longs = Arrays.asList(0L, 1L, 2L);
+    List<Double> doubles = Arrays.asList(0.0, 1.0, 2.0);
 
     assertThat(Shorts.toArray(bytes)).isEqualTo(array);
     assertThat(Shorts.toArray(shorts)).isEqualTo(array);
@@ -595,6 +600,8 @@ public class ShortsTest extends TestCase {
     assertThat(Shorts.toArray(list.subList(2, 2))).isEqualTo(new short[] {});
   }
 
+  // `primitives` can't depend on `collect`, so this is what the prod code has to return.
+  @SuppressWarnings("EmptyList")
   public void testAsListEmpty() {
     assertThat(Shorts.asList(EMPTY)).isSameInstanceAs(Collections.emptyList());
   }
@@ -607,14 +614,14 @@ public class ShortsTest extends TestCase {
 
   public void testStringConverter_convert() {
     Converter<String, Short> converter = Shorts.stringConverter();
-    assertThat(converter.convert("1")).isEqualTo((Short) (short) 1);
-    assertThat(converter.convert("0")).isEqualTo((Short) (short) 0);
-    assertThat(converter.convert("-1")).isEqualTo((Short) (short) (-1));
-    assertThat(converter.convert("0xff")).isEqualTo((Short) (short) 255);
-    assertThat(converter.convert("0xFF")).isEqualTo((Short) (short) 255);
-    assertThat(converter.convert("-0xFF")).isEqualTo((Short) (short) (-255));
-    assertThat(converter.convert("#0000FF")).isEqualTo((Short) (short) 255);
-    assertThat(converter.convert("0666")).isEqualTo((Short) (short) 438);
+    assertThat(converter.convert("1")).isEqualTo(1);
+    assertThat(converter.convert("0")).isEqualTo(0);
+    assertThat(converter.convert("-1")).isEqualTo(-1);
+    assertThat(converter.convert("0xff")).isEqualTo(255);
+    assertThat(converter.convert("0xFF")).isEqualTo(255);
+    assertThat(converter.convert("-0xFF")).isEqualTo(-255);
+    assertThat(converter.convert("#0000FF")).isEqualTo(255);
+    assertThat(converter.convert("0666")).isEqualTo(438);
   }
 
   public void testStringConverter_convertError() {

@@ -43,7 +43,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
  *
  * <p>Examples of use:
  *
- * <pre>{@code
+ * {@snippet :
  * // Building a mutable network
  * MutableNetwork<String, Integer> network =
  *     NetworkBuilder.directed().allowsParallelEdges(true).build();
@@ -60,7 +60,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
  *         .addEdge("LAX", "ATL", 1598)
  *         .addEdge("ATL", "LAX", 2450)
  *         .build();
- * }</pre>
+ * }
  *
  * @author James Sexton
  * @author Joshua O'Madadhain
@@ -73,7 +73,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
  * @since 20.0
  */
 @Beta
-@ElementTypesAreNonnullByDefault
 public final class NetworkBuilder<N, E> extends AbstractGraphBuilder<N> {
   boolean allowsParallelEdges = false;
   ElementOrder<? super E> edgeOrder = ElementOrder.insertion();

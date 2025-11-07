@@ -16,15 +16,19 @@
 
 package com.google.common.collect;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link ForwardingConcurrentMap}.
  *
  * @author Jared Levy
  */
+@NullUnmarked
 public class ForwardingConcurrentMapTest extends TestCase {
 
   private static class TestMap extends ForwardingConcurrentMap<String, Integer> {
@@ -41,7 +45,7 @@ public class ForwardingConcurrentMapTest extends TestCase {
     map.put("foo", 1);
     assertEquals(Integer.valueOf(1), map.putIfAbsent("foo", 2));
     assertEquals(Integer.valueOf(1), map.get("foo"));
-    assertNull(map.putIfAbsent("bar", 3));
+    assertThat(map.putIfAbsent("bar", 3)).isNull();
     assertEquals(Integer.valueOf(3), map.get("bar"));
   }
 
@@ -59,7 +63,7 @@ public class ForwardingConcurrentMapTest extends TestCase {
     TestMap map = new TestMap();
     map.put("foo", 1);
     assertEquals(Integer.valueOf(1), map.replace("foo", 2));
-    assertNull(map.replace("bar", 3));
+    assertThat(map.replace("bar", 3)).isNull();
     assertEquals(Integer.valueOf(2), map.get("foo"));
     assertFalse(map.containsKey("bar"));
   }

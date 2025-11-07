@@ -23,6 +23,7 @@ import static com.google.common.jimfs.Feature.SYMBOLIC_LINKS;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ObjectArrays;
@@ -43,10 +44,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.EnumSet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link MoreFiles}.
@@ -56,6 +57,7 @@ import junit.framework.TestSuite;
  * @author Colin Decker
  */
 
+@NullUnmarked
 public class MoreFilesTest extends TestCase {
 
   public static TestSuite suite() {
@@ -255,16 +257,16 @@ public class MoreFilesTest extends TestCase {
     // We use a fake filesystem to sidestep flaky problems with Windows (b/136041958).
     try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
       Path root = fs.getRootDirectories().iterator().next();
-      assertNull(root.getParent());
-      assertNull(root.toRealPath().getParent());
+      assertThat(root.getParent()).isNull();
+      assertThat(root.toRealPath().getParent()).isNull();
       MoreFiles.createParentDirectories(root); // test that there's no exception
     }
   }
 
   public void testCreateParentDirectories_relativePath() throws IOException {
     Path path = FS.getPath("nonexistent.file");
-    assertNull(path.getParent());
-    assertNotNull(path.toAbsolutePath().getParent());
+    assertThat(path.getParent()).isNull();
+    assertThat(path.toAbsolutePath().getParent()).isNotNull();
     MoreFiles.createParentDirectories(path); // test that there's no exception
   }
 
@@ -599,7 +601,7 @@ public class MoreFilesTest extends TestCase {
         Path changingFile = dirToDelete.resolve("j/l");
         Path symlinkTarget = fs.getPath("/dontdelete");
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = newSingleThreadExecutor();
         startDirectorySymlinkSwitching(changingFile, symlinkTarget, executor);
 
         try {
@@ -661,7 +663,7 @@ public class MoreFilesTest extends TestCase {
    */
   @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
   private static void startDirectorySymlinkSwitching(
-      final Path file, final Path target, ExecutorService executor) {
+      Path file, Path target, ExecutorService executor) {
     @SuppressWarnings("unused") // https://errorprone.info/bugpattern/FutureReturnValueIgnored
     Future<?> possiblyIgnoredError =
         executor.submit(
@@ -718,9 +720,9 @@ public class MoreFilesTest extends TestCase {
       }
     };
 
-    public abstract void delete(Path path, RecursiveDeleteOption... options) throws IOException;
+    abstract void delete(Path path, RecursiveDeleteOption... options) throws IOException;
 
-    public abstract void assertDeleteSucceeded(Path path) throws IOException;
+    abstract void assertDeleteSucceeded(Path path) throws IOException;
   }
 
   private static boolean isWindows() {

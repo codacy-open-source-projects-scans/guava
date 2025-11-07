@@ -23,7 +23,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 /** Precondition checks useful in collection implementations. */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 final class CollectPreconditions {
 
   static void checkEntryNotNull(Object key, Object value) {
@@ -63,4 +62,6 @@ final class CollectPreconditions {
   static void checkRemove(boolean canRemove) {
     checkState(canRemove, "no calls to next() since the last call to remove()");
   }
+
+  private CollectPreconditions() {}
 }

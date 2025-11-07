@@ -21,8 +21,10 @@ import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.testing.SerializableTester;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link TreeRangeSet}.
@@ -31,6 +33,7 @@ import java.util.NavigableMap;
  * @author Chris Povirk
  */
 @GwtIncompatible // TreeRangeSet
+@NullUnmarked
 public class TreeRangeSetTest extends AbstractRangeSetTest {
   // TODO(cpovirk): test all of these with the ranges added in the reverse order
 
@@ -86,7 +89,7 @@ public class TreeRangeSetTest extends AbstractRangeSetTest {
   private static final ImmutableList<Cut<Integer>> CUTS_TO_TEST;
 
   static {
-    List<Cut<Integer>> cutsToTest = Lists.newArrayList();
+    List<Cut<Integer>> cutsToTest = new ArrayList<>();
     for (int i = MIN_BOUND - 1; i <= MAX_BOUND + 1; i++) {
       cutsToTest.add(Cut.belowValue(i));
       cutsToTest.add(Cut.aboveValue(i));
@@ -648,7 +651,7 @@ public class TreeRangeSetTest extends AbstractRangeSetTest {
     rangeSet.add(Range.closed(3, 10));
     assertEquals(Range.closed(3, 10), rangeSet.rangeContaining(5));
     assertTrue(rangeSet.contains(5));
-    assertNull(rangeSet.rangeContaining(1));
+    assertThat(rangeSet.rangeContaining(1)).isNull();
     assertFalse(rangeSet.contains(1));
   }
 
@@ -660,7 +663,7 @@ public class TreeRangeSetTest extends AbstractRangeSetTest {
     assertTrue(rangeSet.contains(5));
     assertEquals(Range.closed(7, 10), rangeSet.rangeContaining(8));
     assertTrue(rangeSet.contains(8));
-    assertNull(rangeSet.rangeContaining(6));
+    assertThat(rangeSet.rangeContaining(6)).isNull();
     assertFalse(rangeSet.contains(6));
   }
 

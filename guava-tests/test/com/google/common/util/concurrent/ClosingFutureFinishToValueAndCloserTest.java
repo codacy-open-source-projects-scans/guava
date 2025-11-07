@@ -33,11 +33,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@link ClosingFuture} that exercise {@link
  * ClosingFuture#finishToValueAndCloser(ValueAndCloserConsumer, Executor)}.
  */
+@NullUnmarked
 public class ClosingFutureFinishToValueAndCloserTest extends AbstractClosingFutureTest {
   private final ExecutorService finishToValueAndCloserExecutor = newSingleThreadExecutor();
   private volatile ValueAndCloser<?> valueAndCloser;
@@ -127,7 +129,7 @@ public class ClosingFutureFinishToValueAndCloserTest extends AbstractClosingFutu
   }
 
   private <V> ValueAndCloser<V> finishToValueAndCloser(ClosingFuture<V> closingFuture) {
-    final CountDownLatch valueAndCloserSet = new CountDownLatch(1);
+    CountDownLatch valueAndCloserSet = new CountDownLatch(1);
     closingFuture.finishToValueAndCloser(
         new ValueAndCloserConsumer<V>() {
           @Override

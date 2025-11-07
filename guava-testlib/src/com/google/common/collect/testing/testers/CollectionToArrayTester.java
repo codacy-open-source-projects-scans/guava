@@ -43,7 +43,7 @@ import org.junit.Ignore;
  * @author Kevin Bourrillion
  * @author Chris Povirk
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @Ignore("test runners must not instantiate and run this directly, only via suites we build")
 // @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
 @SuppressWarnings("JUnit4ClassUsedInJUnit3")
@@ -186,7 +186,7 @@ public class CollectionToArrayTester<E> extends AbstractCollectionTester<E> {
         collection.toArray(array));
   }
 
-  private void expectArrayContentsAnyOrder(Object[] expected, Object[] actual) {
+  private static void expectArrayContentsAnyOrder(Object[] expected, Object[] actual) {
     assertEqualIgnoringOrder(asList(expected), asList(actual));
   }
 
@@ -198,7 +198,7 @@ public class CollectionToArrayTester<E> extends AbstractCollectionTester<E> {
    * Returns the {@link Method} instance for {@link #testToArray_isPlainObjectArray()} so that tests
    * of {@link Arrays#asList(Object[])} can suppress it with {@code
    * FeatureSpecificTestSuiteBuilder.suppressing()} until <a
-   * href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6260652">Sun bug 6260652</a> is fixed.
+   * href="https://bugs.openjdk.org/browse/JDK-6260652">JDK-6260652</a> is fixed.
    */
   @J2ktIncompatible
   @GwtIncompatible // reflection

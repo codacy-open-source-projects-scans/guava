@@ -24,16 +24,19 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Function;
 import com.google.common.testing.NullPointerTester;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * @author Charles Fry
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @J2ktIncompatible // MapMaker
+@NullUnmarked
 public class MapMakerTest extends TestCase {
   @GwtIncompatible // NullPointerTester
   public void testNullParameters() throws Exception {
@@ -49,6 +52,7 @@ public class MapMakerTest extends TestCase {
       this.delayLatch = delayLatch;
     }
 
+    @CanIgnoreReturnValue // Sure, why not?
     @Override
     public T apply(T key) {
       awaitUninterruptibly(delayLatch);

@@ -32,7 +32,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A rate limiter. Conceptually, a rate limiter distributes permits at a configurable rate. Each
@@ -59,7 +59,7 @@ import javax.annotation.CheckForNull;
  * <p>As an example, imagine that we have a list of tasks to execute, but we don't want to submit
  * more than 2 per second:
  *
- * <pre>{@code
+ * {@snippet :
  * final RateLimiter rateLimiter = RateLimiter.create(2.0); // rate is "2 permits per second"
  * void submitTasks(List<Runnable> tasks, Executor executor) {
  *   for (Runnable task : tasks) {
@@ -67,19 +67,19 @@ import javax.annotation.CheckForNull;
  *     executor.execute(task);
  *   }
  * }
- * }</pre>
+ * }
  *
  * <p>As another example, imagine that we produce a stream of data, and we want to cap it at 5kb per
  * second. This could be accomplished by requiring a permit per byte, and specifying a rate of 5000
  * permits per second:
  *
- * <pre>{@code
+ * {@snippet :
  * final RateLimiter rateLimiter = RateLimiter.create(5000.0); // rate = 5000 permits per second
  * void submitPacket(byte[] packet) {
  *   rateLimiter.acquire(packet.length);
  *   networkService.send(packet);
  * }
- * }</pre>
+ * }
  *
  * <p>It is important to note that the number of permits requested <i>never</i> affects the
  * throttling of the request itself (an invocation to {@code acquire(1)} and an invocation to {@code
@@ -96,7 +96,6 @@ import javax.annotation.CheckForNull;
 @Beta
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public abstract class RateLimiter {
   /**
    * Creates a {@code RateLimiter} with the specified stable throughput, given as "permits per
@@ -163,7 +162,6 @@ public abstract class RateLimiter {
    *     warmupPeriod} is negative
    * @since 33.4.0 (but since 28.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public static RateLimiter create(double permitsPerSecond, Duration warmupPeriod) {
     return create(permitsPerSecond, toNanosSaturated(warmupPeriod), TimeUnit.NANOSECONDS);
@@ -219,7 +217,7 @@ public abstract class RateLimiter {
   private final SleepingStopwatch stopwatch;
 
   // Can't be initialized in the constructor because mocks don't call the constructor.
-  @CheckForNull private volatile Object mutexDoNotUseDirectly;
+  private volatile @Nullable Object mutexDoNotUseDirectly;
 
   private Object mutex() {
     Object mutex = mutexDoNotUseDirectly;
@@ -334,7 +332,6 @@ public abstract class RateLimiter {
    * @throws IllegalArgumentException if the requested number of permits is negative or zero
    * @since 33.4.0 (but since 28.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public boolean tryAcquire(Duration timeout) {
     return tryAcquire(1, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);
@@ -395,7 +392,6 @@ public abstract class RateLimiter {
    * @throws IllegalArgumentException if the requested number of permits is negative or zero
    * @since 33.4.0 (but since 28.0 in the JRE flavor)
    */
-  @SuppressWarnings("Java7ApiChecker")
   @IgnoreJRERequirement // Users will use this only if they're already using Duration.
   public boolean tryAcquire(int permits, Duration timeout) {
     return tryAcquire(permits, toNanosSaturated(timeout), TimeUnit.NANOSECONDS);

@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests our AtomicHelper fallback strategy in AggregateFutureState.
@@ -45,11 +46,13 @@ import junit.framework.TestSuite;
  * test methods in these degenerate classloaders.
  */
 
+@NullUnmarked
 public class AggregateFutureStateFallbackAtomicHelperTest extends TestCase {
 
   /**
-   * This classloader disallows AtomicReferenceFieldUpdater and AtomicIntegerFieldUpdate which will
-   * prevent us from selecting our {@code SafeAtomicHelper} strategy.
+   * This classloader disallows {@code AtomicReferenceFieldUpdater} and {@code
+   * AtomicIntegerFieldUpdater}, which will prevent us from selecting the {@code SafeAtomicHelper}
+   * strategy.
    *
    * <p>Stashing this in a static field avoids loading it over and over again and speeds up test
    * execution significantly.
@@ -66,7 +69,13 @@ public class AggregateFutureStateFallbackAtomicHelperTest extends TestCase {
     // corresponding method on FuturesTest in the correct classloader.
     TestSuite suite = new TestSuite(AggregateFutureStateFallbackAtomicHelperTest.class.getName());
     for (Method method : FuturesTest.class.getDeclaredMethods()) {
-      if (Modifier.isPublic(method.getModifiers()) && method.getName().startsWith("test")) {
+      if (Modifier.isPublic(method.getModifiers())
+          && method.getName().startsWith("test")
+          /*
+           * When we block access to AtomicReferenceFieldUpdater, we can't even reflect on
+           * AbstractFuture, since it declares methods that use that type in their signatures.
+           */
+          && !method.getName().equals("testFutures_nullChecks")) {
         suite.addTest(
             TestSuite.createTest(
                 AggregateFutureStateFallbackAtomicHelperTest.class, method.getName()));
@@ -77,41 +86,52 @@ public class AggregateFutureStateFallbackAtomicHelperTest extends TestCase {
 
   @Override
   public void runTest() throws Exception {
-    // First ensure that our classloaders are initializing the correct helper versions
+    /*
+     * Note that we do not run this test under Android at the moment. For Android testing, see
+     * AggregateFutureStateDefaultAtomicHelperTest.
+     */
+
+    // First, ensure that our classloaders are initializing the correct helper versions:
+
     checkHelperVersion(getClass().getClassLoader(), "SafeAtomicHelper");
     checkHelperVersion(NO_ATOMIC_FIELD_UPDATER, "SynchronizedAtomicHelper");
 
-    // Run the corresponding FuturesTest test method in a new classloader that disallows
-    // certain core jdk classes.
+    // Then, run the actual tests under each alternative classloader:
+
+    runTestMethod(NO_ATOMIC_FIELD_UPDATER);
+    // TODO(lukes): assert that the logs are full of errors
+  }
+
+  /**
+   * Runs the corresponding {@link FuturesTest} test method in a new classloader that disallows
+   * certain core JDK classes.
+   */
+  private void runTestMethod(ClassLoader classLoader) throws Exception {
     ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(NO_ATOMIC_FIELD_UPDATER);
+    Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      runTestMethod(NO_ATOMIC_FIELD_UPDATER);
-      // TODO(lukes): assert that the logs are full of errors
+      Class<?> test = classLoader.loadClass(FuturesTest.class.getName());
+      Object testInstance = test.getDeclaredConstructor().newInstance();
+      test.getMethod("setUp").invoke(testInstance);
+      test.getMethod(getName()).invoke(testInstance);
+      test.getMethod("tearDown").invoke(testInstance);
     } finally {
       Thread.currentThread().setContextClassLoader(oldClassLoader);
     }
   }
 
-  private void runTestMethod(ClassLoader classLoader) throws Exception {
-    Class<?> test = classLoader.loadClass(FuturesTest.class.getName());
-    Object testInstance = test.getDeclaredConstructor().newInstance();
-    test.getMethod("setUp").invoke(testInstance);
-    test.getMethod(getName()).invoke(testInstance);
-    test.getMethod("tearDown").invoke(testInstance);
-  }
-
   private void checkHelperVersion(ClassLoader classLoader, String expectedHelperClassName)
       throws Exception {
     // Make sure we are actually running with the expected helper implementation
-    Class<?> abstractFutureClass = classLoader.loadClass(AggregateFutureState.class.getName());
-    Field helperField = abstractFutureClass.getDeclaredField("ATOMIC_HELPER");
+    Class<?> aggregateFutureStateClass =
+        classLoader.loadClass(AggregateFutureState.class.getName());
+    Field helperField = aggregateFutureStateClass.getDeclaredField("ATOMIC_HELPER");
     helperField.setAccessible(true);
     assertEquals(expectedHelperClassName, helperField.get(null).getClass().getSimpleName());
   }
 
-  private static ClassLoader getClassLoader(final Set<String> blocklist) {
-    final String concurrentPackage = SettableFuture.class.getPackage().getName();
+  private static ClassLoader getClassLoader(Set<String> blocklist) {
+    String concurrentPackage = SettableFuture.class.getPackage().getName();
     ClassLoader classLoader = AggregateFutureStateFallbackAtomicHelperTest.class.getClassLoader();
     // we delegate to the current classloader so both loaders agree on classes like TestCase
     return new URLClassLoader(ClassPathUtil.getClassPathUrls(), classLoader) {

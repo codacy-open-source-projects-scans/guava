@@ -52,21 +52,23 @@ import java.util.stream.Stream;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link ImmutableBiMap}.
  *
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class ImmutableBiMapTest extends TestCase {
 
   // TODO: Reduce duplication of ImmutableMapTest code
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -536,7 +538,7 @@ public class ImmutableBiMapTest extends TestCase {
   }
 
   public void testFromHashMap() {
-    Map<String, Integer> hashMap = Maps.newLinkedHashMap();
+    Map<String, Integer> hashMap = new LinkedHashMap<>();
     hashMap.put("one", 1);
     hashMap.put("two", 2);
     ImmutableBiMap<String, Integer> bimap = ImmutableBiMap.copyOf(hashMap);

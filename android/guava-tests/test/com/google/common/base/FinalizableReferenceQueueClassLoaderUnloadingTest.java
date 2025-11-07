@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,6 +44,7 @@ import org.junit.runners.JUnit4;
  */
 @AndroidIncompatible
 @RunWith(JUnit4.class)
+@NullUnmarked
 public class FinalizableReferenceQueueClassLoaderUnloadingTest {
 
   /*
@@ -72,7 +74,7 @@ public class FinalizableReferenceQueueClassLoaderUnloadingTest {
   }
 
   private WeakReference<ClassLoader> useFrqInSeparateLoader() throws Exception {
-    final ClassLoader myLoader = getClass().getClassLoader();
+    ClassLoader myLoader = getClass().getClassLoader();
     URLClassLoader sepLoader = new URLClassLoader(getClassPathUrls(), myLoader.getParent());
     // sepLoader is the loader that we will use to load the parallel FinalizableReferenceQueue (FRQ)
     // and friends, and that we will eventually expect to see garbage-collected. The assumption

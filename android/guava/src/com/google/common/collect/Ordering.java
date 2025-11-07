@@ -25,9 +25,12 @@ import static java.util.Collections.sort;
 import static java.util.Collections.unmodifiableList;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import com.google.errorprone.annotations.InlineMe;
+import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,9 +46,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A comparator, with additional methods to support common operations. This is an "enriched" version
@@ -95,13 +97,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * <p>Complex chained orderings like the following example can be challenging to understand.
  *
- * <pre>{@code
+ * {@snippet :
  * Ordering<Foo> ordering =
  *     Ordering.natural()
  *         .nullsFirst()
  *         .onResultOf(getBarFunction)
  *         .nullsLast();
- * }</pre>
+ * }
  *
  * Note that each chaining method returns a new ordering instance which is backed by the previous
  * instance, but has the chance to act on values <i>before</i> handing off to that backing instance.
@@ -151,7 +153,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 public abstract class Ordering<T extends @Nullable Object> implements Comparator<T> {
   // Natural order
 
@@ -164,7 +165,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * <p><b>Java 8+ users:</b> use {@link Comparator#naturalOrder} instead.
    */
-  @GwtCompatible(serializable = true)
   @SuppressWarnings({"unchecked", "rawtypes"})
   // TODO(kevinb): right way to explain this??
   // plus https://github.com/google/guava/issues/989
@@ -189,7 +189,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * @return comparator itself if it is already an {@code Ordering}; otherwise an ordering that
    *     wraps that comparator
    */
-  @GwtCompatible(serializable = true)
   public static <T extends @Nullable Object> Ordering<T> from(Comparator<T> comparator) {
     return (comparator instanceof Ordering)
         ? (Ordering<T>) comparator
@@ -201,7 +200,9 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * @deprecated no need to use this
    */
-  @GwtCompatible(serializable = true)
+  @InlineMe(
+      replacement = "checkNotNull(ordering)",
+      staticImports = "com.google.common.base.Preconditions.checkNotNull")
   @Deprecated
   public static <T extends @Nullable Object> Ordering<T> from(Ordering<T> ordering) {
     return checkNotNull(ordering);
@@ -227,7 +228,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *     (according to {@link Object#equals})
    */
   // TODO(kevinb): provide replacement
-  @GwtCompatible(serializable = true)
   public static <T> Ordering<T> explicit(List<T> valuesInOrder) {
     return new ExplicitOrdering<>(valuesInOrder);
   }
@@ -253,7 +253,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *     Object#equals(Object)}) are present among the method arguments
    */
   // TODO(kevinb): provide replacement
-  @GwtCompatible(serializable = true)
   public static <T> Ordering<T> explicit(T leastValue, T... remainingValuesInOrder) {
     return explicit(Lists.asList(leastValue, remainingValuesInOrder));
   }
@@ -268,10 +267,10 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * <p>Example:
    *
-   * <pre>{@code
+   * {@snippet :
    * Ordering.allEqual().nullsLast().sortedCopy(
    *     asList(t, null, e, s, null, t, null))
-   * }</pre>
+   * }
    *
    * <p>Assuming {@code t}, {@code e} and {@code s} are non-null, this returns {@code [t, e, s, t,
    * null, null, null]} regardless of the true comparison order of those three values (which might
@@ -288,7 +287,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * @since 13.0
    */
-  @GwtCompatible(serializable = true)
   public static Ordering<@Nullable Object> allEqual() {
     return AllEqualOrdering.INSTANCE;
   }
@@ -301,7 +299,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * <p><b>Java 8+ users:</b> Use {@code Comparator.comparing(Object::toString)} instead.
    */
-  @GwtCompatible(serializable = true)
   public static Ordering<Object> usingToString() {
     return UsingToStringOrdering.INSTANCE;
   }
@@ -328,7 +325,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
   }
 
   @J2ktIncompatible // MapMaker
-  private static class ArbitraryOrderingHolder {
+  private static final class ArbitraryOrderingHolder {
     static final Ordering<@Nullable Object> ARBITRARY_ORDERING = new ArbitraryOrdering();
   }
 
@@ -356,7 +353,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
     }
 
     @Override
-    public int compare(@CheckForNull Object left, @CheckForNull Object right) {
+    public int compare(@Nullable Object left, @Nullable Object right) {
       if (left == right) {
         return 0;
       } else if (left == null) {
@@ -414,7 +411,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   // type parameter <S> lets us avoid the extra <String> in statements like:
   // Ordering<String> o = Ordering.<String>natural().reverse();
-  @GwtCompatible(serializable = true)
   public <S extends T> Ordering<S> reverse() {
     return new ReverseOrdering<>(this);
   }
@@ -429,7 +425,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   // type parameter <S> lets us avoid the extra <String> in statements like:
   // Ordering<String> o = Ordering.<String>natural().nullsFirst();
-  @GwtCompatible(serializable = true)
   public <S extends T> Ordering<@Nullable S> nullsFirst() {
     return new NullsFirstOrdering<S>(this);
   }
@@ -444,7 +439,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    */
   // type parameter <S> lets us avoid the extra <String> in statements like:
   // Ordering<String> o = Ordering.<String>natural().nullsLast();
-  @GwtCompatible(serializable = true)
   public <S extends T> Ordering<@Nullable S> nullsLast() {
     return new NullsLastOrdering<S>(this);
   }
@@ -454,21 +448,20 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * then comparing those results using {@code this}. For example, to compare objects by their
    * string forms, in a case-insensitive manner, use:
    *
-   * <pre>{@code
+   * {@snippet :
    * Ordering.from(String.CASE_INSENSITIVE_ORDER)
    *     .onResultOf(Functions.toStringFunction())
-   * }</pre>
+   * }
    *
    * <p><b>Java 8+ users:</b> Use {@code Comparator.comparing(function, thisComparator)} instead
    * (you can omit the comparator if it is the natural order).
    */
-  @GwtCompatible(serializable = true)
   public <F extends @Nullable Object> Ordering<F> onResultOf(Function<F, ? extends T> function) {
     return new ByFunctionOrdering<>(function, this);
   }
 
   <T2 extends T> Ordering<Entry<T2, ?>> onKeys() {
-    return onResultOf(Maps.<T2>keyFunction());
+    return onResultOf(Entry::getKey);
   }
 
   /**
@@ -487,7 +480,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * Depending on what {@code secondaryComparator} is, one of the other overloads of {@code
    * thenComparing} may be even more useful.
    */
-  @GwtCompatible(serializable = true)
   public <U extends T> Ordering<U> compound(Comparator<? super U> secondaryComparator) {
     return new CompoundOrdering<>(this, checkNotNull(secondaryComparator));
   }
@@ -513,7 +505,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * @param comparators the comparators to try in order
    */
-  @GwtCompatible(serializable = true)
   public static <T extends @Nullable Object> Ordering<T> compound(
       Iterable<? extends Comparator<? super T>> comparators) {
     return new CompoundOrdering<>(comparators);
@@ -534,7 +525,6 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    *
    * @since 2.0
    */
-  @GwtCompatible(serializable = true)
   // type parameter <S> lets us avoid the extra <String> in statements like:
   // Ordering<Iterable<String>> o =
   //     Ordering.<String>natural().lexicographical();
@@ -788,6 +778,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * @throws IllegalArgumentException if {@code k} is negative
    * @since 14.0
    */
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   public <E extends T> List<E> leastOf(Iterator<E> iterator, int k) {
     checkNotNull(iterator);
     checkNonnegative(k, "k");
@@ -872,7 +863,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
     @SuppressWarnings("unchecked") // does not escape, and contains only E's
     E[] array = (E[]) Iterables.toArray(elements);
     sort(array, this);
-    return Lists.newArrayList(asList(array));
+    return new ArrayList<>(asList(array));
   }
 
   /**
@@ -951,6 +942,13 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * @param key the key to be searched for
    * @deprecated Use {@link Collections#binarySearch(List, Object, Comparator)} directly.
    */
+  @InlineMe(
+      replacement = "Collections.binarySearch(sortedList, key, this)",
+      imports = "java.util.Collections")
+  // We can't compatibly make this `final` now.
+  @InlineMeValidationDisabled(
+      "While binarySearch() is not final, the inlining is still safe as long as any overrides"
+          + " follow the contract.")
   @Deprecated
   public int binarySearch(
       List<? extends T> sortedList, @ParametricNullness T key) {
@@ -962,7 +960,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
    * Object[])} comparator when comparing a value outside the set of values it can compare.
    * Extending {@link ClassCastException} may seem odd, but it is required.
    */
-  static class IncomparableValueException extends ClassCastException {
+  static final class IncomparableValueException extends ClassCastException {
     final Object value;
 
     IncomparableValueException(Object value) {
@@ -970,7 +968,7 @@ public abstract class Ordering<T extends @Nullable Object> implements Comparator
       this.value = value;
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   // Never make these public

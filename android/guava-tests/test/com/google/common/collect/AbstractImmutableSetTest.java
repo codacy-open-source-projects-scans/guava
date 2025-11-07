@@ -40,7 +40,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base class for {@link ImmutableSet} and {@link ImmutableSortedSet} tests.
@@ -48,8 +49,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Kevin Bourrillion
  * @author Jared Levy
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public abstract class AbstractImmutableSetTest extends TestCase {
 
   protected abstract <E extends Comparable<? super E>> Set<E> of();
@@ -147,8 +148,7 @@ public abstract class AbstractImmutableSetTest extends TestCase {
   }
 
   public void testCopyOf_collection_empty() {
-    // "<String>" is required to work around a javac 1.5 bug.
-    Collection<String> c = MinimalCollection.<String>of();
+    Collection<String> c = MinimalCollection.of();
     Set<String> set = copyOf(c);
     assertEquals(Collections.<String>emptySet(), set);
     assertSame(this.<String>of(), set);
@@ -389,7 +389,7 @@ public abstract class AbstractImmutableSetTest extends TestCase {
 
   public void testBuilderAddHandlesNullsCorrectly() {
     {
-    ImmutableSet.Builder<String> builder = this.<String>builder();
+      ImmutableSet.Builder<String> builder = this.<String>builder();
       assertThrows(NullPointerException.class, () -> builder.add((String) null));
     }
 
@@ -421,7 +421,7 @@ public abstract class AbstractImmutableSetTest extends TestCase {
 
   public void testBuilderAddAllHandlesNullsCorrectly() {
     {
-    ImmutableSet.Builder<String> builder = this.<String>builder();
+      ImmutableSet.Builder<String> builder = this.<String>builder();
       assertThrows(NullPointerException.class, () -> builder.addAll((Iterable<String>) null));
     }
 
@@ -432,13 +432,13 @@ public abstract class AbstractImmutableSetTest extends TestCase {
 
     {
       ImmutableSet.Builder<String> builder = this.<String>builder();
-    List<@Nullable String> listWithNulls = asList("a", null, "b");
+      List<@Nullable String> listWithNulls = asList("a", null, "b");
       assertThrows(NullPointerException.class, () -> builder.addAll((List<String>) listWithNulls));
     }
 
     {
       ImmutableSet.Builder<String> builder = this.<String>builder();
-    Iterable<@Nullable String> iterableWithNulls = MinimalIterable.of("a", null, "b");
+      Iterable<@Nullable String> iterableWithNulls = MinimalIterable.of("a", null, "b");
       assertThrows(
           NullPointerException.class, () -> builder.addAll((Iterable<String>) iterableWithNulls));
     }

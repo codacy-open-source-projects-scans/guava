@@ -18,15 +18,14 @@ import com.google.common.annotations.GwtCompatible;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Methods factored out so that they can be emulated differently in GWT.
  *
  * @author Jesse Wilson
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 final class Platform {
   private static final PatternCompiler patternCompiler = loadPatternCompiler();
 
@@ -55,7 +54,7 @@ final class Platform {
     return String.format(Locale.ROOT, "%.4g", value);
   }
 
-  static boolean stringIsNullOrEmpty(@CheckForNull String string) {
+  static boolean stringIsNullOrEmpty(@Nullable String string) {
     return string == null || string.isEmpty();
   }
 
@@ -65,7 +64,7 @@ final class Platform {
    * @param string the string to test and possibly return
    * @return {@code string} if it is not null; {@code ""} otherwise
    */
-  static String nullToEmpty(@CheckForNull String string) {
+  static String nullToEmpty(@Nullable String string) {
     return (string == null) ? "" : string;
   }
 
@@ -75,9 +74,16 @@ final class Platform {
    * @param string the string to test and possibly return
    * @return {@code string} if it is not empty; {@code null} otherwise
    */
-  @CheckForNull
-  static String emptyToNull(@CheckForNull String string) {
+  static @Nullable String emptyToNull(@Nullable String string) {
     return stringIsNullOrEmpty(string) ? null : string;
+  }
+
+  static String lenientFormat(@Nullable String template, @Nullable Object @Nullable ... args) {
+    return Strings.lenientFormat(template, args);
+  }
+
+  static String stringValueOf(@Nullable Object o) {
+    return String.valueOf(o);
   }
 
   static CommonPattern compilePattern(String pattern) {
@@ -90,11 +96,11 @@ final class Platform {
   }
 
   private static PatternCompiler loadPatternCompiler() {
-    /*
-     * We'd normally use ServiceLoader here, but it hurts Android startup performance. To avoid
-     * that, we hardcode the JDK Pattern compiler on Android (and, inadvertently, on App Engine and
-     * in Guava, at least for now).
-     */
+    // We want the JDK Pattern compiler:
+    // - under Android (where it hurts startup performance)
+    // - even for the JVM in our open-source release (https://github.com/google/guava/issues/3147)
+    // If anyone in our monorepo uses the Android copy of Guava on a JVM, that would be unfortunate.
+    // But that is only likely to happen in Robolectric tests, where the risks of JDK regex are low.
     return new JdkPatternCompiler();
   }
 

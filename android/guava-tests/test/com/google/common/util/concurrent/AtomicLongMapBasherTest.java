@@ -16,6 +16,7 @@
 
 package com.google.common.util.concurrent;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
@@ -24,9 +25,9 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Basher test for {@link AtomicLongMap}.
@@ -35,19 +36,20 @@ import junit.framework.TestCase;
  */
 @J2ktIncompatible // threads
 @GwtIncompatible // threads
+@NullUnmarked
 public class AtomicLongMapBasherTest extends TestCase {
   private final Random random = new Random(301);
 
   public void testModify_basher() throws Exception {
     int nTasks = 3000;
     int nThreads = 100;
-    final int getsPerTask = 1000;
-    final int deltaRange = 10000;
-    final String key = "key";
+    int getsPerTask = 1000;
+    int deltaRange = 10000;
+    String key = "key";
 
-    final AtomicLongMap<String> map = AtomicLongMap.create();
+    AtomicLongMap<String> map = AtomicLongMap.create();
 
-    ExecutorService threadPool = Executors.newFixedThreadPool(nThreads);
+    ExecutorService threadPool = newFixedThreadPool(nThreads);
     ArrayList<Future<Long>> futures = new ArrayList<>();
     for (int i = 0; i < nTasks; i++) {
       futures.add(

@@ -16,17 +16,20 @@ package com.google.common.cache;
 
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.LocalCache.Strength;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Helper class for creating {@link CacheBuilder} instances with all combinations of several sets of
@@ -34,6 +37,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @author mike nonemacher
  */
+@NullUnmarked
 class CacheBuilderFactory {
   // Default values contain only 'null', which means don't call the CacheBuilder method (just give
   // the CacheBuilder default).
@@ -46,44 +50,52 @@ class CacheBuilderFactory {
   private Set<Strength> keyStrengths = Sets.newHashSet((Strength) null);
   private Set<Strength> valueStrengths = Sets.newHashSet((Strength) null);
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withConcurrencyLevels(Set<Integer> concurrencyLevels) {
-    this.concurrencyLevels = Sets.newLinkedHashSet(concurrencyLevels);
+    this.concurrencyLevels = new LinkedHashSet<>(concurrencyLevels);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withInitialCapacities(Set<Integer> initialCapacities) {
-    this.initialCapacities = Sets.newLinkedHashSet(initialCapacities);
+    this.initialCapacities = new LinkedHashSet<>(initialCapacities);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withMaximumSizes(Set<Integer> maximumSizes) {
-    this.maximumSizes = Sets.newLinkedHashSet(maximumSizes);
+    this.maximumSizes = new LinkedHashSet<>(maximumSizes);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withExpireAfterWrites(Set<DurationSpec> durations) {
-    this.expireAfterWrites = Sets.newLinkedHashSet(durations);
+    this.expireAfterWrites = new LinkedHashSet<>(durations);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withExpireAfterAccesses(Set<DurationSpec> durations) {
-    this.expireAfterAccesses = Sets.newLinkedHashSet(durations);
+    this.expireAfterAccesses = new LinkedHashSet<>(durations);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withRefreshes(Set<DurationSpec> durations) {
-    this.refreshes = Sets.newLinkedHashSet(durations);
+    this.refreshes = new LinkedHashSet<>(durations);
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withKeyStrengths(Set<Strength> keyStrengths) {
-    this.keyStrengths = Sets.newLinkedHashSet(keyStrengths);
+    this.keyStrengths = new LinkedHashSet<>(keyStrengths);
     Preconditions.checkArgument(!this.keyStrengths.contains(Strength.SOFT));
     return this;
   }
 
+  @CanIgnoreReturnValue
   CacheBuilderFactory withValueStrengths(Set<Strength> valueStrengths) {
-    this.valueStrengths = Sets.newLinkedHashSet(valueStrengths);
+    this.valueStrengths = new LinkedHashSet<>(valueStrengths);
     return this;
   }
 
@@ -209,7 +221,7 @@ class CacheBuilderFactory {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(duration, unit);
+      return Objects.hash(duration, unit);
     }
 
     @Override

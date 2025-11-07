@@ -23,8 +23,7 @@ import com.google.common.annotations.GwtCompatible;
  *
  * @author Chris Povirk
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 abstract class ForwardingImmutableList<E> {
   private ForwardingImmutableList() {}
 }

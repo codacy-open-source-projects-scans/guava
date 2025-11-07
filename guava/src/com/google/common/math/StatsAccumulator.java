@@ -16,8 +16,8 @@ package com.google.common.math;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.math.DoubleUtils.ensureNonNegative;
-import static com.google.common.primitives.Doubles.isFinite;
 import static java.lang.Double.NaN;
+import static java.lang.Double.isFinite;
 import static java.lang.Double.isNaN;
 
 import com.google.common.annotations.GwtIncompatible;
@@ -37,7 +37,6 @@ import java.util.stream.LongStream;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class StatsAccumulator {
   /** Creates a new accumulator. */
   public StatsAccumulator() {}

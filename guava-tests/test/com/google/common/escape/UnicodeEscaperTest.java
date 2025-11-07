@@ -17,10 +17,12 @@
 package com.google.common.escape;
 
 import static com.google.common.escape.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link UnicodeEscaper}.
@@ -28,6 +30,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author David Beaumont
  */
 @GwtCompatible
+@NullUnmarked
 public class UnicodeEscaperTest extends TestCase {
 
   private static final String SMALLEST_SURROGATE =
@@ -60,7 +63,7 @@ public class UnicodeEscaperTest extends TestCase {
 
   public void testNopEscaper() {
     UnicodeEscaper e = NOP_ESCAPER;
-    assertEquals(TEST_STRING, escapeAsString(e, TEST_STRING));
+    assertThat(escapeAsString(e, TEST_STRING)).isEqualTo(TEST_STRING);
   }
 
   public void testSimpleEscaper() {
@@ -73,7 +76,7 @@ public class UnicodeEscaperTest extends TestCase {
             + "0189["
             + Character.MAX_CODE_POINT
             + "]";
-    assertEquals(expected, escapeAsString(e, TEST_STRING));
+    assertThat(escapeAsString(e, TEST_STRING)).isEqualTo(expected);
   }
 
   public void testGrowBuffer() { // need to grow past an initial 1024 byte buffer
@@ -83,20 +86,20 @@ public class UnicodeEscaperTest extends TestCase {
       input.append((char) i);
       expected.append("[" + i + "]");
     }
-    assertEquals(expected.toString(), SIMPLE_ESCAPER.escape(input.toString()));
+    assertThat(SIMPLE_ESCAPER.escape(input.toString())).isEqualTo(expected.toString());
   }
 
   public void testSurrogatePairs() {
     UnicodeEscaper e = SIMPLE_ESCAPER;
 
     // Build up a range of surrogate pair characters to test
-    final int min = Character.MIN_SUPPLEMENTARY_CODE_POINT;
-    final int max = Character.MAX_CODE_POINT;
-    final int range = max - min;
-    final int s1 = min + (1 * range) / 4;
-    final int s2 = min + (2 * range) / 4;
-    final int s3 = min + (3 * range) / 4;
-    final char[] dst = new char[12];
+    int min = Character.MIN_SUPPLEMENTARY_CODE_POINT;
+    int max = Character.MAX_CODE_POINT;
+    int range = max - min;
+    int s1 = min + (1 * range) / 4;
+    int s2 = min + (2 * range) / 4;
+    int s3 = min + (3 * range) / 4;
+    char[] dst = new char[12];
 
     // Put surrogate pairs at odd indices so they can be split easily
     dst[0] = 'x';
@@ -110,7 +113,7 @@ public class UnicodeEscaperTest extends TestCase {
 
     // Get the expected result string
     String expected = "x[" + min + "][" + s1 + "][" + s2 + "][" + s3 + "][" + max + "]x";
-    assertEquals(expected, escapeAsString(e, test));
+    assertThat(escapeAsString(e, test)).isEqualTo(expected);
   }
 
   public void testTrailingHighSurrogate() {
@@ -149,6 +152,7 @@ public class UnicodeEscaperTest extends TestCase {
           protected char @Nullable [] escape(int cp) {
             return ('a' <= cp && cp <= 'z') ? new char[] {Character.toUpperCase((char) cp)} : null;
           }
+
           // Inefficient implementation that defines all letters as escapable.
           @Override
           protected int nextEscapeIndex(CharSequence csq, int index, int end) {
@@ -158,7 +162,8 @@ public class UnicodeEscaperTest extends TestCase {
             return index;
           }
         };
-    assertEquals("\0HELLO \uD800\uDC00 WORLD!\n", e.escape("\0HeLLo \uD800\uDC00 WorlD!\n"));
+    assertThat(e.escape("\0HeLLo \uD800\uDC00 WorlD!\n"))
+        .isEqualTo("\0HELLO \uD800\uDC00 WORLD!\n");
   }
 
   public void testCodePointAt_indexOutOfBoundsException() {

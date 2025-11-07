@@ -29,16 +29,16 @@ import java.util.Set;
 /**
  * A sorted set of contiguous values in a given {@link DiscreteDomain}. Example:
  *
- * <pre>{@code
+ * {@snippet :
  * ContiguousSet.create(Range.closed(5, 42), DiscreteDomain.integers())
- * }</pre>
+ * }
  *
  * <p>Note that because bounded ranges over {@code int} and {@code long} values are so common, this
  * particular example can be written as just:
  *
- * <pre>{@code
+ * {@snippet :
  * ContiguousSet.closed(5, 42)
- * }</pre>
+ * }
  *
  * <p><b>Warning:</b> Be extremely careful what you do with conceptually large instances (such as
  * {@code ContiguousSet.create(Range.greaterThan(0), DiscreteDomain.integers()}). Certain operations
@@ -48,9 +48,8 @@ import java.util.Set;
  * @author Gregory Kick
  * @since 10.0
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
 @SuppressWarnings("rawtypes") // allow ungenerified Comparable types
-@ElementTypesAreNonnullByDefault
 public abstract class ContiguousSet<C extends Comparable> extends ImmutableSortedSet<C> {
   /**
    * Returns a {@code ContiguousSet} containing the same values in the given domain {@linkplain
@@ -155,7 +154,9 @@ public abstract class ContiguousSet<C extends Comparable> extends ImmutableSorte
     return headSetImpl(checkNotNull(toElement), false);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public ContiguousSet<C> headSet(C toElement, boolean inclusive) {
@@ -170,7 +171,9 @@ public abstract class ContiguousSet<C extends Comparable> extends ImmutableSorte
     return subSetImpl(fromElement, true, toElement, false);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public ContiguousSet<C> subSet(
@@ -186,7 +189,9 @@ public abstract class ContiguousSet<C extends Comparable> extends ImmutableSorte
     return tailSetImpl(checkNotNull(fromElement), true);
   }
 
-  /** @since 12.0 */
+  /**
+   * @since 12.0
+   */
   @GwtIncompatible // NavigableSet
   @Override
   public ContiguousSet<C> tailSet(C fromElement, boolean inclusive) {

@@ -43,6 +43,7 @@ import com.google.common.collect.testing.TestStringSortedSetGenerator;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.collect.testing.features.Feature;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,8 @@ import java.util.SortedSet;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Collection tests for {@link Table} implementations.
@@ -59,22 +61,26 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jared Levy
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class TableCollectionTest extends TestCase {
 
+  @J2ktIncompatible
   private static final Feature<?>[] COLLECTION_FEATURES = {
     CollectionSize.ANY, CollectionFeature.ALLOWS_NULL_QUERIES
   };
 
+  @J2ktIncompatible
   private static final Feature<?>[] COLLECTION_FEATURES_ORDER = {
     CollectionSize.ANY, CollectionFeature.KNOWN_ORDER, CollectionFeature.ALLOWS_NULL_QUERIES
   };
 
+  @J2ktIncompatible
   private static final Feature<?>[] COLLECTION_FEATURES_REMOVE = {
     CollectionSize.ANY, CollectionFeature.SUPPORTS_REMOVE, CollectionFeature.ALLOWS_NULL_QUERIES
   };
 
+  @J2ktIncompatible
   private static final Feature<?>[] COLLECTION_FEATURES_REMOVE_ORDER = {
     CollectionSize.ANY,
     CollectionFeature.KNOWN_ORDER,
@@ -84,6 +90,7 @@ public class TableCollectionTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
 
@@ -273,7 +280,7 @@ public class TableCollectionTest extends TestCase {
                 new TestStringCollectionGenerator() {
                   @Override
                   protected Collection<String> create(String[] elements) {
-                    List<Integer> rowKeys = Lists.newArrayList();
+                    List<Integer> rowKeys = new ArrayList<>();
                     for (int i = 0; i < elements.length; i++) {
                       rowKeys.add(i);
                     }
@@ -325,7 +332,7 @@ public class TableCollectionTest extends TestCase {
             .withFeatures(CollectionFeature.SUPPORTS_ITERATOR_REMOVE)
             .createTestSuite());
 
-    final Function<String, String> removeFirstCharacter =
+    Function<String, String> removeFirstCharacter =
         new Function<String, String>() {
           @Override
           public String apply(String input) {
@@ -397,7 +404,7 @@ public class TableCollectionTest extends TestCase {
 
                   @Override
                   public Set<Cell<String, Integer, Character>> create(Object... elements) {
-                    List<Integer> columnKeys = Lists.newArrayList();
+                    List<Integer> columnKeys = new ArrayList<>();
                     for (Object element : elements) {
                       @SuppressWarnings("unchecked")
                       Cell<String, Integer, Character> cell =
@@ -680,6 +687,7 @@ public class TableCollectionTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible
   private abstract static class TestCellSetGenerator
       implements TestSetGenerator<Cell<String, Integer, Character>> {
     @Override
@@ -839,16 +847,16 @@ public class TableCollectionTest extends TestCase {
      */
     @Override
     public void testRemove() {
-      final Map<String, Map<Integer, Character>> map;
+      Map<String, Map<Integer, Character>> map;
       try {
         map = makePopulatedMap();
       } catch (UnsupportedOperationException e) {
         return;
       }
-      final String keyToRemove = map.keySet().iterator().next();
+      String keyToRemove = map.keySet().iterator().next();
       if (supportsRemove) {
         int initialSize = map.size();
-        map.get(keyToRemove);
+        // var oldValue = map.get(keyToRemove);
         map.remove(keyToRemove);
         // This line doesn't hold - see the Javadoc comments above.
         // assertEquals(expectedValue, oldValue);
@@ -879,7 +887,8 @@ public class TableCollectionTest extends TestCase {
       return table.rowMap();
     }
 
-    void populateTable(Table<String, Integer, Character> table) {
+    // `protected` to work around b/320650932 / KT-67447 runtime crash
+    protected final void populateTable(Table<String, Integer, Character> table) {
       table.put("foo", 1, 'a');
       table.put("bar", 1, 'b');
       table.put("foo", 3, 'c');

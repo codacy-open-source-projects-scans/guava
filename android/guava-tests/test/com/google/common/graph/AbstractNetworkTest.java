@@ -25,9 +25,7 @@ import static com.google.common.graph.TestUtil.sanityCheckSet;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 import static java.util.concurrent.Executors.newFixedThreadPool;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
@@ -38,7 +36,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,6 +58,7 @@ import org.junit.Test;
  * TODO(user): Make this class generic (using <N, E>) for all node and edge types.
  * TODO(user): Differentiate between directed and undirected edge strings.
  */
+@NullUnmarked
 public abstract class AbstractNetworkTest {
 
   Network<Integer, String> network;
@@ -185,8 +185,9 @@ public abstract class AbstractNetworkTest {
       for (N incidentNode : network.incidentNodes(edge)) {
         assertThat(network.nodes()).contains(incidentNode);
         for (E adjacentEdge : network.incidentEdges(incidentNode)) {
-          assertTrue(
-              edge.equals(adjacentEdge) || network.adjacentEdges(edge).contains(adjacentEdge));
+          assertThat(
+                  edge.equals(adjacentEdge) || network.adjacentEdges(edge).contains(adjacentEdge))
+              .isTrue();
         }
       }
     }
@@ -261,12 +262,14 @@ public abstract class AbstractNetworkTest {
       }
 
       for (N adjacentNode : sanityCheckSet(network.adjacentNodes(node))) {
-        assertTrue(
-            network.predecessors(node).contains(adjacentNode)
-                || network.successors(node).contains(adjacentNode));
-        assertTrue(
-            !network.edgesConnecting(node, adjacentNode).isEmpty()
-                || !network.edgesConnecting(adjacentNode, node).isEmpty());
+        assertThat(
+                network.predecessors(node).contains(adjacentNode)
+                    || network.successors(node).contains(adjacentNode))
+            .isTrue();
+        assertThat(
+                !network.edgesConnecting(node, adjacentNode).isEmpty()
+                    || !network.edgesConnecting(adjacentNode, node).isEmpty())
+            .isTrue();
       }
 
       for (N predecessor : sanityCheckSet(network.predecessors(node))) {
@@ -280,9 +283,10 @@ public abstract class AbstractNetworkTest {
       }
 
       for (E incidentEdge : sanityCheckSet(network.incidentEdges(node))) {
-        assertTrue(
-            network.inEdges(node).contains(incidentEdge)
-                || network.outEdges(node).contains(incidentEdge));
+        assertThat(
+                network.inEdges(node).contains(incidentEdge)
+                    || network.outEdges(node).contains(incidentEdge))
+            .isTrue();
         assertThat(network.edges()).contains(incidentEdge);
         assertThat(network.incidentNodes(incidentEdge)).contains(node);
       }
@@ -560,7 +564,7 @@ public abstract class AbstractNetworkTest {
   }
 
   @Test
-  public void hasEdgesConnecting_nodesNotInGraph() {
+  public void hasEdgeConnecting_nodesNotInGraph() {
     addNode(N1);
     addNode(N2);
     assertThat(network.hasEdgeConnecting(N1, NODE_NOT_IN_GRAPH)).isFalse();
@@ -621,7 +625,7 @@ public abstract class AbstractNetworkTest {
   public void addNode_newNode() {
     assume().that(graphIsMutable()).isTrue();
 
-    assertTrue(networkAsMutableNetwork.addNode(N1));
+    assertThat(networkAsMutableNetwork.addNode(N1)).isTrue();
     assertThat(networkAsMutableNetwork.nodes()).contains(N1);
   }
 
@@ -631,7 +635,7 @@ public abstract class AbstractNetworkTest {
 
     addNode(N1);
     ImmutableSet<Integer> nodes = ImmutableSet.copyOf(networkAsMutableNetwork.nodes());
-    assertFalse(networkAsMutableNetwork.addNode(N1));
+    assertThat(networkAsMutableNetwork.addNode(N1)).isFalse();
     assertThat(networkAsMutableNetwork.nodes()).containsExactlyElementsIn(nodes);
   }
 
@@ -641,8 +645,8 @@ public abstract class AbstractNetworkTest {
 
     addEdge(N1, N2, E12);
     addEdge(N4, N1, E41);
-    assertTrue(networkAsMutableNetwork.removeNode(N1));
-    assertFalse(networkAsMutableNetwork.removeNode(N1));
+    assertThat(networkAsMutableNetwork.removeNode(N1)).isTrue();
+    assertThat(networkAsMutableNetwork.removeNode(N1)).isFalse();
     assertThat(networkAsMutableNetwork.nodes()).containsExactly(N2, N4);
     assertThat(networkAsMutableNetwork.edges()).doesNotContain(E12);
     assertThat(networkAsMutableNetwork.edges()).doesNotContain(E41);
@@ -676,7 +680,7 @@ public abstract class AbstractNetworkTest {
 
     addNode(N1);
     ImmutableSet<Integer> nodes = ImmutableSet.copyOf(networkAsMutableNetwork.nodes());
-    assertFalse(networkAsMutableNetwork.removeNode(NODE_NOT_IN_GRAPH));
+    assertThat(networkAsMutableNetwork.removeNode(NODE_NOT_IN_GRAPH)).isFalse();
     assertThat(networkAsMutableNetwork.nodes()).containsExactlyElementsIn(nodes);
   }
 
@@ -734,8 +738,8 @@ public abstract class AbstractNetworkTest {
     assume().that(graphIsMutable()).isTrue();
 
     addEdge(N1, N2, E12);
-    assertTrue(networkAsMutableNetwork.removeEdge(E12));
-    assertFalse(networkAsMutableNetwork.removeEdge(E12));
+    assertThat(networkAsMutableNetwork.removeEdge(E12)).isTrue();
+    assertThat(networkAsMutableNetwork.removeEdge(E12)).isFalse();
     assertThat(networkAsMutableNetwork.edges()).doesNotContain(E12);
     assertThat(networkAsMutableNetwork.edgesConnecting(N1, N2)).isEmpty();
   }
@@ -748,7 +752,7 @@ public abstract class AbstractNetworkTest {
     addEdge(N1, N3, E13);
     addEdge(N1, N4, E14);
     assertThat(networkAsMutableNetwork.edges()).containsExactly(E12, E13, E14);
-    assertTrue(networkAsMutableNetwork.removeEdge(E13));
+    assertThat(networkAsMutableNetwork.removeEdge(E13)).isTrue();
     assertThat(networkAsMutableNetwork.edges()).containsExactly(E12, E14);
   }
 
@@ -758,7 +762,7 @@ public abstract class AbstractNetworkTest {
 
     addEdge(N1, N2, E12);
     ImmutableSet<String> edges = ImmutableSet.copyOf(networkAsMutableNetwork.edges());
-    assertFalse(networkAsMutableNetwork.removeEdge(EDGE_NOT_IN_GRAPH));
+    assertThat(networkAsMutableNetwork.removeEdge(EDGE_NOT_IN_GRAPH)).isFalse();
     assertThat(networkAsMutableNetwork.edges()).containsExactlyElementsIn(edges);
   }
 
@@ -770,7 +774,7 @@ public abstract class AbstractNetworkTest {
     @SuppressWarnings("unused")
     EndpointPair<Integer> unused =
         networkAsMutableNetwork.incidentNodes(E12); // ensure cache (if any) is populated
-    assertTrue(networkAsMutableNetwork.removeEdge(E12));
+    assertThat(networkAsMutableNetwork.removeEdge(E12)).isTrue();
     assertEdgeNotInGraphErrorMessage(
         assertThrows(
             IllegalArgumentException.class, () -> networkAsMutableNetwork.incidentNodes(E12)));
@@ -783,7 +787,7 @@ public abstract class AbstractNetworkTest {
 
     addEdge(N1, N2, E12);
     addEdge(N1, N2, E12_A);
-    assertTrue(networkAsMutableNetwork.removeEdge(E12_A));
+    assertThat(networkAsMutableNetwork.removeEdge(E12_A)).isTrue();
     assertThat(network.edgesConnecting(N1, N2)).containsExactly(E12);
   }
 
@@ -796,10 +800,10 @@ public abstract class AbstractNetworkTest {
     addEdge(N1, N1, E11);
     addEdge(N1, N1, E11_A);
     addEdge(N1, N2, E12);
-    assertTrue(networkAsMutableNetwork.removeEdge(E11_A));
+    assertThat(networkAsMutableNetwork.removeEdge(E11_A)).isTrue();
     assertThat(network.edgesConnecting(N1, N1)).containsExactly(E11);
     assertThat(network.edgesConnecting(N1, N2)).containsExactly(E12);
-    assertTrue(networkAsMutableNetwork.removeEdge(E11));
+    assertThat(networkAsMutableNetwork.removeEdge(E11)).isTrue();
     assertThat(network.edgesConnecting(N1, N1)).isEmpty();
     assertThat(network.edgesConnecting(N1, N2)).containsExactly(E12);
   }
@@ -812,7 +816,7 @@ public abstract class AbstractNetworkTest {
 
     int threadCount = 20;
     ExecutorService executor = newFixedThreadPool(threadCount);
-    final CyclicBarrier barrier = new CyclicBarrier(threadCount);
+    CyclicBarrier barrier = new CyclicBarrier(threadCount);
     ImmutableList.Builder<Future<?>> futures = ImmutableList.builder();
     for (int i = 0; i < threadCount; i++) {
       futures.add(

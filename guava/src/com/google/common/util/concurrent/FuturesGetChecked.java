@@ -35,13 +35,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /** Static methods used to implement {@link Futures#getChecked(Future, Class)}. */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 final class FuturesGetChecked {
   @CanIgnoreReturnValue
   @ParametricNullness
@@ -114,8 +112,7 @@ final class FuturesGetChecked {
    *
    * <p>Uses reflection to gracefully fall back to when certain implementations aren't available.
    */
-  @VisibleForTesting
-  static class GetCheckedTypeValidatorHolder {
+  private static final class GetCheckedTypeValidatorHolder {
     static final String CLASS_VALUE_VALIDATOR_NAME =
         GetCheckedTypeValidatorHolder.class.getName() + "$ClassValueValidator";
 
@@ -267,8 +264,7 @@ final class FuturesGetChecked {
       ORDERING_BY_CONSTRUCTOR_PARAMETER_LIST.onResultOf(
           constructor -> asList(constructor.getParameterTypes()));
 
-  @CheckForNull
-  private static <X> X newFromConstructor(Constructor<X> constructor, Throwable cause) {
+  private static <X> @Nullable X newFromConstructor(Constructor<X> constructor, Throwable cause) {
     Class<?>[] paramTypes = constructor.getParameterTypes();
     Object[] params = new Object[paramTypes.length];
     for (int i = 0; i < paramTypes.length; i++) {

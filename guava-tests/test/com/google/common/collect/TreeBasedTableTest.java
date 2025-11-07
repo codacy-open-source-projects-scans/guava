@@ -37,7 +37,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Test cases for {@link TreeBasedTable}.
@@ -45,11 +46,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jared Levy
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class TreeBasedTableTest extends AbstractTableTest<Character> {
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(TreeBasedTableTest.class);
@@ -153,6 +155,7 @@ public class TreeBasedTableTest extends AbstractTableTest<Character> {
     assertEquals("[b, a, c]", table.values().toString());
   }
 
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testRowComparator() {
     sortedTable = TreeBasedTable.create();
     assertSame(Ordering.natural(), sortedTable.rowComparator());

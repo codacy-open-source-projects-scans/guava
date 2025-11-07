@@ -19,11 +19,10 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 import static com.google.common.base.Strings.lenientFormat;
-import static java.lang.Float.NEGATIVE_INFINITY;
-import static java.lang.Float.POSITIVE_INFINITY;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.errorprone.annotations.InlineMe;
 import java.io.Serializable;
@@ -34,7 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.RandomAccess;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code float} primitives, that are not already found in
@@ -46,32 +45,28 @@ import javax.annotation.CheckForNull;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Floats extends FloatsMethodsForWeb {
   private Floats() {}
 
   /**
    * The number of bytes required to represent a primitive {@code float} value.
    *
-   * <p><b>Java 8+ users:</b> use {@link Float#BYTES} instead.
+   * <p>Prefer {@link Float#BYTES} instead.
    *
    * @since 10.0
    */
-  public static final int BYTES = Float.SIZE / Byte.SIZE;
+  public static final int BYTES = Float.BYTES;
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Float)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Float#hashCode(float)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Float#hashCode(float)}.
    *
    * @param value a primitive {@code float} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Float.hashCode(value)")
   public static int hashCode(float value) {
-    // TODO(kevinb): is there a better way, that's still gwt-safe?
-    return ((Float) value).hashCode();
+    return Float.hashCode(value);
   }
 
   /**
@@ -96,12 +91,13 @@ public final class Floats extends FloatsMethodsForWeb {
    * Returns {@code true} if {@code value} represents a real number. This is equivalent to, but not
    * necessarily implemented as, {@code !(Float.isInfinite(value) || Float.isNaN(value))}.
    *
-   * <p><b>Java 8+ users:</b> use {@link Float#isFinite(float)} instead.
+   * <p>Prefer {@link Float#isFinite(float)} instead.
    *
    * @since 10.0
    */
+  @InlineMe(replacement = "Float.isFinite(value)")
   public static boolean isFinite(float value) {
-    return NEGATIVE_INFINITY < value && value < POSITIVE_INFINITY;
+    return Float.isFinite(value);
   }
 
   /**
@@ -318,7 +314,7 @@ public final class Floats extends FloatsMethodsForWeb {
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   /**
@@ -577,8 +573,7 @@ public final class Floats extends FloatsMethodsForWeb {
     return new FloatArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class FloatArrayAsList extends AbstractList<Float>
+  private static final class FloatArrayAsList extends AbstractList<Float>
       implements RandomAccess, Serializable {
     final float[] array;
     final int start;
@@ -611,13 +606,13 @@ public final class Floats extends FloatsMethodsForWeb {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Float) && Floats.indexOf(array, (Float) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Float) {
         int i = Floats.indexOf(array, (Float) target, start, end);
@@ -629,7 +624,7 @@ public final class Floats extends FloatsMethodsForWeb {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Float) {
         int i = Floats.lastIndexOf(array, (Float) target, start, end);
@@ -660,7 +655,7 @@ public final class Floats extends FloatsMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -684,7 +679,7 @@ public final class Floats extends FloatsMethodsForWeb {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Floats.hashCode(array[i]);
+        result = 31 * result + Float.hashCode(array[i]);
       }
       return result;
     }
@@ -703,7 +698,7 @@ public final class Floats extends FloatsMethodsForWeb {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -724,8 +719,7 @@ public final class Floats extends FloatsMethodsForWeb {
    * @since 14.0
    */
   @GwtIncompatible // regular expressions
-  @CheckForNull
-  public static Float tryParse(String string) {
+  public static @Nullable Float tryParse(String string) {
     if (Doubles.FLOATING_POINT_PATTERN.matcher(string).matches()) {
       // TODO(lowasser): could be potentially optimized, but only with
       // extensive testing

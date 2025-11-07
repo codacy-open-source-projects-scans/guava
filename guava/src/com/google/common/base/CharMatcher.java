@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkPositionIndex;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.errorprone.annotations.InlineMe;
+import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -60,8 +62,7 @@ import java.util.BitSet;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public abstract class CharMatcher implements Predicate<Character> {
   /*
    *           N777777777NO
@@ -293,7 +294,7 @@ public abstract class CharMatcher implements Predicate<Character> {
   // Static factories
 
   /** Returns a {@code char} matcher that matches only one specified BMP character. */
-  public static CharMatcher is(final char match) {
+  public static CharMatcher is(char match) {
     return new Is(match);
   }
 
@@ -302,7 +303,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * <p>To negate another {@code CharMatcher}, use {@link #negate()}.
    */
-  public static CharMatcher isNot(final char match) {
+  public static CharMatcher isNot(char match) {
     return new IsNot(match);
   }
 
@@ -310,7 +311,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a {@code char} matcher that matches any BMP character present in the given character
    * sequence. Returns a bogus matcher if the sequence contains supplementary characters.
    */
-  public static CharMatcher anyOf(final CharSequence sequence) {
+  public static CharMatcher anyOf(CharSequence sequence) {
     switch (sequence.length()) {
       case 0:
         return none();
@@ -340,7 +341,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    *
    * @throws IllegalArgumentException if {@code endInclusive < startInclusive}
    */
-  public static CharMatcher inRange(final char startInclusive, final char endInclusive) {
+  public static CharMatcher inRange(char startInclusive, char endInclusive) {
     return new InRange(startInclusive, endInclusive);
   }
 
@@ -348,7 +349,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a matcher with identical behavior to the given {@link Character}-based predicate, but
    * which operates on primitive {@code char} instances instead.
    */
-  public static CharMatcher forPredicate(final Predicate<? super Character> predicate) {
+  public static CharMatcher forPredicate(Predicate<? super Character> predicate) {
     return predicate instanceof CharMatcher ? (CharMatcher) predicate : new ForPredicate(predicate);
   }
 
@@ -390,12 +391,12 @@ public abstract class CharMatcher implements Predicate<Character> {
 
   /**
    * Returns a {@code char} matcher functionally equivalent to this one, but which may be faster to
-   * query than the original; your mileage may vary. Precomputation takes time and is likely to be
-   * worthwhile only if the precomputed matcher is queried many thousands of times.
+   * query than the original; your mileage may vary. Precomputation takes time and requires more
+   * memory, so it is only likely to be worthwhile if the precomputed matcher is queried very often.
    *
    * <p>This method has no effect (returns {@code this}) when called in GWT: it's unclear whether a
-   * precomputed matcher is faster, but it certainly consumes more memory, which doesn't seem like a
-   * worthwhile tradeoff in a browser.
+   * precomputed matcher is faster, but it certainly would consume more memory (which doesn't seem
+   * like a worthwhile tradeoff in a browser).
    */
   public CharMatcher precomputed() {
     return Platform.precomputeCharMatcher(this);
@@ -415,7 +416,7 @@ public abstract class CharMatcher implements Predicate<Character> {
    */
   @GwtIncompatible // SmallCharMatcher
   CharMatcher precomputedInternal() {
-    final BitSet table = new BitSet();
+    BitSet table = new BitSet();
     setBits(table);
     int totalCharacters = table.cardinality();
     if (totalCharacters * 2 <= DISTINCT_CHARS) {
@@ -425,7 +426,7 @@ public abstract class CharMatcher implements Predicate<Character> {
       table.flip(Character.MIN_VALUE, Character.MAX_VALUE + 1);
       int negatedCharacters = DISTINCT_CHARS - totalCharacters;
       String suffix = ".negate()";
-      final String description = toString();
+      String description = toString();
       String negatedDescription =
           description.endsWith(suffix)
               ? description.substring(0, description.length() - suffix.length())
@@ -608,9 +609,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a string containing all non-matching characters of a character sequence, in order. For
    * example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.is('a').removeFrom("bazaar")
-   * }</pre>
+   * }
    *
    * ... returns {@code "bzr"}.
    */
@@ -647,9 +648,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a string containing all matching BMP characters of a character sequence, in order. For
    * example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.is('a').retainFrom("bazaar")
-   * }</pre>
+   * }
    *
    * ... returns {@code "aaa"}.
    */
@@ -661,9 +662,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a string copy of the input character sequence, with each matching BMP character
    * replaced by a given replacement character. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.is('a').replaceFrom("radar", 'o')
-   * }</pre>
+   * }
    *
    * ... returns {@code "rodor"}.
    *
@@ -696,9 +697,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a string copy of the input character sequence, with each matching BMP character
    * replaced by a given replacement sequence. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.is('a').replaceFrom("yaha", "oo")
-   * }</pre>
+   * }
    *
    * ... returns {@code "yoohoo"}.
    *
@@ -744,17 +745,17 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a substring of the input character sequence that omits all matching BMP characters from
    * the beginning and from the end of the string. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.anyOf("ab").trimFrom("abacatbab")
-   * }</pre>
+   * }
    *
    * ... returns {@code "cat"}.
    *
    * <p>Note that:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.inRange('\0', ' ').trimFrom(str)
-   * }</pre>
+   * }
    *
    * ... is equivalent to {@link String#trim()}.
    */
@@ -781,9 +782,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a substring of the input character sequence that omits all matching BMP characters from
    * the beginning of the string. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.anyOf("ab").trimLeadingFrom("abacatbab")
-   * }</pre>
+   * }
    *
    * ... returns {@code "catbab"}.
    */
@@ -801,9 +802,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a substring of the input character sequence that omits all matching BMP characters from
    * the end of the string. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.anyOf("ab").trimTrailingFrom("abacatbab")
-   * }</pre>
+   * }
    *
    * ... returns {@code "abacat"}.
    */
@@ -821,9 +822,9 @@ public abstract class CharMatcher implements Predicate<Character> {
    * Returns a string copy of the input character sequence, with each group of consecutive matching
    * BMP characters replaced by a single replacement character. For example:
    *
-   * <pre>{@code
+   * {@snippet :
    * CharMatcher.anyOf("eko").collapseFrom("bookkeeper", '-')
-   * }</pre>
+   * }
    *
    * ... returns {@code "b-p-r"}.
    *
@@ -906,9 +907,30 @@ public abstract class CharMatcher implements Predicate<Character> {
    * @deprecated Provided only to satisfy the {@link Predicate} interface; use {@link #matches}
    *     instead.
    */
+  @InlineMe(replacement = "this.matches(character)")
   @Deprecated
   @Override
+  // We can't compatibly make this `final` now.
+  @InlineMeValidationDisabled(
+      "While apply() is not final, the inlining is still safe because all known overrides of"
+          + " apply() call matches().")
   public boolean apply(Character character) {
+    return matches(character);
+  }
+
+  /**
+   * @deprecated Provided only to satisfy the {@link java.util.function.Predicate} interface; use
+   *     {@link #matches} instead.
+   * @since 21.0
+   */
+  @InlineMe(replacement = "this.matches(character)")
+  @Deprecated
+  @Override
+  // We can't compatibly make this `final` now.
+  @InlineMeValidationDisabled(
+      "While test() is not final, the inlining is still safe because all known overrides of test()"
+          + " call matches().")
+  public boolean test(Character character) {
     return matches(character);
   }
 
@@ -1569,7 +1591,7 @@ public abstract class CharMatcher implements Predicate<Character> {
 
     @Override
     public String toString() {
-      return "CharMatcher.and(" + first + ", " + second + ")";
+      return first + ".and(" + second + ")";
     }
   }
 
@@ -1598,7 +1620,7 @@ public abstract class CharMatcher implements Predicate<Character> {
 
     @Override
     public String toString() {
-      return "CharMatcher.or(" + first + ", " + second + ")";
+      return first + ".or(" + second + ")";
     }
   }
 
@@ -1730,7 +1752,7 @@ public abstract class CharMatcher implements Predicate<Character> {
 
     private final char[] chars;
 
-    public AnyOf(CharSequence chars) {
+    AnyOf(CharSequence chars) {
       this.chars = chars.toString().toCharArray();
       Arrays.sort(this.chars);
     }
@@ -1804,12 +1826,6 @@ public abstract class CharMatcher implements Predicate<Character> {
     @Override
     public boolean matches(char c) {
       return predicate.apply(c);
-    }
-
-    @SuppressWarnings("deprecation") // intentional; deprecation is for callers primarily
-    @Override
-    public boolean apply(Character character) {
-      return predicate.apply(checkNotNull(character));
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.google.common.collect;
 
 import static com.google.common.collect.Maps.immutableEntry;
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -38,6 +39,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code EnumHashBiMap}.
@@ -45,7 +47,8 @@ import junit.framework.TestSuite;
  * @author Mike Bostock
  */
 @J2ktIncompatible // EnumHashBiMap
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class EnumHashBiMapTest extends TestCase {
   private enum Currency {
     DOLLAR,
@@ -63,6 +66,7 @@ public class EnumHashBiMapTest extends TestCase {
     UK
   }
 
+  @AndroidIncompatible // test-suite builders
   public static final class EnumHashBiMapGenerator implements TestBiMapGenerator<Country, String> {
     @SuppressWarnings("unchecked")
     @Override
@@ -109,6 +113,7 @@ public class EnumHashBiMapTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // suite
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTest(
@@ -172,7 +177,7 @@ public class EnumHashBiMapTest extends TestCase {
     assertEquals(bimap1, bimap2);
     bimap2.inverse().put("franc", Currency.FRANC);
     assertEquals("franc", bimap2.get(Currency.FRANC));
-    assertNull(bimap1.get(Currency.FRANC));
+    assertThat(bimap1.get(Currency.FRANC)).isNull();
     assertFalse(bimap2.equals(bimap1));
 
     /* Test that it can be empty. */
@@ -191,7 +196,7 @@ public class EnumHashBiMapTest extends TestCase {
     assertEquals(bimap1, bimap2);
     bimap2.inverse().put("franc", Currency.FRANC);
     assertEquals("franc", bimap2.get(Currency.FRANC));
-    assertNull(bimap1.get(Currency.FRANC));
+    assertThat(bimap1.get(Currency.FRANC)).isNull();
     assertFalse(bimap2.equals(bimap1));
 
     /* Test that it can be empty. */
@@ -221,9 +226,9 @@ public class EnumHashBiMapTest extends TestCase {
     assertEquals(3, uniqueEntries.size());
   }
 
+  @GwtIncompatible
   @J2ktIncompatible
-  @GwtIncompatible // serialize
-  public void testSerializable() {
+    public void testSerializable() {
     SerializableTester.reserializeAndAssert(EnumHashBiMap.create(Currency.class));
   }
 

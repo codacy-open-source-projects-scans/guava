@@ -21,6 +21,7 @@ import static java.util.Collections.sort;
 import com.google.common.annotations.GwtCompatible;
 import java.util.List;
 import java.util.SortedSet;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Create string sets for testing collections that are sorted by natural ordering.
@@ -28,7 +29,7 @@ import java.util.SortedSet;
  * @author Jared Levy
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
+@NullMarked
 public abstract class TestStringSortedSetGenerator extends TestStringSetGenerator
     implements TestSortedSetGenerator<String> {
 
@@ -41,6 +42,12 @@ public abstract class TestStringSortedSetGenerator extends TestStringSetGenerato
   protected abstract SortedSet<String> create(String[] elements);
 
   /** Sorts the elements by their natural ordering. */
+  /*
+   * While the current implementation returns `this`, that's not something we mean to guarantee.
+   * Callers of TestContainerGenerator.order need to be prepared for implementations to return a new
+   * collection.
+   */
+  @SuppressWarnings("CanIgnoreReturnValueSuggester")
   @Override
   public List<String> order(List<String> insertionOrder) {
     sort(insertionOrder);

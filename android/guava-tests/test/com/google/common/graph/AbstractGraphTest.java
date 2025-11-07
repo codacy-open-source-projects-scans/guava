@@ -27,6 +27,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.collect.ImmutableSet;
 import java.util.HashSet;
 import java.util.Set;
+import org.jspecify.annotations.NullUnmarked;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,7 @@ import org.junit.Test;
  * TODO(user): Make this class generic (using <N, E>) for all node and edge types.
  * TODO(user): Differentiate between directed and undirected edge strings.
  */
+@NullUnmarked
 public abstract class AbstractGraphTest {
 
   Graph<Integer> graph;
@@ -118,6 +120,17 @@ public abstract class AbstractGraphTest {
     int nodeStart = graphString.indexOf("nodes:");
     int edgeStart = graphString.indexOf("edges:");
     String nodeString = graphString.substring(nodeStart, edgeStart);
+
+    Network<N, EndpointPair<N>> asNetwork = graph.asNetwork();
+    // Don't call AbstractNetworkTest.validateNetwork(asNetwork).  Mutual recursion.
+    assertThat(graph.nodes()).isEqualTo(asNetwork.nodes());
+    assertThat(graph.edges()).hasSize(asNetwork.edges().size());
+    assertThat(graph.nodeOrder()).isEqualTo(asNetwork.nodeOrder());
+    assertThat(graph.isDirected()).isEqualTo(asNetwork.isDirected());
+    assertThat(graph.allowsSelfLoops()).isEqualTo(asNetwork.allowsSelfLoops());
+    assertThat(asNetwork.edgeOrder()).isEqualTo(ElementOrder.unordered());
+    assertThat(asNetwork.allowsParallelEdges()).isFalse();
+    assertThat(asNetwork.asGraph()).isEqualTo(graph);
 
     Set<EndpointPair<N>> allEndpointPairs = new HashSet<>();
 

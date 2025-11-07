@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.immutableEntry;
+import static com.google.common.collect.Range.rangeLexOrdering;
 import static java.util.Collections.sort;
 
 import com.google.common.annotations.GwtIncompatible;
@@ -30,6 +31,7 @@ import com.google.errorprone.annotations.DoNotMock;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,8 +39,7 @@ import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collector;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link RangeMap} whose contents will never change, with many other important properties
@@ -48,11 +49,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @since 14.0
  */
 @GwtIncompatible // NavigableMap
-@ElementTypesAreNonnullByDefault
 public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K, V>, Serializable {
 
   private static final ImmutableRangeMap<Comparable<?>, Object> EMPTY =
-      new ImmutableRangeMap<>(ImmutableList.<Range<Comparable<?>>>of(), ImmutableList.of());
+      new ImmutableRangeMap<>(ImmutableList.of(), ImmutableList.of());
 
   /**
    * Returns a {@code Collector} that accumulates the input elements into a new {@code
@@ -113,7 +113,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
     private final List<Entry<Range<K>, V>> entries;
 
     public Builder() {
-      this.entries = Lists.newArrayList();
+      this.entries = new ArrayList<>();
     }
 
     /**
@@ -180,8 +180,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  @CheckForNull
-  public V get(K key) {
+  public @Nullable V get(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,
@@ -198,8 +197,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  @CheckForNull
-  public Entry<Range<K>, V> getEntry(K key) {
+  public @Nullable Entry<Range<K>, V> getEntry(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,
@@ -302,7 +300,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   @DoNotCall("Always throws UnsupportedOperationException")
   public final void merge(
       Range<K> range,
-      @CheckForNull V value,
+      @Nullable V value,
       BiFunction<? super V, ? super @Nullable V, ? extends @Nullable V> remappingFunction) {
     throw new UnsupportedOperationException();
   }
@@ -313,7 +311,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
       return ImmutableMap.of();
     }
     RegularImmutableSortedSet<Range<K>> rangeSet =
-        new RegularImmutableSortedSet<>(ranges, Range.<K>rangeLexOrdering());
+        new RegularImmutableSortedSet<>(ranges, rangeLexOrdering());
     return new ImmutableSortedMap<>(rangeSet, values);
   }
 
@@ -328,7 +326,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public ImmutableRangeMap<K, V> subRangeMap(final Range<K> range) {
+  public ImmutableRangeMap<K, V> subRangeMap(Range<K> range) {
     if (checkNotNull(range).isEmpty()) {
       return ImmutableRangeMap.of();
     } else if (ranges.isEmpty() || range.encloses(span())) {
@@ -351,8 +349,8 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
     if (lowerIndex >= upperIndex) {
       return ImmutableRangeMap.of();
     }
-    final int off = lowerIndex;
-    final int len = upperIndex - lowerIndex;
+    int off = lowerIndex;
+    int len = upperIndex - lowerIndex;
     ImmutableList<Range<K>> subRanges =
         new ImmutableList<Range<K>>() {
           @Override
@@ -383,7 +381,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
             return super.writeReplace();
           }
         };
-    final ImmutableRangeMap<K, V> outer = this;
+    ImmutableRangeMap<K, V> outer = this;
     return new ImmutableRangeMap<K, V>(subRanges, values.subList(lowerIndex, upperIndex)) {
       @Override
       public ImmutableRangeMap<K, V> subRangeMap(Range<K> subRange) {
@@ -410,7 +408,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public boolean equals(@CheckForNull Object o) {
+  public boolean equals(@Nullable Object o) {
     if (o instanceof RangeMap) {
       RangeMap<?, ?> rangeMap = (RangeMap<?, ?>) o;
       return asMapOfRanges().equals(rangeMap.asMapOfRanges());
@@ -427,7 +425,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
    * This class is used to serialize ImmutableRangeMap instances. Serializes the {@link
    * #asMapOfRanges()} form.
    */
-  private static class SerializedForm<K extends Comparable<?>, V> implements Serializable {
+  private static final class SerializedForm<K extends Comparable<?>, V> implements Serializable {
 
     private final ImmutableMap<Range<K>, V> mapOfRanges;
 
@@ -451,7 +449,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
       return builder.build();
     }
 
-    private static final long serialVersionUID = 0;
+    @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   Object writeReplace() {
@@ -463,5 +461,5 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
     throw new InvalidObjectException("Use SerializedForm");
   }
 
-  private static final long serialVersionUID = 0;
+  @J2ktIncompatible private static final long serialVersionUID = 0;
 }

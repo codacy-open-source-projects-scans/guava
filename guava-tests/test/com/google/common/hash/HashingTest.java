@@ -16,6 +16,7 @@
 
 package com.google.common.hash;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThrows;
@@ -23,7 +24,6 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Table.Cell;
 import com.google.common.primitives.Ints;
 import com.google.common.testing.EqualsTester;
@@ -32,11 +32,13 @@ import com.google.common.util.concurrent.AtomicLongMap;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Unit tests for {@link Hashing}.
@@ -47,6 +49,7 @@ import junit.framework.TestCase;
  * @author Dimitris Andreou
  * @author Kurt Alfred Kluever
  */
+@NullUnmarked
 public class HashingTest extends TestCase {
   public void testMd5() {
     HashTestUtils.checkAvalanche(Hashing.md5(), 100, 0.4);
@@ -140,7 +143,7 @@ public class HashingTest extends TestCase {
   public void testGoodFastHash() {
     for (int i = 1; i < 200; i += 17) {
       HashFunction hasher = Hashing.goodFastHash(i);
-      assertTrue(hasher.bits() >= i);
+      assertThat(hasher.bits()).isAtLeast(i);
       HashTestUtils.assertInvariants(hasher);
     }
   }
@@ -202,7 +205,7 @@ public class HashingTest extends TestCase {
     }
     for (int shard = 2; shard <= MAX_SHARDS; shard++) {
       // Rough: don't exceed 1.2x the expected number of remaps by more than 20
-      assertTrue(map.get(shard) <= 1.2 * ITERS / shard + 20);
+      assertThat((double) map.get(shard)).isAtMost(1.2 * ITERS / shard + 20);
     }
   }
 
@@ -290,7 +293,7 @@ public class HashingTest extends TestCase {
 
   public void testCombineOrdered_randomHashCodes() {
     Random random = new Random(7);
-    List<HashCode> hashCodes = Lists.newArrayList();
+    List<HashCode> hashCodes = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       hashCodes.add(HashCode.fromLong(random.nextLong()));
     }
@@ -331,7 +334,7 @@ public class HashingTest extends TestCase {
 
   public void testCombineUnordered_randomHashCodes() {
     Random random = new Random(RANDOM_SEED);
-    List<HashCode> hashCodes = Lists.newArrayList();
+    List<HashCode> hashCodes = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       hashCodes.add(HashCode.fromLong(random.nextLong()));
     }

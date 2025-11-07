@@ -21,6 +21,8 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.Maps.immutableEntry;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 
@@ -29,15 +31,15 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps.ViewCachingAbstractMap;
 import com.google.j2objc.annotations.WeakOuter;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of {@link Multimaps#filterEntries(Multimap, Predicate)}.
@@ -46,7 +48,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMultimap<K, V> implements FilteredMultimap<K, V> {
   final Multimap<K, V> unfiltered;
@@ -99,20 +100,19 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
   }
 
   @Override
-  public boolean containsKey(@CheckForNull Object key) {
+  public boolean containsKey(@Nullable Object key) {
     return asMap().get(key) != null;
   }
 
   @Override
-  public Collection<V> removeAll(@CheckForNull Object key) {
+  public Collection<V> removeAll(@Nullable Object key) {
     return MoreObjects.firstNonNull(asMap().remove(key), unmodifiableEmptyCollection());
   }
 
+  @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
   Collection<V> unmodifiableEmptyCollection() {
     // These return false, rather than throwing a UOE, on remove calls.
-    return (unfiltered instanceof SetMultimap)
-        ? Collections.<V>emptySet()
-        : Collections.<V>emptyList();
+    return (unfiltered instanceof SetMultimap) ? emptySet() : emptyList();
   }
 
   @Override
@@ -171,9 +171,9 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
   }
 
   @WeakOuter
-  class AsMap extends ViewCachingAbstractMap<K, Collection<V>> {
+  private final class AsMap extends ViewCachingAbstractMap<K, Collection<V>> {
     @Override
-    public boolean containsKey(@CheckForNull Object key) {
+    public boolean containsKey(@Nullable Object key) {
       return get(key) != null;
     }
 
@@ -183,8 +183,7 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
     }
 
     @Override
-    @CheckForNull
-    public Collection<V> get(@CheckForNull Object key) {
+    public @Nullable Collection<V> get(@Nullable Object key) {
       Collection<V> result = unfiltered.asMap().get(key);
       if (result == null) {
         return null;
@@ -196,15 +195,14 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
     }
 
     @Override
-    @CheckForNull
-    public Collection<V> remove(@CheckForNull Object key) {
+    public @Nullable Collection<V> remove(@Nullable Object key) {
       Collection<V> collection = unfiltered.asMap().get(key);
       if (collection == null) {
         return null;
       }
       @SuppressWarnings("unchecked") // it's definitely equal to a K
       K k = (K) key;
-      List<V> result = Lists.newArrayList();
+      List<V> result = new ArrayList<>();
       Iterator<V> itr = collection.iterator();
       while (itr.hasNext()) {
         V v = itr.next();
@@ -216,7 +214,7 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
       if (result.isEmpty()) {
         return null;
       } else if (unfiltered instanceof SetMultimap) {
-        return unmodifiableSet(Sets.newLinkedHashSet(result));
+        return unmodifiableSet(new LinkedHashSet<>(result));
       } else {
         return unmodifiableList(result);
       }
@@ -225,23 +223,23 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
     @Override
     Set<K> createKeySet() {
       @WeakOuter
-      class KeySetImpl extends Maps.KeySet<K, Collection<V>> {
+      final class KeySetImpl extends Maps.KeySet<K, Collection<V>> {
         KeySetImpl() {
           super(AsMap.this);
         }
 
         @Override
         public boolean removeAll(Collection<?> c) {
-          return removeEntriesIf(Maps.<K>keyPredicateOnEntries(in(c)));
+          return removeEntriesIf(Maps.keyPredicateOnEntries(in(c)));
         }
 
         @Override
         public boolean retainAll(Collection<?> c) {
-          return removeEntriesIf(Maps.<K>keyPredicateOnEntries(not(in(c))));
+          return removeEntriesIf(Maps.keyPredicateOnEntries(not(in(c))));
         }
 
         @Override
-        public boolean remove(@CheckForNull Object o) {
+        public boolean remove(@Nullable Object o) {
           return AsMap.this.remove(o) != null;
         }
       }
@@ -251,7 +249,7 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
     @Override
     Set<Entry<K, Collection<V>>> createEntrySet() {
       @WeakOuter
-      class EntrySetImpl extends Maps.EntrySet<K, Collection<V>> {
+      final class EntrySetImpl extends Maps.EntrySet<K, Collection<V>> {
         @Override
         Map<K, Collection<V>> map() {
           return AsMap.this;
@@ -264,8 +262,7 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
                 unfiltered.asMap().entrySet().iterator();
 
             @Override
-            @CheckForNull
-            protected Entry<K, Collection<V>> computeNext() {
+            protected @Nullable Entry<K, Collection<V>> computeNext() {
               while (backingIterator.hasNext()) {
                 Entry<K, Collection<V>> entry = backingIterator.next();
                 K key = entry.getKey();
@@ -301,13 +298,18 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
     @Override
     Collection<Collection<V>> createValues() {
       @WeakOuter
-      class ValuesImpl extends Maps.Values<K, Collection<V>> {
+      final class ValuesImpl extends Maps.Values<K, Collection<V>> {
         ValuesImpl() {
           super(AsMap.this);
         }
 
         @Override
-        public boolean remove(@CheckForNull Object o) {
+        /*
+         * For discussion of equality in Multimap value collections, see the suppression for
+         * UndefinedEquals in AbstractMapBasedMultimap.
+         */
+        @SuppressWarnings("UndefinedEquals")
+        public boolean remove(@Nullable Object o) {
           if (o instanceof Collection) {
             Collection<?> c = (Collection<?>) o;
             Iterator<Entry<K, Collection<V>>> entryIterator =
@@ -332,12 +334,12 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
 
         @Override
         public boolean removeAll(Collection<?> c) {
-          return removeEntriesIf(Maps.<Collection<V>>valuePredicateOnEntries(in(c)));
+          return removeEntriesIf(Maps.valuePredicateOnEntries(in(c)));
         }
 
         @Override
         public boolean retainAll(Collection<?> c) {
-          return removeEntriesIf(Maps.<Collection<V>>valuePredicateOnEntries(not(in(c))));
+          return removeEntriesIf(Maps.valuePredicateOnEntries(not(in(c))));
         }
       }
       return new ValuesImpl();
@@ -350,13 +352,13 @@ class FilteredEntryMultimap<K extends @Nullable Object, V extends @Nullable Obje
   }
 
   @WeakOuter
-  class Keys extends Multimaps.Keys<K, V> {
+  final class Keys extends Multimaps.Keys<K, V> {
     Keys() {
       super(FilteredEntryMultimap.this);
     }
 
     @Override
-    public int remove(@CheckForNull Object key, int occurrences) {
+    public int remove(@Nullable Object key, int occurrences) {
       checkNonnegative(occurrences, "occurrences");
       if (occurrences == 0) {
         return count(key);

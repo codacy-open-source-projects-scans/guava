@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkPositionIndexes;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
@@ -28,15 +29,10 @@ import java.io.Writer;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Provides utility methods for working with character streams.
- *
- * <p>Some of the methods in this class take arguments with a generic type of {@code Readable &
- * Closeable}. A {@link java.io.Reader} implements both of those interfaces. Similarly for {@code
- * Appendable & Closeable} and {@link java.io.Writer}.
  *
  * @author Chris Nokleberg
  * @author Bin Zhu
@@ -45,7 +41,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 public final class CharStreams {
 
   // 2K chars (4K bytes)
@@ -157,6 +152,9 @@ public final class CharStreams {
    * Reads all characters from a {@link Readable} object into a {@link String}. Does not close the
    * {@code Readable}.
    *
+   * <p><b>Java 25+ users:</b> If the input is a {@link Reader}, prefer {@link
+   * Reader#readAllAsString()}.
+   *
    * @param r the object to read from
    * @return a string containing all the characters
    * @throws IOException if an I/O error occurs
@@ -190,6 +188,15 @@ public final class CharStreams {
    * <p>Does not close the {@code Readable}. If reading files or resources you should use the {@link
    * Files#readLines} and {@link Resources#readLines} methods.
    *
+   * <p>This method prioritizes convenience over performance: It reads the entire input into memory
+   * immediately. To instead read and process lines individually, use an alternative like {@link
+   * BufferedReader#lines()}.
+   *
+   * <p><b>Java 25+ users:</b> If the input is a {@link Reader}, you may prefer {@link
+   * Reader#readAllLines()}. The two may have different performance characteristics for different
+   * {@link Reader} classes and Java versions, but both methods read the entire input into memory
+   * immediately, so we discourage use of both when memory usage is a concern.
+   *
    * @param r the object to read from
    * @return a mutable {@link List} containing all the lines
    * @throws IOException if an I/O error occurs
@@ -209,6 +216,10 @@ public final class CharStreams {
    * or all lines have been read and returning the result produced by the processor. Does not close
    * {@code readable}. Note that this method may not fully consume the contents of {@code readable}
    * if the processor stops processing early.
+   *
+   * <p><b>Users who can use {@code Stream}:</b> If your input is a {@link Reader}, consider
+   * wrapping it with a {@link BufferedReader} and operating on the {@link java.util.stream.Stream}
+   * of lines returned by {@link BufferedReader#lines()}.
    *
    * @throws IOException if an I/O error occurs
    * @since 14.0
@@ -271,6 +282,11 @@ public final class CharStreams {
   /**
    * Returns a {@link Writer} that simply discards written chars.
    *
+   * <p><b>Java 11+ users:</b> use {@link Writer#nullWriter()} instead. Note that the {@link
+   * CharStreams} method returns a singleton writer whose {@code close} method has no effect, while
+   * the {@link Writer#nullWriter()} method returns a new instance whose methods throw after the
+   * instance is {@link Writer#close() closed}.
+   *
    * @since 15.0
    */
   public static Writer nullWriter() {
@@ -305,12 +321,12 @@ public final class CharStreams {
     }
 
     @Override
-    public Writer append(@CheckForNull CharSequence csq) {
+    public Writer append(@Nullable CharSequence csq) {
       return this;
     }
 
     @Override
-    public Writer append(@CheckForNull CharSequence csq, int start, int end) {
+    public Writer append(@Nullable CharSequence csq, int start, int end) {
       checkPositionIndexes(start, end, csq == null ? "null".length() : csq.length());
       return this;
     }

@@ -28,11 +28,12 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /** Tests for {@link AbstractSequentialIterator}. */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class AbstractSequentialIteratorTest extends TestCase {
   @GwtIncompatible // Too slow
   public void testDoublerExhaustive() {
@@ -123,7 +124,7 @@ public class AbstractSequentialIteratorTest extends TestCase {
     assertThrows(SomeUncheckedException.class, broken::next);
   }
 
-  private static Iterator<Integer> newDoubler(int first, final int last) {
+  private static Iterator<Integer> newDoubler(int first, int last) {
     return new AbstractSequentialIterator<Integer>(first) {
       @Override
       protected @Nullable Integer computeNext(Integer previous) {
@@ -134,7 +135,7 @@ public class AbstractSequentialIteratorTest extends TestCase {
 
   private static class EmptyAbstractSequentialIterator<T> extends AbstractSequentialIterator<T> {
 
-    public EmptyAbstractSequentialIterator() {
+    EmptyAbstractSequentialIterator() {
       super(null);
     }
 
@@ -146,7 +147,7 @@ public class AbstractSequentialIteratorTest extends TestCase {
 
   private static class BrokenAbstractSequentialIterator extends AbstractSequentialIterator<Object> {
 
-    public BrokenAbstractSequentialIterator() {
+    BrokenAbstractSequentialIterator() {
       super("UNUSED");
     }
 

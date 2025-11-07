@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiPredicate;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for {@link Multisets}.
@@ -42,8 +43,8 @@ import junit.framework.TestCase;
  * @author Jared Levy
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class MultisetsTest extends TestCase {
 
   /* See MultisetsImmutableEntryTest for immutableEntry() tests. */
@@ -254,7 +255,7 @@ public class MultisetsTest extends TestCase {
     assertThat(multiset).containsExactly("a", "c").inOrder();
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"deprecation", "InlineMeInliner"}) // test of a deprecated method
   public void testUnmodifiableMultisetShortCircuit() {
     Multiset<String> mod = HashMultiset.create();
     Multiset<String> unmod = unmodifiableMultiset(mod);

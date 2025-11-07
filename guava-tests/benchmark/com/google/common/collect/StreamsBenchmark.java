@@ -28,23 +28,27 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Test stream operation speed.
  *
  * @author Louis Wasserman
  */
+@NullUnmarked
 public class StreamsBenchmark {
   @Param({"1", "10", "100", "1000", "10000"})
   private int size;
 
+  // This is a benchmark of streams, including those from LinkedList.
+  @SuppressWarnings("JdkObsolete")
   enum CollectionType {
     ARRAY_LIST(ArrayList::new),
     LINKED_LIST(LinkedList::new);
 
     final Supplier<Collection<Object>> supplier;
 
-    private CollectionType(Supplier<Collection<Object>> supplier) {
+    CollectionType(Supplier<Collection<Object>> supplier) {
       this.supplier = supplier;
     }
   }

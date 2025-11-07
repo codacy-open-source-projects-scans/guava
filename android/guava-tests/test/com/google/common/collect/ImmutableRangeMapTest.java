@@ -24,6 +24,7 @@ import com.google.common.testing.SerializableTester;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for {@code ImmutableRangeMap}.
@@ -31,6 +32,7 @@ import junit.framework.TestCase;
  * @author Louis Wasserman
  */
 @GwtIncompatible // NavigableMap
+@NullUnmarked
 public class ImmutableRangeMapTest extends TestCase {
   private static final ImmutableList<Range<Integer>> RANGES;
   private static final int MIN_BOUND = 0;
@@ -67,7 +69,7 @@ public class ImmutableRangeMapTest extends TestCase {
 
   public void testBuilderRejectsEmptyRanges() {
     for (int i = MIN_BOUND; i <= MAX_BOUND; i++) {
-      final int ii = i;
+      int ii = i;
       ImmutableRangeMap.Builder<Integer, Integer> builder = ImmutableRangeMap.builder();
       assertThrows(IllegalArgumentException.class, () -> builder.put(Range.closedOpen(ii, ii), 1));
       assertThrows(IllegalArgumentException.class, () -> builder.put(Range.openClosed(ii, ii), 1));

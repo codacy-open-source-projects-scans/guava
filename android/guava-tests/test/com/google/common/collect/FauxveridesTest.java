@@ -18,7 +18,6 @@ package com.google.common.collect;
 
 import static com.google.common.collect.Lists.transform;
 import static com.google.common.collect.Sets.difference;
-import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
 import static java.util.Arrays.asList;
@@ -26,16 +25,18 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests that all {@code public static} methods "inherited" from superclasses are "overridden" in
@@ -44,6 +45,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @author Chris Povirk
  */
+@NullUnmarked
 public class FauxveridesTest extends TestCase {
   public void testImmutableBiMap() {
     doHasAllFauxveridesTest(ImmutableBiMap.class, ImmutableMap.class);
@@ -83,12 +85,16 @@ public class FauxveridesTest extends TestCase {
   }
 
   public void testImmutableSortedSetCopyOfIterable() {
+    // false positive: `new Object()` is not equal to `new Object()`
+    @SuppressWarnings("DistinctVarargsChecker")
     Set<Object> original = ImmutableSet.of(new Object(), new Object());
 
     assertThrows(ClassCastException.class, () -> ImmutableSortedSet.copyOf(original));
   }
 
   public void testImmutableSortedSetCopyOfIterator() {
+    // false positive: `new Object()` is not equal to `new Object()`
+    @SuppressWarnings("DistinctVarargsChecker")
     Set<Object> original = ImmutableSet.of(new Object(), new Object());
 
     assertThrows(ClassCastException.class, () -> ImmutableSortedSet.copyOf(original.iterator()));
@@ -116,7 +122,7 @@ public class FauxveridesTest extends TestCase {
 
   private static Set<MethodSignature> getPublicStaticMethodsBetween(
       Class<?> descendant, Class<?> ancestor) {
-    Set<MethodSignature> methods = newHashSet();
+    Set<MethodSignature> methods = new HashSet<>();
     for (Class<?> clazz : getClassesBetween(descendant, ancestor)) {
       methods.addAll(getPublicStaticMethods(clazz));
     }
@@ -124,7 +130,7 @@ public class FauxveridesTest extends TestCase {
   }
 
   private static Set<MethodSignature> getPublicStaticMethods(Class<?> clazz) {
-    Set<MethodSignature> publicStaticMethods = newHashSet();
+    Set<MethodSignature> publicStaticMethods = new HashSet<>();
 
     for (Method method : clazz.getDeclaredMethods()) {
       int modifiers = method.getModifiers();
@@ -138,7 +144,7 @@ public class FauxveridesTest extends TestCase {
 
   /** [descendant, ancestor) */
   private static Set<Class<?>> getClassesBetween(Class<?> descendant, Class<?> ancestor) {
-    Set<Class<?>> classes = newHashSet();
+    Set<Class<?>> classes = new HashSet<>();
 
     while (!descendant.equals(ancestor)) {
       classes.add(descendant);
@@ -179,7 +185,7 @@ public class FauxveridesTest extends TestCase {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(name, parameterTypes, typeSignature);
+      return Objects.hash(name, parameterTypes, typeSignature);
     }
 
     @Override
@@ -225,7 +231,7 @@ public class FauxveridesTest extends TestCase {
 
     @Override
     public String toString() {
-      return (parameterSignatures.isEmpty())
+      return parameterSignatures.isEmpty()
           ? ""
           : "<" + Joiner.on(", ").join(parameterSignatures) + "> ";
     }
@@ -261,7 +267,7 @@ public class FauxveridesTest extends TestCase {
 
     @Override
     public String toString() {
-      return (bounds.equals(ImmutableList.of(Object.class)))
+      return bounds.equals(ImmutableList.of(Object.class))
           ? name
           : name + " extends " + getTypesString(bounds);
     }

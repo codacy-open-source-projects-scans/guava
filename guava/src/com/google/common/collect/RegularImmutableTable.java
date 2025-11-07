@@ -26,7 +26,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An implementation of {@link ImmutableTable} holding an arbitrary number of cells.
@@ -34,7 +34,6 @@ import javax.annotation.CheckForNull;
  * @author Gregory Kick
  */
 @GwtCompatible
-@ElementTypesAreNonnullByDefault
 abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
   RegularImmutableTable() {}
 
@@ -42,7 +41,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
 
   @Override
   final ImmutableSet<Cell<R, C, V>> createCellSet() {
-    return isEmpty() ? ImmutableSet.<Cell<R, C, V>>of() : new CellSet();
+    return isEmpty() ? ImmutableSet.of() : new CellSet();
   }
 
   @WeakOuter
@@ -58,7 +57,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object object) {
+    public boolean contains(@Nullable Object object) {
       if (object instanceof Cell) {
         Cell<?, ?, ?> cell = (Cell<?, ?, ?>) object;
         Object value = RegularImmutableTable.this.get(cell.getRowKey(), cell.getColumnKey());
@@ -75,9 +74,9 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     // redeclare to help optimizers with b/310253115
     @SuppressWarnings("RedundantOverride")
     @Override
-    @J2ktIncompatible // serialization
-    @GwtIncompatible // serialization
-    Object writeReplace() {
+    @J2ktIncompatible
+    @GwtIncompatible
+        Object writeReplace() {
       return super.writeReplace();
     }
   }
@@ -86,7 +85,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
 
   @Override
   final ImmutableCollection<V> createValues() {
-    return isEmpty() ? ImmutableList.<V>of() : new Values();
+    return isEmpty() ? ImmutableList.of() : new Values();
   }
 
   @WeakOuter
@@ -109,17 +108,17 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
     // redeclare to help optimizers with b/310253115
     @SuppressWarnings("RedundantOverride")
     @Override
-    @J2ktIncompatible // serialization
-    @GwtIncompatible // serialization
-    Object writeReplace() {
+    @J2ktIncompatible
+    @GwtIncompatible
+        Object writeReplace() {
       return super.writeReplace();
     }
   }
 
   static <R, C, V> RegularImmutableTable<R, C, V> forCells(
       List<Cell<R, C, V>> cells,
-      @CheckForNull Comparator<? super R> rowComparator,
-      @CheckForNull Comparator<? super C> columnComparator) {
+      @Nullable Comparator<? super R> rowComparator,
+      @Nullable Comparator<? super C> columnComparator) {
     checkNotNull(cells);
     if (rowComparator != null || columnComparator != null) {
       /*
@@ -153,8 +152,8 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
 
   private static <R, C, V> RegularImmutableTable<R, C, V> forCellsInternal(
       Iterable<Cell<R, C, V>> cells,
-      @CheckForNull Comparator<? super R> rowComparator,
-      @CheckForNull Comparator<? super C> columnComparator) {
+      @Nullable Comparator<? super R> rowComparator,
+      @Nullable Comparator<? super C> columnComparator) {
     Set<R> rowSpaceBuilder = new LinkedHashSet<>();
     Set<C> columnSpaceBuilder = new LinkedHashSet<>();
     ImmutableList<Cell<R, C, V>> cellList = ImmutableList.copyOf(cells);
@@ -187,12 +186,14 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
         : new SparseImmutableTable<R, C, V>(cellList, rowSpace, columnSpace);
   }
 
-  /** @throws IllegalArgumentException if {@code existingValue} is not null. */
+  /**
+   * @throws IllegalArgumentException if {@code existingValue} is not null.
+   */
   /*
    * We could have declared this method 'static' but the additional compile-time checks achieved by
    * referencing the type variables seem worthwhile.
    */
-  final void checkNoDuplicate(R rowKey, C columnKey, @CheckForNull V existingValue, V newValue) {
+  final void checkNoDuplicate(R rowKey, C columnKey, @Nullable V existingValue, V newValue) {
     checkArgument(
         existingValue == null,
         "Duplicate key: (row=%s, column=%s), values: [%s, %s].",
@@ -204,7 +205,7 @@ abstract class RegularImmutableTable<R, C, V> extends ImmutableTable<R, C, V> {
 
   // redeclare to satisfy our test for b/310253115
   @Override
-  @J2ktIncompatible // serialization
-  @GwtIncompatible // serialization
-  abstract Object writeReplace();
+  @J2ktIncompatible
+  @GwtIncompatible
+    abstract Object writeReplace();
 }

@@ -22,8 +22,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Set;
+import org.jspecify.annotations.NullUnmarked;
 
 /** Utility methods used in various common.graph tests. */
+@NullUnmarked
 final class TestUtil {
   static final String ERROR_ELEMENT_NOT_IN_GRAPH = "not an element of this graph";
   static final String ERROR_NODE_NOT_IN_GRAPH =
@@ -43,7 +45,7 @@ final class TestUtil {
     assertThat(throwable).hasMessageThat().startsWith(NODE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_NOT_IN_GRAPH);
   }
-  
+
   static void assertEdgeNotInGraphErrorMessage(Throwable throwable) {
     assertThat(throwable).hasMessageThat().startsWith(EDGE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_NOT_IN_GRAPH);

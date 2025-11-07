@@ -17,6 +17,7 @@
 package com.google.common.collect;
 
 import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -27,14 +28,15 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Tests for {@link EvictingQueue}.
  *
  * @author Kurt Alfred Kluever
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
+@NullMarked
 public class EvictingQueueTest extends TestCase {
 
   public void testCreateWithNegativeSize() throws Exception {
@@ -56,8 +58,8 @@ public class EvictingQueueTest extends TestCase {
 
     assertThrows(NoSuchElementException.class, () -> queue.element());
 
-    assertNull(queue.peek());
-    assertNull(queue.poll());
+    assertThat(queue.peek()).isNull();
+    assertThat(queue.poll()).isNull();
     assertThrows(NoSuchElementException.class, () -> queue.remove());
   }
 
@@ -153,7 +155,7 @@ public class EvictingQueueTest extends TestCase {
   }
 
   public void testAddAll_largeList() {
-    final List<String> list = ImmutableList.of("one", "two", "three", "four", "five");
+    List<String> list = ImmutableList.of("one", "two", "three", "four", "five");
     List<String> misbehavingList =
         new AbstractList<String>() {
           @Override

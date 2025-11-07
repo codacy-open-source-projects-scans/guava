@@ -20,12 +20,12 @@ import static java.util.Arrays.asList;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.testing.SerializableTester;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 public class SafeTreeSetTest extends TestCase {
+  @AndroidIncompatible // test-suite builders
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(SafeTreeSetTest.class);
@@ -50,7 +51,7 @@ public class SafeTreeSetTest extends TestCase {
 
                   @Override
                   public List<String> order(List<String> insertionOrder) {
-                    return Lists.newArrayList(Sets.newTreeSet(insertionOrder));
+                    return new ArrayList<>(Sets.newTreeSet(insertionOrder));
                   }
                 })
             .withFeatures(
@@ -71,7 +72,7 @@ public class SafeTreeSetTest extends TestCase {
 
                   @Override
                   public List<String> order(List<String> insertionOrder) {
-                    return Lists.newArrayList(Sets.newTreeSet(insertionOrder));
+                    return new ArrayList<>(Sets.newTreeSet(insertionOrder));
                   }
                 })
             .withFeatures(
@@ -90,8 +91,8 @@ public class SafeTreeSetTest extends TestCase {
     SerializableTester.reserializeAndAssert(map.entrySet());
     SerializableTester.reserializeAndAssert(map.keySet());
     assertEquals(
-        Lists.newArrayList(map.values()),
-        Lists.newArrayList(SerializableTester.reserialize(map.values())));
+        new ArrayList<>(map.values()),
+        new ArrayList<>(SerializableTester.reserialize(map.values())));
   }
 
   @GwtIncompatible // SerializableTester

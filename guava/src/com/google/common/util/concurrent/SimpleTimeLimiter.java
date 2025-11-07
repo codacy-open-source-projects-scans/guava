@@ -21,12 +21,12 @@ import static com.google.common.util.concurrent.Uninterruptibles.getUninterrupti
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.ObjectArrays;
-import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -35,8 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A TimeLimiter that runs method calls in the background using an {@link ExecutorService}. If the
@@ -48,7 +47,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @J2ktIncompatible
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 // TODO: b/227335009 - Maybe change interruption behavior, but it requires thought.
 @SuppressWarnings("Interruption")
 public final class SimpleTimeLimiter implements TimeLimiter {
@@ -86,22 +84,17 @@ public final class SimpleTimeLimiter implements TimeLimiter {
     Set<Method> interruptibleMethods = findInterruptibleMethods(interfaceType);
 
     InvocationHandler handler =
-        new InvocationHandler() {
-          @Override
-          @CheckForNull
-          public Object invoke(Object obj, Method method, @CheckForNull @Nullable Object[] args)
-              throws Throwable {
-            Callable<@Nullable Object> callable =
-                () -> {
-                  try {
-                    return method.invoke(target, args);
-                  } catch (InvocationTargetException e) {
-                    throw throwCause(e, false /* combineStackTraces */);
-                  }
-                };
-            return callWithTimeout(
-                callable, timeoutDuration, timeoutUnit, interruptibleMethods.contains(method));
-          }
+        (obj, method, args) -> {
+          Callable<@Nullable Object> callable =
+              () -> {
+                try {
+                  return method.invoke(target, args);
+                } catch (InvocationTargetException e) {
+                  throw throwCause(e, /* combineStackTraces= */ false);
+                }
+              };
+          return callWithTimeout(
+              callable, timeoutDuration, timeoutUnit, interruptibleMethods.contains(method));
         };
     return newProxy(interfaceType, handler);
   }
@@ -246,7 +239,7 @@ public final class SimpleTimeLimiter implements TimeLimiter {
   }
 
   private static Set<Method> findInterruptibleMethods(Class<?> interfaceType) {
-    Set<Method> set = Sets.newHashSet();
+    Set<Method> set = new HashSet<>();
     for (Method m : interfaceType.getMethods()) {
       if (declaresInterruptedEx(m)) {
         set.add(m);
@@ -265,7 +258,8 @@ public final class SimpleTimeLimiter implements TimeLimiter {
     return false;
   }
 
-  private void wrapAndThrowExecutionExceptionOrError(Throwable cause) throws ExecutionException {
+  private static void wrapAndThrowExecutionExceptionOrError(Throwable cause)
+      throws ExecutionException {
     if (cause instanceof Error) {
       throw new ExecutionError((Error) cause);
     } else if (cause instanceof RuntimeException) {
@@ -275,7 +269,7 @@ public final class SimpleTimeLimiter implements TimeLimiter {
     }
   }
 
-  private void wrapAndThrowRuntimeExecutionExceptionOrError(Throwable cause) {
+  private static void wrapAndThrowRuntimeExecutionExceptionOrError(Throwable cause) {
     if (cause instanceof Error) {
       throw new ExecutionError((Error) cause);
     } else {

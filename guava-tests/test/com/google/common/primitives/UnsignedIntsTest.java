@@ -29,13 +29,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Tests for UnsignedInts
  *
  * @author Louis Wasserman
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class UnsignedIntsTest extends TestCase {
   private static final long[] UNSIGNED_INTS = {
     0L,
@@ -92,7 +94,7 @@ public class UnsignedIntsTest extends TestCase {
   public void testCompare() {
     for (long a : UNSIGNED_INTS) {
       for (long b : UNSIGNED_INTS) {
-        int cmpAsLongs = Longs.compare(a, b);
+        int cmpAsLongs = Long.compare(a, b);
         int cmpAsUInt = UnsignedInts.compare((int) a, (int) b);
         assertThat(Integer.signum(cmpAsUInt)).isEqualTo(Integer.signum(cmpAsLongs));
       }
@@ -280,7 +282,7 @@ public class UnsignedIntsTest extends TestCase {
   public void testParseIntWithRadixLimits() {
     // loops through all legal radix values.
     for (int r = Character.MIN_RADIX; r <= Character.MAX_RADIX; r++) {
-      final int radix = r;
+      int radix = r;
       // tests can successfully parse a number string with this radix.
       String maxAsString = Long.toString((1L << 32) - 1, radix);
       assertThat(UnsignedInts.parseUnsignedInt(maxAsString, radix)).isEqualTo(-1);

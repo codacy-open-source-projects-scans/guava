@@ -19,11 +19,10 @@ package com.google.common.collect;
 import static java.lang.Math.max;
 
 import com.google.common.annotations.GwtIncompatible;
-import com.google.common.base.Objects;
 import com.google.common.primitives.Ints;
 import java.util.Arrays;
-import javax.annotation.CheckForNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Helper classes and static methods for implementing compact hash-based collections.
@@ -31,7 +30,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Jon Noack
  */
 @GwtIncompatible
-@ElementTypesAreNonnullByDefault
 final class CompactHashing {
   private CompactHashing() {}
 
@@ -42,7 +40,7 @@ final class CompactHashing {
   private static final int HASH_TABLE_BITS_MAX_BITS = 5;
 
   /** Use high bits of metadata for modification count. */
-  static final int MODIFICATION_COUNT_INCREMENT = (1 << HASH_TABLE_BITS_MAX_BITS);
+  static final int MODIFICATION_COUNT_INCREMENT = 1 << HASH_TABLE_BITS_MAX_BITS;
 
   /** Bitmask that selects the low bits of metadata to get hashTableBits. */
   static final int HASH_TABLE_BITS_MASK = (1 << HASH_TABLE_BITS_MAX_BITS) - 1;
@@ -159,13 +157,13 @@ final class CompactHashing {
   }
 
   static int remove(
-      @CheckForNull Object key,
-      @CheckForNull Object value,
+      @Nullable Object key,
+      @Nullable Object value,
       int mask,
       Object table,
       int[] entries,
       @Nullable Object[] keys,
-      @CheckForNull @Nullable Object[] values) {
+      @Nullable Object @Nullable [] values) {
     int hash = Hashing.smearedHash(key);
     int tableIndex = hash & mask;
     int next = tableGet(table, tableIndex);
@@ -178,8 +176,8 @@ final class CompactHashing {
       int entryIndex = next - 1;
       int entry = entries[entryIndex];
       if (getHashPrefix(entry, mask) == hashPrefix
-          && Objects.equal(key, keys[entryIndex])
-          && (values == null || Objects.equal(value, values[entryIndex]))) {
+          && Objects.equals(key, keys[entryIndex])
+          && (values == null || Objects.equals(value, values[entryIndex]))) {
         int newNext = getNext(entry, mask);
         if (lastEntryIndex == -1) {
           // we need to update the root link from table[]

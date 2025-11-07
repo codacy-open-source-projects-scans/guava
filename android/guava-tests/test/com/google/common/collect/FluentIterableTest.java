@@ -42,21 +42,25 @@ import com.google.common.testing.NullPointerTester;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link FluentIterable}.
  *
  * @author Marcin Mikosik
  */
-@GwtCompatible(emulated = true)
+@GwtCompatible
+@NullUnmarked
 public class FluentIterableTest extends TestCase {
 
   @GwtIncompatible // NullPointerTester
@@ -80,7 +84,11 @@ public class FluentIterableTest extends TestCase {
         Lists.newArrayList(FluentIterable.from(ImmutableList.of(1, 2, 3, 4))));
   }
 
-  @SuppressWarnings("deprecation") // test of deprecated method
+  @SuppressWarnings({
+    "deprecation", // test of deprecated method
+    // We need to test that from(FluentIterable) really is just a null check.
+    "InlineMeInliner",
+  })
   public void testFrom_alreadyFluentIterable() {
     FluentIterable<Integer> iterable = FluentIterable.from(asList(1));
     assertSame(iterable, FluentIterable.from(iterable));
@@ -321,7 +329,7 @@ public class FluentIterableTest extends TestCase {
 
   public void testAppend_emptyList() {
     FluentIterable<Integer> result =
-        FluentIterable.<Integer>from(asList(1, 2, 3)).append(Lists.<Integer>newArrayList());
+        FluentIterable.<Integer>from(asList(1, 2, 3)).append(new ArrayList<Integer>());
     assertEquals(asList(1, 2, 3), Lists.newArrayList(result));
   }
 
@@ -369,7 +377,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testAnyMatch() {
-    ArrayList<String> list = Lists.newArrayList();
+    ArrayList<String> list = new ArrayList<>();
     FluentIterable<String> iterable = FluentIterable.<String>from(list);
     Predicate<String> predicate = equalTo("pants");
 
@@ -381,7 +389,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testAllMatch() {
-    List<String> list = Lists.newArrayList();
+    List<String> list = new ArrayList<>();
     FluentIterable<String> iterable = FluentIterable.<String>from(list);
     Predicate<String> predicate = equalTo("cool");
 
@@ -502,7 +510,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testFirst_emptyIterable() {
-    Set<String> set = newHashSet();
+    Set<String> set = new HashSet<>();
     assertThat(FluentIterable.from(set).first()).isAbsent();
   }
 
@@ -537,7 +545,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testLast_emptyIterable() {
-    Set<String> set = newHashSet();
+    Set<String> set = new HashSet<>();
     assertThat(FluentIterable.from(set).last()).isAbsent();
   }
 
@@ -585,7 +593,7 @@ public class FluentIterableTest extends TestCase {
         IteratorTester.KnownOrder.KNOWN_ORDER) {
       @Override
       protected Iterator<Integer> newTargetIterator() {
-        Collection<Integer> collection = Sets.newLinkedHashSet();
+        Collection<Integer> collection = new LinkedHashSet<>();
         Collections.addAll(collection, 1, 2, 3);
         return FluentIterable.from(collection).skip(1).iterator();
       }
@@ -616,7 +624,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testSkip_structurallyModifiedSkipSome() throws Exception {
-    Collection<String> set = Sets.newLinkedHashSet();
+    Collection<String> set = new LinkedHashSet<>();
     Collections.addAll(set, "a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(set).skip(1);
     set.remove("b");
@@ -633,7 +641,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testSkip_structurallyModifiedSkipAll() throws Exception {
-    Collection<String> set = Sets.newLinkedHashSet();
+    Collection<String> set = new LinkedHashSet<>();
     Collections.addAll(set, "a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(set).skip(2);
     set.remove("a");
@@ -846,9 +854,9 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testCopyInto_nonCollection() {
-    final ArrayList<Integer> list = Lists.newArrayList(1, 2, 3);
+    ArrayList<Integer> list = Lists.newArrayList(1, 2, 3);
 
-    final ArrayList<Integer> iterList = Lists.newArrayList(9, 8, 7);
+    ArrayList<Integer> iterList = Lists.newArrayList(9, 8, 7);
     Iterable<Integer> iterable =
         new Iterable<Integer>() {
           @Override
@@ -897,7 +905,7 @@ public class FluentIterableTest extends TestCase {
   }
 
   private static Iterable<String> iterable(String... elements) {
-    final List<String> list = asList(elements);
+    List<String> list = asList(elements);
     return new Iterable<String>() {
       @Override
       public Iterator<String> iterator() {

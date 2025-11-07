@@ -15,6 +15,7 @@
 
 package com.google.common.util.concurrent;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -30,7 +31,6 @@ import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.PropertyPermission;
@@ -48,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import org.jspecify.annotations.NullUnmarked;
 
 /**
  * Base class for JSR166 Junit TCK tests. Defines some constants, utility methods and classes, as
@@ -99,11 +100,15 @@ import junit.framework.TestCase;
  *       tests.
  * </ul>
  */
-// We call threadUnexpectedException, which does the right thing for errors.
-@SuppressWarnings("AssertionFailureIgnored")
+@SuppressWarnings({
+  // We call threadUnexpectedException, which does the right thing for errors.
+  "AssertionFailureIgnored",
+  // We're following the upstream naming to reduce diffs.
+  "IdentifierName",
+  "ConstantCaseForConstants",
+})
+@NullUnmarked
 abstract class JSR166TestCase extends TestCase {
-  private static final boolean useSecurityManager = Boolean.getBoolean("jsr166.useSecurityManager");
-
   protected static final boolean expensiveTests = Boolean.getBoolean("jsr166.expensiveTests");
 
   /**
@@ -359,7 +364,7 @@ abstract class JSR166TestCase extends TestCase {
    */
   public void threadAssertNull(Object x) {
     try {
-      assertNull(x);
+      assertThat(x).isNull();
     } catch (AssertionFailedError t) {
       threadRecordFailure(t);
       throw t;
@@ -505,24 +510,14 @@ abstract class JSR166TestCase extends TestCase {
     long startTime = System.nanoTime();
     try {
       future.get(timeoutMillis, MILLISECONDS);
-      shouldThrow();
+      fail("Should throw exception");
     } catch (TimeoutException success) {
     } catch (Exception e) {
       threadUnexpectedException(e);
     } finally {
       future.cancel(true);
     }
-    assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
-  }
-
-  /** Fails with message "should throw exception". */
-  public void shouldThrow() {
-    fail("Should throw exception");
-  }
-
-  /** Fails with message "should throw " + exceptionName. */
-  public void shouldThrow(String exceptionName) {
-    fail("Should throw " + exceptionName);
+    assertThat(millisElapsedSince(startTime)).isAtLeast(timeoutMillis);
   }
 
   /** The number of elements to place in collections, arrays, etc. */
@@ -844,7 +839,7 @@ abstract class JSR166TestCase extends TestCase {
     }
   }
 
-  public Callable<String> latchAwaitingStringTask(final CountDownLatch latch) {
+  public Callable<String> latchAwaitingStringTask(CountDownLatch latch) {
     return new CheckedCallable<String>() {
       @Override
       protected String realCall() {
@@ -857,7 +852,7 @@ abstract class JSR166TestCase extends TestCase {
     };
   }
 
-  public Runnable awaiter(final CountDownLatch latch) {
+  public Runnable awaiter(CountDownLatch latch) {
     return new CheckedRunnable() {
       @Override
       public void realRun() throws InterruptedException {
@@ -968,7 +963,7 @@ abstract class JSR166TestCase extends TestCase {
     }
   }
 
-  public Runnable possiblyInterruptedRunnable(final long timeoutMillis) {
+  public Runnable possiblyInterruptedRunnable(long timeoutMillis) {
     return new CheckedRunnable() {
       @Override
       protected void realRun() {
@@ -1012,7 +1007,7 @@ abstract class JSR166TestCase extends TestCase {
     boolean isDone();
   }
 
-  public static TrackedRunnable trackedRunnable(final long timeoutMillis) {
+  public static TrackedRunnable trackedRunnable(long timeoutMillis) {
     return new TrackedRunnable() {
       private volatile boolean done = false;
 
@@ -1171,25 +1166,25 @@ abstract class JSR166TestCase extends TestCase {
     try {
       assertTrue(q.isEmpty());
       assertEquals(0, q.size());
-      assertNull(q.peek());
-      assertNull(q.poll());
-      assertNull(q.poll(0, MILLISECONDS));
+      assertThat(q.peek()).isNull();
+      assertThat(q.poll()).isNull();
+      assertThat(q.poll(0, MILLISECONDS)).isNull();
       assertEquals("[]", q.toString());
-      assertTrue(Arrays.equals(q.toArray(), new Object[0]));
+      assertThat(q.toArray()).isEmpty();
       assertFalse(q.iterator().hasNext());
       try {
         q.element();
-        shouldThrow();
+        fail("Should throw exception");
       } catch (NoSuchElementException success) {
       }
       try {
         q.iterator().next();
-        shouldThrow();
+        fail("Should throw exception");
       } catch (NoSuchElementException success) {
       }
       try {
         q.remove();
-        shouldThrow();
+        fail("Should throw exception");
       } catch (NoSuchElementException success) {
       }
     } catch (InterruptedException ie) {

@@ -21,8 +21,10 @@ import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Converter;
 import com.google.errorprone.annotations.InlineMe;
+import com.google.errorprone.annotations.InlineMeValidationDisabled;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Arrays;
@@ -33,7 +35,7 @@ import java.util.List;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import javax.annotation.CheckForNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static utility methods pertaining to {@code int} primitives, that are not already found in either
@@ -45,17 +47,16 @@ import javax.annotation.CheckForNull;
  * @author Kevin Bourrillion
  * @since 1.0
  */
-@GwtCompatible(emulated = true)
-@ElementTypesAreNonnullByDefault
+@GwtCompatible
 public final class Ints extends IntsMethodsForWeb {
   private Ints() {}
 
   /**
    * The number of bytes required to represent a primitive {@code int} value.
    *
-   * <p><b>Java 8+ users:</b> use {@link Integer#BYTES} instead.
+   * <p>Prefer {@link Integer#BYTES} instead.
    */
-  public static final int BYTES = Integer.SIZE / Byte.SIZE;
+  public static final int BYTES = Integer.BYTES;
 
   /**
    * The largest power of two that can be represented as an {@code int}.
@@ -65,20 +66,24 @@ public final class Ints extends IntsMethodsForWeb {
   public static final int MAX_POWER_OF_TWO = 1 << (Integer.SIZE - 2);
 
   /**
-   * Returns a hash code for {@code value}; equal to the result of invoking {@code ((Integer)
-   * value).hashCode()}.
-   *
-   * <p><b>Java 8+ users:</b> use {@link Integer#hashCode(int)} instead.
+   * Returns a hash code for {@code value}; obsolete alternative to {@link Integer#hashCode(int)}.
    *
    * @param value a primitive {@code int} value
    * @return a hash code for the value
    */
+  @InlineMe(replacement = "Integer.hashCode(value)")
+  @InlineMeValidationDisabled(
+      "The hash code of a int is the int itself, so it's simplest to return that.")
   public static int hashCode(int value) {
     return value;
   }
 
   /**
    * Returns the {@code int} value that is equal to {@code value}, if possible.
+   *
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Use {@link
+   * Math#toIntExact(long)} instead, but be aware that that method throws {@link
+   * ArithmeticException} rather than {@link IllegalArgumentException}.
    *
    * @param value any value in the range of the {@code int} type
    * @return the {@code int} value that equals {@code value}
@@ -375,7 +380,7 @@ public final class Ints extends IntsMethodsForWeb {
       return INSTANCE;
     }
 
-    private static final long serialVersionUID = 1;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
   }
 
   /**
@@ -656,8 +661,7 @@ public final class Ints extends IntsMethodsForWeb {
     return new IntArrayAsList(backingArray);
   }
 
-  @GwtCompatible
-  private static class IntArrayAsList extends AbstractList<Integer>
+  private static final class IntArrayAsList extends AbstractList<Integer>
       implements RandomAccess, Serializable {
     final int[] array;
     final int start;
@@ -690,7 +694,6 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    @SuppressWarnings("Java7ApiChecker")
     /*
      * This is an override that is not directly visible to callers, so NewApi will catch calls to
      * Collection.spliterator() where necessary.
@@ -701,13 +704,13 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public boolean contains(@CheckForNull Object target) {
+    public boolean contains(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       return (target instanceof Integer) && Ints.indexOf(array, (Integer) target, start, end) != -1;
     }
 
     @Override
-    public int indexOf(@CheckForNull Object target) {
+    public int indexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Integer) {
         int i = Ints.indexOf(array, (Integer) target, start, end);
@@ -719,7 +722,7 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public int lastIndexOf(@CheckForNull Object target) {
+    public int lastIndexOf(@Nullable Object target) {
       // Overridden to prevent a ton of boxing
       if (target instanceof Integer) {
         int i = Ints.lastIndexOf(array, (Integer) target, start, end);
@@ -750,7 +753,7 @@ public final class Ints extends IntsMethodsForWeb {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -774,7 +777,7 @@ public final class Ints extends IntsMethodsForWeb {
     public int hashCode() {
       int result = 1;
       for (int i = start; i < end; i++) {
-        result = 31 * result + Ints.hashCode(array[i]);
+        result = 31 * result + Integer.hashCode(array[i]);
       }
       return result;
     }
@@ -793,7 +796,7 @@ public final class Ints extends IntsMethodsForWeb {
       return Arrays.copyOfRange(array, start, end);
     }
 
-    private static final long serialVersionUID = 0;
+    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -813,8 +816,7 @@ public final class Ints extends IntsMethodsForWeb {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 11.0
    */
-  @CheckForNull
-  public static Integer tryParse(String string) {
+  public static @Nullable Integer tryParse(String string) {
     return tryParse(string, 10);
   }
 
@@ -838,8 +840,7 @@ public final class Ints extends IntsMethodsForWeb {
    * @throws NullPointerException if {@code string} is {@code null}
    * @since 19.0
    */
-  @CheckForNull
-  public static Integer tryParse(String string, int radix) {
+  public static @Nullable Integer tryParse(String string, int radix) {
     Long result = Longs.tryParse(string, radix);
     if (result == null || result.longValue() != result.intValue()) {
       return null;
