@@ -21,11 +21,11 @@ import static com.google.common.collect.NullnessCasts.uncheckedCastNullableTToT;
 import static java.util.Collections.emptyList;
 
 import com.google.common.annotations.GwtCompatible;
-import com.google.common.base.Supplier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import org.jspecify.annotations.Nullable;
 
@@ -93,6 +93,7 @@ public final class MoreCollectors {
    * than one, not just two.
    */
   @SuppressWarnings("EmptyList") // ImmutableList doesn't support nullable element types
+  @IgnoreJRERequirement // see enclosing class (whose annotation Animal Sniffer ignores here...)
   private static final class ToOptionalState<T> {
     static final int MAX_EXTRAS = 4;
 
