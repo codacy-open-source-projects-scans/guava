@@ -138,7 +138,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
-  @SuppressWarnings("removal") // b/260137033
+  @SuppressWarnings("removal") // b/487687332
   public static void awaitDone(Future<?> future) {
     if (future.isDone()) {
       return;
@@ -171,7 +171,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
-  @SuppressWarnings("removal") // b/260137033
+  @SuppressWarnings("removal") // b/487687332
   public static void awaitDone(FinalizationPredicate predicate) {
     if (predicate.isDone()) {
       return;
@@ -200,7 +200,7 @@ public final class GcFinalization {
    *
    * @throws RuntimeException if timed out or interrupted while waiting
    */
-  @SuppressWarnings("removal") // b/260137033
+  @SuppressWarnings("removal") // b/487687332
   public static void await(CountDownLatch latch) {
     if (latch.getCount() == 0) {
       return;
@@ -232,7 +232,7 @@ public final class GcFinalization {
   private static void createUnreachableLatchFinalizer(CountDownLatch latch) {
     Object unused =
         new Object() {
-          @SuppressWarnings({"removal", "Finalize"}) // b/260137033
+          @SuppressWarnings({"removal", "Finalize"}) // b/487687332
           @Override
           protected void finalize() {
             latch.countDown();
@@ -298,23 +298,27 @@ public final class GcFinalization {
    * @throws RuntimeException if timed out or interrupted while waiting
    * @since 12.0
    */
-  @SuppressWarnings({"removal", "Finalize"}) // b/260137033
   public static void awaitFullGc() {
     CountDownLatch finalizerRan = new CountDownLatch(1);
-    WeakReference<Object> ref =
-        new WeakReference<>(
-            new Object() {
-              @Override
-              protected void finalize() {
-                finalizerRan.countDown();
-              }
-            });
+    WeakReference<Object> ref = createWeakReferenceWithFinalizer(finalizerRan);
 
     await(finalizerRan);
     awaitClear(ref);
 
     // Hope to catch some stragglers queued up behind our finalizable object
     System.runFinalization();
+  }
+
+  @SuppressWarnings({"removal", "Finalize"}) // b/487687332
+  private static WeakReference<Object> createWeakReferenceWithFinalizer(
+      CountDownLatch finalizerRan) {
+    return new WeakReference<>(
+        new Object() {
+          @Override
+          protected void finalize() {
+            finalizerRan.countDown();
+          }
+        });
   }
 
   @FormatMethod
