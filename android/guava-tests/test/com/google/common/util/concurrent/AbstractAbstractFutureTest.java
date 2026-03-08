@@ -45,6 +45,7 @@ import org.jspecify.annotations.Nullable;
  */
 @GwtCompatible
 @NullUnmarked
+@SuppressWarnings("nullness") // TODO(cpovirk): fix errors
 abstract class AbstractAbstractFutureTest extends TestCase {
   private TestedFuture<Integer> future;
   private AbstractFuture<Integer> delegate;
@@ -416,6 +417,9 @@ abstract class AbstractAbstractFutureTest extends TestCase {
 
     verifyGetOnPendingFuture(future);
     verifyTimedGetOnPendingFuture(future);
+
+    assertThrows(IllegalStateException.class, () -> future.resultNow());
+    assertThrows(IllegalStateException.class, () -> future.exceptionNow());
   }
 
   private static void assertSuccessful(
@@ -426,6 +430,9 @@ abstract class AbstractAbstractFutureTest extends TestCase {
 
     assertThat(getDone(future)).isEqualTo(expectedResult);
     assertThat(getDoneFromTimeoutOverload(future)).isEqualTo(expectedResult);
+
+    assertThat(future.resultNow()).isEqualTo(expectedResult);
+    assertThrows(IllegalStateException.class, () -> future.exceptionNow());
   }
 
   private static void assertFailed(AbstractFuture<Integer> future, Throwable expectedException)
@@ -446,6 +453,9 @@ abstract class AbstractAbstractFutureTest extends TestCase {
     } catch (ExecutionException e) {
       assertThat(e).hasCauseThat().isSameInstanceAs(expectedException);
     }
+
+    assertThrows(IllegalStateException.class, () -> future.resultNow());
+    assertThat(future.exceptionNow()).isSameInstanceAs(expectedException);
   }
 
   private static void assertCancelled(AbstractFuture<Integer> future, boolean expectWasInterrupted)
@@ -465,6 +475,9 @@ abstract class AbstractAbstractFutureTest extends TestCase {
       fail();
     } catch (CancellationException expected) {
     }
+
+    assertThrows(IllegalStateException.class, () -> future.resultNow());
+    assertThrows(IllegalStateException.class, () -> future.exceptionNow());
   }
 
   private static void assertDone(AbstractFuture<Integer> future) {
