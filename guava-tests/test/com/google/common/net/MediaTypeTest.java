@@ -164,48 +164,50 @@ public class MediaTypeTest extends TestCase {
 
   public void testCreateApplicationType() {
     MediaType newType = MediaType.createApplicationType("yams");
-    assertEquals("application", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("application");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testCreateAudioType() {
     MediaType newType = MediaType.createAudioType("yams");
-    assertEquals("audio", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("audio");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testCreateFontType() {
     MediaType newType = MediaType.createFontType("yams");
-    assertEquals("font", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("font");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testCreateImageType() {
     MediaType newType = MediaType.createImageType("yams");
-    assertEquals("image", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("image");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testCreateTextType() {
     MediaType newType = MediaType.createTextType("yams");
-    assertEquals("text", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("text");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testCreateVideoType() {
     MediaType newType = MediaType.createVideoType("yams");
-    assertEquals("video", newType.type());
-    assertEquals("yams", newType.subtype());
+    assertThat(newType.type()).isEqualTo("video");
+    assertThat(newType.subtype()).isEqualTo("yams");
   }
 
   public void testGetType() {
-    assertEquals("text", MediaType.parse("text/plain").type());
-    assertEquals("application", MediaType.parse("application/atom+xml; charset=utf-8").type());
+    assertThat(MediaType.parse("text/plain").type()).isEqualTo("text");
+    assertThat(MediaType.parse("application/atom+xml; charset=utf-8").type())
+        .isEqualTo("application");
   }
 
   public void testGetSubtype() {
-    assertEquals("plain", MediaType.parse("text/plain").subtype());
-    assertEquals("atom+xml", MediaType.parse("application/atom+xml; charset=utf-8").subtype());
+    assertThat(MediaType.parse("text/plain").subtype()).isEqualTo("plain");
+    assertThat(MediaType.parse("application/atom+xml; charset=utf-8").subtype())
+        .isEqualTo("atom+xml");
   }
 
   private static final ImmutableListMultimap<String, String> PARAMETERS =
@@ -331,12 +333,10 @@ public class MediaTypeTest extends TestCase {
   }
 
   public void testWithCharset() {
-    assertEquals(
-        MediaType.parse("text/plain; charset=utf-8"),
-        MediaType.parse("text/plain").withCharset(UTF_8));
-    assertEquals(
-        MediaType.parse("text/plain; charset=utf-8"),
-        MediaType.parse("text/plain; charset=utf-16").withCharset(UTF_8));
+    assertThat(MediaType.parse("text/plain").withCharset(UTF_8))
+        .isEqualTo(MediaType.parse("text/plain; charset=utf-8"));
+    assertThat(MediaType.parse("text/plain; charset=utf-16").withCharset(UTF_8))
+        .isEqualTo(MediaType.parse("text/plain; charset=utf-8"));
   }
 
   public void testHasWildcard() {
@@ -489,15 +489,16 @@ public class MediaTypeTest extends TestCase {
   }
 
   public void testToString() {
-    assertEquals("text/plain", MediaType.create("text", "plain").toString());
-    assertEquals(
-        "text/plain; something=\"cr@zy\"; something-else=\"crazy with spaces\";"
-            + " and-another-thing=\"\"; normal-thing=foo",
-        MediaType.create("text", "plain")
-            .withParameter("something", "cr@zy")
-            .withParameter("something-else", "crazy with spaces")
-            .withParameter("and-another-thing", "")
-            .withParameter("normal-thing", "foo")
-            .toString());
+    assertThat(MediaType.create("text", "plain").toString()).isEqualTo("text/plain");
+    assertThat(
+            MediaType.create("text", "plain")
+                .withParameter("something", "cr@zy")
+                .withParameter("something-else", "crazy with spaces")
+                .withParameter("and-another-thing", "")
+                .withParameter("normal-thing", "foo")
+                .toString())
+        .isEqualTo(
+            "text/plain; something=\"cr@zy\"; something-else=\"crazy with spaces\";"
+                + " and-another-thing=\"\"; normal-thing=foo");
   }
 }

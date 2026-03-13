@@ -63,18 +63,18 @@ public class FunctionsTest extends TestCase {
   }
 
   public void testToStringFunction_apply() {
-    assertEquals("3", Functions.toStringFunction().apply(3));
-    assertEquals("hiya", Functions.toStringFunction().apply("hiya"));
-    assertEquals(
-        "I'm a string",
-        Functions.toStringFunction()
-            .apply(
-                new Object() {
-                  @Override
-                  public String toString() {
-                    return "I'm a string";
-                  }
-                }));
+    assertThat(Functions.toStringFunction().apply(3)).isEqualTo("3");
+    assertThat(Functions.toStringFunction().apply("hiya")).isEqualTo("hiya");
+    assertThat(
+            Functions.toStringFunction()
+                .apply(
+                    new Object() {
+                      @Override
+                      public String toString() {
+                        return "I'm a string";
+                      }
+                    }))
+        .isEqualTo("I'm a string");
     assertThrows(NullPointerException.class, () -> Functions.toStringFunction().apply(null));
   }
 
@@ -221,9 +221,9 @@ public class FunctionsTest extends TestCase {
     Function<String, String> japaneseToSpanish =
         Functions.compose(integerToSpanish, japaneseToInteger);
 
-    assertEquals("Uno", japaneseToSpanish.apply("Ichi"));
+    assertThat(japaneseToSpanish.apply("Ichi")).isEqualTo("Uno");
     assertThrows(IllegalArgumentException.class, () -> japaneseToSpanish.apply("Ni"));
-    assertEquals("Tres", japaneseToSpanish.apply("San"));
+    assertThat(japaneseToSpanish.apply("San")).isEqualTo("Tres");
     assertThrows(IllegalArgumentException.class, () -> japaneseToSpanish.apply("Shi"));
 
     new EqualsTester()
@@ -344,8 +344,8 @@ public class FunctionsTest extends TestCase {
     assertEquals("correct", f.apply(null));
 
     Function<@Nullable Object, @Nullable String> g = Functions.constant(null);
-    assertEquals(null, g.apply(2));
-    assertEquals(null, g.apply(null));
+    assertThat(g.apply(2)).isNull();
+    assertThat(g.apply(null)).isNull();
 
     new EqualsTester()
         .addEqualityGroup(f, Functions.constant("correct"))
