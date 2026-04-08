@@ -28,7 +28,7 @@ import static com.google.common.util.concurrent.FuturesGetCheckedInputs.OTHER_TH
 import static com.google.common.util.concurrent.FuturesGetCheckedInputs.RUNTIME_EXCEPTION;
 import static com.google.common.util.concurrent.FuturesGetCheckedInputs.RUNTIME_EXCEPTION_FUTURE;
 import static com.google.common.util.concurrent.FuturesGetCheckedInputs.UNCHECKED_EXCEPTION;
-import static com.google.common.util.concurrent.ReflectionFreeAssertThrows.assertThrows;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -99,12 +99,7 @@ public class FuturesGetUncheckedTest extends TestCase {
   }
 
   public void testGetUnchecked_error() {
-    try {
-      getUnchecked(ERROR_FUTURE);
-    } catch (Error expected) {
-      assertEquals(ERROR, expected);
-      return;
-    }
-    fail();
+    Error expected = assertThrows(Error.class, () -> getUnchecked(ERROR_FUTURE));
+    assertEquals(ERROR, expected);
   }
 }

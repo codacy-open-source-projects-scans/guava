@@ -23,8 +23,8 @@ import static com.google.common.collect.testing.features.CollectionFeature.SUPPO
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_REMOVE;
 import static com.google.common.collect.testing.features.CollectionSize.SEVERAL;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
-import static com.google.common.collect.testing.google.ReflectionFreeAssertThrows.assertThrows;
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -93,19 +93,13 @@ public abstract class AbstractMultisetSetCountTester<E> extends AbstractMultiset
   abstract void setCountNoCheckReturnValue(E element, int count);
 
   private void assertSetCountIncreasingFailure(E element, int count) {
-    try {
-      setCountNoCheckReturnValue(element, count);
-      fail("a call to multiset.setCount() to increase an element's count should throw");
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class, () -> setCountNoCheckReturnValue(element, count));
   }
 
   private void assertSetCountDecreasingFailure(E element, int count) {
-    try {
-      setCountNoCheckReturnValue(element, count);
-      fail("a call to multiset.setCount() to decrease an element's count should throw");
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class, () -> setCountNoCheckReturnValue(element, count));
   }
 
   // Unconditional setCount no-ops.

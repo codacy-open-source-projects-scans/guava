@@ -43,7 +43,6 @@ import static com.google.common.util.concurrent.Futures.transformAsync;
 import static com.google.common.util.concurrent.Futures.whenAllComplete;
 import static com.google.common.util.concurrent.Futures.whenAllSucceed;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-import static com.google.common.util.concurrent.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.util.concurrent.TestPlatform.clearInterrupt;
 import static com.google.common.util.concurrent.TestPlatform.getDoneFromTimeoutOverload;
 import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
@@ -55,6 +54,7 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -607,13 +607,10 @@ public class FuturesTest extends TestCase {
       Future<Integer> transformedFuture, Class<? extends Throwable> expectedExceptionClass)
       throws Throwable {
     for (int i = 0; i < 5; i++) {
-      try {
-        getDone(transformedFuture);
-        fail();
-      } catch (ExecutionException expected) {
-        if (!expectedExceptionClass.isInstance(expected.getCause())) {
-          throw expected.getCause();
-        }
+      ExecutionException expected =
+          assertThrows(ExecutionException.class, () -> getDone(transformedFuture));
+      if (!expectedExceptionClass.isInstance(expected.getCause())) {
+        throw expected.getCause();
       }
     }
   }
@@ -879,12 +876,9 @@ public class FuturesTest extends TestCase {
 
     ListenableFuture<Integer> faultTolerantFuture =
         catchingAsync(failingFuture, Throwable.class, fallback, directExecutor());
-    try {
-      getDone(faultTolerantFuture);
-      fail();
-    } catch (ExecutionException expected) {
-      assertThat(expected.getCause()).isEqualTo(expectedException);
-    }
+    ExecutionException expected =
+        assertThrows(ExecutionException.class, () -> getDone(faultTolerantFuture));
+    assertThat(expected.getCause()).isEqualTo(expectedException);
     fallback.verifyCallCount(1);
   }
 
@@ -1108,12 +1102,9 @@ public class FuturesTest extends TestCase {
 
     ListenableFuture<Integer> faultTolerantFuture =
         catching(failingFuture, Throwable.class, fallback, directExecutor());
-    try {
-      getDone(faultTolerantFuture);
-      fail();
-    } catch (ExecutionException expected) {
-      assertThat(expected.getCause()).isEqualTo(expectedException);
-    }
+    ExecutionException expected =
+        assertThrows(ExecutionException.class, () -> getDone(faultTolerantFuture));
+    assertThat(expected.getCause()).isEqualTo(expectedException);
     fallback.verifyCallCount(1);
   }
 
@@ -2044,15 +2035,14 @@ public class FuturesTest extends TestCase {
 
   /** The same exception happening on multiple futures should not be logged. */
   public void testAllAsList_logging_same_exception() throws Exception {
+    MyException sameInstance = new MyException();
     ExecutionException expected =
         assertThrows(
             ExecutionException.class,
-            () -> {
-              MyException sameInstance = new MyException();
-              getDone(
-                  allAsList(
-                      immediateFailedFuture(sameInstance), immediateFailedFuture(sameInstance)));
-            });
+            () ->
+                getDone(
+                    allAsList(
+                        immediateFailedFuture(sameInstance), immediateFailedFuture(sameInstance))));
     assertThat(expected).hasCauseThat().isInstanceOf(MyException.class);
     assertEquals(
         "Nothing should be logged", 0, aggregateFutureLogHandler.getStoredLogRecords().size());
@@ -2106,21 +2096,21 @@ public class FuturesTest extends TestCase {
    * Different exceptions happening on multiple futures with the same cause should not be logged.
    */
   public void testAllAsList_logging_same_cause() throws Exception {
+    MyException exception1 = new MyException();
+    MyException exception2 = new MyException();
+    MyException exception3 = new MyException();
+
+    MyException sameInstance = new MyException();
+    exception1.initCause(sameInstance);
+    exception2.initCause(sameInstance);
+    exception3.initCause(exception2);
     ExecutionException expected =
         assertThrows(
             ExecutionException.class,
-            () -> {
-              MyException exception1 = new MyException();
-              MyException exception2 = new MyException();
-              MyException exception3 = new MyException();
-
-              MyException sameInstance = new MyException();
-              exception1.initCause(sameInstance);
-              exception2.initCause(sameInstance);
-              exception3.initCause(exception2);
-              getDone(
-                  allAsList(immediateFailedFuture(exception1), immediateFailedFuture(exception3)));
-            });
+            () ->
+                getDone(
+                    allAsList(
+                        immediateFailedFuture(exception1), immediateFailedFuture(exception3))));
     assertThat(expected).hasCauseThat().isInstanceOf(MyException.class);
     assertEquals(
         "Nothing should be logged", 0, aggregateFutureLogHandler.getStoredLogRecords().size());
@@ -3035,11 +3025,7 @@ public class FuturesTest extends TestCase {
     assertTrue(future1.isCancelled());
     assertFalse(future2.isCancelled());
 
-    try {
-      getDone(compound);
-      fail();
-    } catch (CancellationException expected) {
-    }
+    assertThrows(CancellationException.class, () -> getDone(compound));
   }
 
   public void testSuccessfulAsList_resultInterrupted() throws Exception {

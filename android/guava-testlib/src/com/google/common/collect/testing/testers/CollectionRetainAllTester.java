@@ -20,8 +20,8 @@ import static com.google.common.collect.testing.features.CollectionFeature.ALLOW
 import static com.google.common.collect.testing.features.CollectionFeature.SUPPORTS_REMOVE;
 import static com.google.common.collect.testing.features.CollectionSize.ONE;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
-import static com.google.common.collect.testing.testers.ReflectionFreeAssertThrows.assertThrows;
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.testing.AbstractCollectionTester;
@@ -308,12 +308,7 @@ public class CollectionRetainAllTester<E> extends AbstractCollectionTester<E> {
   }
 
   private void expectThrows(Target target) {
-    try {
-      collection.retainAll(target.toRetain);
-      String message = Platform.format("retainAll(%s) should throw", target);
-      fail(message);
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> collection.retainAll(target.toRetain));
   }
 
   private void expectReturnsFalseOrThrows(Target target) {

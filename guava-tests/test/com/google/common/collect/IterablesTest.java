@@ -29,7 +29,6 @@ import static com.google.common.collect.Iterables.removeIf;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Iterables.tryFind;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.google.common.collect.testing.IteratorFeature.MODIFIABLE;
 import static com.google.common.collect.testing.IteratorFeature.UNMODIFIABLE;
@@ -40,6 +39,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.nCopies;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -727,32 +727,16 @@ public class IterablesTest extends TestCase {
   }
 
   private void testGetOnAbc(Iterable<String> iterable) {
-    try {
-      Iterables.get(iterable, -1);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> Iterables.get(iterable, -1));
     assertThat(Iterables.get(iterable, 0)).isEqualTo("a");
     assertThat(Iterables.get(iterable, 1)).isEqualTo("b");
     assertThat(Iterables.get(iterable, 2)).isEqualTo("c");
-    try {
-      Iterables.get(iterable, 3);
-      fail();
-    } catch (IndexOutOfBoundsException nsee) {
-    }
-    try {
-      Iterables.get(iterable, 4);
-      fail();
-    } catch (IndexOutOfBoundsException nsee) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> Iterables.get(iterable, 3));
+    assertThrows(IndexOutOfBoundsException.class, () -> Iterables.get(iterable, 4));
   }
 
   private void testGetOnEmpty(Iterable<String> iterable) {
-    try {
-      Iterables.get(iterable, 0);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> Iterables.get(iterable, 0));
   }
 
   public void testGet_list() {

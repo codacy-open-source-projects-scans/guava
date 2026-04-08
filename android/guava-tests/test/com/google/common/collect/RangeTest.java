@@ -19,11 +19,11 @@ package com.google.common.collect;
 import static com.google.common.collect.BoundType.CLOSED;
 import static com.google.common.collect.BoundType.OPEN;
 import static com.google.common.collect.DiscreteDomain.integers;
-import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.collect.testing.Helpers.testCompareToAndEquals;
 import static com.google.common.testing.SerializableTester.reserializeAndAssert;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -246,30 +246,14 @@ public class RangeTest extends TestCase {
 
   private static void assertUnboundedBelow(Range<Integer> range) {
     assertFalse(range.hasLowerBound());
-    try {
-      range.lowerEndpoint();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-    try {
-      range.lowerBoundType();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> range.lowerEndpoint());
+    assertThrows(IllegalStateException.class, () -> range.lowerBoundType());
   }
 
   private static void assertUnboundedAbove(Range<Integer> range) {
     assertFalse(range.hasUpperBound());
-    try {
-      range.upperEndpoint();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-    try {
-      range.upperBoundType();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> range.upperEndpoint());
+    assertThrows(IllegalStateException.class, () -> range.upperBoundType());
   }
 
   public void testOrderingCuts() {

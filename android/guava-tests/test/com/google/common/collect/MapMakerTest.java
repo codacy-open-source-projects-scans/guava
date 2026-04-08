@@ -16,8 +16,8 @@
 
 package com.google.common.collect;
 
-import static com.google.common.collect.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -73,12 +73,8 @@ public class MapMakerTest extends TestCase {
   // TODO(cpovirk): enable when ready (apparently after a change to our GWT emulation)
   public void xtestInitialCapacity_setTwice() {
     MapMaker maker = new MapMaker().initialCapacity(16);
-    try {
-      // even to the same value is not allowed
-      maker.initialCapacity(16);
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    // even to the same value is not allowed
+    assertThrows(IllegalStateException.class, () -> maker.initialCapacity(16));
   }
 
   public void testReturnsPlainConcurrentHashMapWhenPossible() {

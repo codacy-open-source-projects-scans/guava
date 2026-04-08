@@ -19,9 +19,9 @@ import static com.google.common.io.BaseEncoding.base32;
 import static com.google.common.io.BaseEncoding.base32Hex;
 import static com.google.common.io.BaseEncoding.base64;
 import static com.google.common.io.BaseEncoding.base64Url;
-import static com.google.common.io.ReflectionFreeAssertThrows.assertThrows;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -463,13 +463,10 @@ public class BaseEncodingTest extends TestCase {
       @Override
       void assertFailsToDecode(
           BaseEncoding encoding, String cannotDecode, @Nullable String expectedMessage) {
-        try {
-          encoding.decode(cannotDecode);
-          fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {
-          if (expectedMessage != null) {
-            assertThat(expected).hasCauseThat().hasMessageThat().isEqualTo(expectedMessage);
-          }
+        IllegalArgumentException expected =
+            assertThrows(IllegalArgumentException.class, () -> encoding.decode(cannotDecode));
+        if (expectedMessage != null) {
+          assertThat(expected).hasCauseThat().hasMessageThat().isEqualTo(expectedMessage);
         }
       }
     },
@@ -477,13 +474,10 @@ public class BaseEncodingTest extends TestCase {
       @Override
       void assertFailsToDecode(
           BaseEncoding encoding, String cannotDecode, @Nullable String expectedMessage) {
-        try {
-          encoding.decodeChecked(cannotDecode);
-          fail("Expected DecodingException");
-        } catch (DecodingException expected) {
-          if (expectedMessage != null) {
-            assertThat(expected).hasMessageThat().isEqualTo(expectedMessage);
-          }
+        DecodingException expected =
+            assertThrows(DecodingException.class, () -> encoding.decodeChecked(cannotDecode));
+        if (expectedMessage != null) {
+          assertThat(expected).hasMessageThat().isEqualTo(expectedMessage);
         }
       }
     },
@@ -503,15 +497,7 @@ public class BaseEncodingTest extends TestCase {
         // See https://github.com/google/guava/issues/3542
         Reader reader = new StringReader(cannotDecode);
         InputStream decodingStream = encoding.decodingStream(reader);
-        try {
-          ByteStreams.exhaust(decodingStream);
-          fail("Expected DecodingException");
-        } catch (DecodingException expected) {
-          // Don't assert on the expectedMessage; the messages for exceptions thrown from the
-          // decoding stream may differ from the messages for the decode methods.
-        } catch (IOException e) {
-          fail("Expected DecodingException but got: " + e);
-        }
+        assertThrows(DecodingException.class, () -> ByteStreams.exhaust(decodingStream));
       }
     };
 

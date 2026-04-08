@@ -20,7 +20,7 @@ import static com.google.common.collect.testing.Helpers.getMethod;
 import static com.google.common.collect.testing.features.CollectionFeature.ALLOWS_NULL_VALUES;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static com.google.common.collect.testing.features.ListFeature.SUPPORTS_SET;
-import static com.google.common.collect.testing.testers.ReflectionFreeAssertThrows.assertThrows;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -101,10 +101,10 @@ public class ListSetTester<E> extends AbstractListTester<E> {
   @CollectionSize.Require(ZERO)
   @ListFeature.Require(absent = SUPPORTS_SET)
   public void testSet_unsupportedByEmptyList() {
-    try {
-      getList().set(0, e3());
-      fail("set() should throw UnsupportedOperationException or IndexOutOfBoundsException");
-    } catch (UnsupportedOperationException | IndexOutOfBoundsException expected) {
+    RuntimeException expected = assertThrows(RuntimeException.class, () -> getList().set(0, e3()));
+    if (!(expected instanceof UnsupportedOperationException
+        || expected instanceof IndexOutOfBoundsException)) {
+      throw expected;
     }
     expectUnchanged();
   }

@@ -24,10 +24,10 @@ import static com.google.common.collect.testing.features.CollectionSize.ZERO;
 import static com.google.common.collect.testing.features.ListFeature.SUPPORTS_ADD_WITH_INDEX;
 import static com.google.common.collect.testing.features.ListFeature.SUPPORTS_REMOVE_WITH_INDEX;
 import static com.google.common.collect.testing.features.ListFeature.SUPPORTS_SET;
-import static com.google.common.collect.testing.testers.ReflectionFreeAssertThrows.assertThrows;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
@@ -61,17 +61,14 @@ public class ListSubListTester<E> extends AbstractListTester<E> {
   }
 
   public void testSubList_startGreaterThanEnd() {
-    try {
-      getList().subList(1, 0);
-      fail("subList(1, 0) should throw");
-    } catch (IndexOutOfBoundsException expected) {
-    } catch (IllegalArgumentException expected) {
-      /*
-       * The subList() docs claim that this should be an
-       * IndexOutOfBoundsException, but many JDK implementations throw
-       * IllegalArgumentException:
-       * https://bugs.openjdk.org/browse/JDK-4506427
-       */
+    RuntimeException expected = assertThrows(RuntimeException.class, () -> getList().subList(1, 0));
+    /*
+     * The subList() docs claim that this should be an IndexOutOfBoundsException, but many JDK
+     * implementations throw IllegalArgumentException: https://bugs.openjdk.org/browse/JDK-4506427
+     */
+    if (!(expected instanceof IndexOutOfBoundsException
+        || expected instanceof IllegalArgumentException)) {
+      throw expected;
     }
   }
 

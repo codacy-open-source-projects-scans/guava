@@ -22,11 +22,11 @@ import static com.google.common.collect.testing.features.CollectionFeature.SUPPO
 import static com.google.common.collect.testing.features.CollectionSize.ONE;
 import static com.google.common.collect.testing.features.CollectionSize.SEVERAL;
 import static com.google.common.collect.testing.features.CollectionSize.ZERO;
-import static com.google.common.collect.testing.google.ReflectionFreeAssertThrows.assertThrows;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.sort;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.collect.BoundType;
@@ -233,23 +233,13 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
   }
 
   void expectAddFailure(SortedMultiset<E> multiset, Entry<E> entry) {
-    try {
-      multiset.add(entry.getElement(), entry.getCount());
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> multiset.add(entry.getElement(), entry.getCount()));
 
-    try {
-      multiset.add(entry.getElement());
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> multiset.add(entry.getElement()));
 
-    try {
-      multiset.addAll(singletonList(entry.getElement()));
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> multiset.addAll(singletonList(entry.getElement())));
   }
 
   void expectRemoveZero(SortedMultiset<E> multiset, Entry<E> entry) {
@@ -263,11 +253,9 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
       multiset.setCount(entry.getElement(), multiset.count(entry.getElement()));
     } catch (IllegalArgumentException acceptable) {
     }
-    try {
-      multiset.setCount(entry.getElement(), multiset.count(entry.getElement()) + 1);
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> multiset.setCount(entry.getElement(), multiset.count(entry.getElement()) + 1));
   }
 
   @CollectionSize.Require(ONE)
