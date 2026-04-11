@@ -17,7 +17,6 @@ package com.google.common.util.concurrent;
 import static com.google.common.util.concurrent.AbstractFuture.getDoneValue;
 import static com.google.common.util.concurrent.AbstractFuture.notInstanceOfDelegatingToFuture;
 import static java.lang.Boolean.parseBoolean;
-import static java.security.AccessController.doPrivileged;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
@@ -30,7 +29,6 @@ import com.google.common.util.concurrent.internal.InternalFutureFailureAccess;
 import com.google.j2objc.annotations.ReflectionSupport;
 import com.google.j2objc.annotations.RetainedLocalRef;
 import java.lang.reflect.Field;
-import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -283,18 +281,16 @@ abstract class AbstractFutureState<V extends @Nullable Object> extends InternalF
    */
   static final LazyLogger log = new LazyLogger(AbstractFuture.class);
 
-  static final boolean GENERATE_CANCELLATION_CAUSES;
+  static final boolean GENERATE_CANCELLATION_CAUSES = computeGenerateCancellationCauses();
 
-  static {
+  private static boolean computeGenerateCancellationCauses() {
     // System.getProperty may throw if the security policy does not permit access.
-    boolean generateCancellationCauses;
     try {
-      generateCancellationCauses =
-          parseBoolean(System.getProperty("guava.concurrent.generate_cancellation_cause", "false"));
+      return parseBoolean(
+          System.getProperty("guava.concurrent.generate_cancellation_cause", "false"));
     } catch (SecurityException e) {
-      generateCancellationCauses = false;
+      return false;
     }
-    GENERATE_CANCELLATION_CAUSES = generateCancellationCauses;
   }
 
   /** Waiter links form a Treiber stack in {@link #waitersField}. */
@@ -590,22 +586,29 @@ abstract class AbstractFutureState<V extends @Nullable Object> extends InternalF
         unsafe = Unsafe.getUnsafe();
       } catch (SecurityException tryReflectionInstead) {
         try {
-          unsafe =
-              doPrivileged(
-                  (PrivilegedExceptionAction<Unsafe>)
-                      () -> {
-                        Class<Unsafe> k = Unsafe.class;
-                        for (Field f : k.getDeclaredFields()) {
-                          f.setAccessible(true);
-                          Object x = f.get(null);
-                          if (k.isInstance(x)) {
-                            return k.cast(x);
-                          }
-                        }
-                        throw new NoSuchFieldError("the Unsafe");
-                      });
-        } catch (PrivilegedActionException e) {
-          throw new RuntimeException("Could not initialize intrinsics", e.getCause());
+          PrivilegedExceptionAction<Unsafe> action =
+              () -> {
+                Class<Unsafe> k = Unsafe.class;
+                for (Field f : k.getDeclaredFields()) {
+                  f.setAccessible(true);
+                  Object x = f.get(null);
+                  if (k.isInstance(x)) {
+                    return k.cast(x);
+                  }
+                }
+                throw new NoSuchFieldError("the Unsafe");
+              };
+          try {
+            unsafe =
+                (Unsafe)
+                    Class.forName("java.security.AccessController")
+                        .getMethod("doPrivileged", PrivilegedExceptionAction.class)
+                        .invoke(null, action);
+          } catch (Exception e) {
+            unsafe = action.run();
+          }
+        } catch (Exception e) {
+          throw new RuntimeException("Could not initialize intrinsics", e);
         }
       }
       try {
