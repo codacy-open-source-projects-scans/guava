@@ -96,7 +96,7 @@ public class AbstractFutureTest extends TestCase {
     ExecutionException ee2 = getExpectingExecutionException(future);
 
     // Ensure we get a unique execution exception on each get
-    assertThat(ee1).isNotSameInstanceAs(ee2);
+    assertThat(ee1).isNotEqualTo(ee2);
 
     assertThat(ee1).hasCauseThat().isEqualTo(failure);
     assertThat(ee2).hasCauseThat().isEqualTo(failure);
@@ -1110,7 +1110,7 @@ public class AbstractFutureTest extends TestCase {
     normalFuture.setFuture(new FailFuture(exception));
     assertTrue(normalFuture.isDone());
     ExecutionException e = assertThrows(ExecutionException.class, normalFuture::get);
-    assertThat(e.getCause()).isEqualTo(exception);
+    assertThat(e).hasCauseThat().isEqualTo(exception);
   }
 
   private static void awaitUnchecked(CyclicBarrier barrier) {
