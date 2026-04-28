@@ -53,7 +53,6 @@ import org.jspecify.annotations.NullUnmarked;
  */
 @NullUnmarked
 public class HashingTest extends TestCase {
-  @J2ktIncompatible
   public void testMd5() {
     HashTestUtils.checkAvalanche(Hashing.md5(), 100, 0.4);
     HashTestUtils.checkNo2BitCharacteristics(Hashing.md5());
@@ -62,7 +61,6 @@ public class HashingTest extends TestCase {
     assertThat(Hashing.md5().toString()).isEqualTo("Hashing.md5()");
   }
 
-  @J2ktIncompatible
   public void testSha1() {
     HashTestUtils.checkAvalanche(Hashing.sha1(), 100, 0.4);
     HashTestUtils.checkNo2BitCharacteristics(Hashing.sha1());
@@ -71,7 +69,6 @@ public class HashingTest extends TestCase {
     assertThat(Hashing.sha1().toString()).isEqualTo("Hashing.sha1()");
   }
 
-  @J2ktIncompatible
   public void testSha256() {
     HashTestUtils.checkAvalanche(Hashing.sha256(), 100, 0.4);
     HashTestUtils.checkNo2BitCharacteristics(Hashing.sha256());
@@ -287,8 +284,7 @@ public class HashingTest extends TestCase {
   @J2ktIncompatible
   public void testCombineOrdered_empty() {
     assertThrows(
-        IllegalArgumentException.class,
-        () -> Hashing.combineOrdered(Collections.<HashCode>emptySet()));
+        IllegalArgumentException.class, () -> Hashing.combineOrdered(Collections.emptySet()));
   }
 
   @J2ktIncompatible
@@ -335,8 +331,7 @@ public class HashingTest extends TestCase {
   @J2ktIncompatible
   public void testCombineUnordered_empty() {
     assertThrows(
-        IllegalArgumentException.class,
-        () -> Hashing.combineUnordered(Collections.<HashCode>emptySet()));
+        IllegalArgumentException.class, () -> Hashing.combineUnordered(Collections.emptySet()));
   }
 
   @J2ktIncompatible
@@ -472,7 +467,6 @@ public class HashingTest extends TestCase {
     }
   }
 
-  @J2ktIncompatible
   public void testKnownUtf8Hashing() {
     for (Cell<HashFunction, String, String> cell : TestPlatform.getKnownHashes().cellSet()) {
       HashFunction func = cell.getRowKey();
