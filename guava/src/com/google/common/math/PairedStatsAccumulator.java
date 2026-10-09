@@ -118,7 +118,7 @@ public final class PairedStatsAccumulator {
    * is not guaranteed to return zero when the dataset consists of the same pair of values multiple
    * times, due to numerical errors.
    *
-   * <h3>Non-finite values</h3>
+   * <h4>Non-finite values</h4>
    *
    * <p>If the dataset contains any non-finite values ({@link Double#POSITIVE_INFINITY}, {@link
    * Double#NEGATIVE_INFINITY}, or {@link Double#NaN}) then the result is {@link Double#NaN}.
@@ -136,14 +136,14 @@ public final class PairedStatsAccumulator {
    * <p>This is not guaranteed to return zero when the dataset consists of the same pair of values
    * multiple times, due to numerical errors.
    *
-   * <h3>Non-finite values</h3>
+   * <h4>Non-finite values</h4>
    *
    * <p>If the dataset contains any non-finite values ({@link Double#POSITIVE_INFINITY}, {@link
    * Double#NEGATIVE_INFINITY}, or {@link Double#NaN}) then the result is {@link Double#NaN}.
    *
    * @throws IllegalStateException if the dataset is empty or contains a single pair of values
    */
-  public final double sampleCovariance() {
+  public double sampleCovariance() {
     checkState(count() > 1);
     return sumOfProductsOfDeltas / (count() - 1);
   }
@@ -156,7 +156,7 @@ public final class PairedStatsAccumulator {
    * guaranteed to be exactly +/-1 even when the data are perfectly (anti-)correlated, due to
    * numerical errors. However, it is guaranteed to be in the inclusive range [-1, +1].
    *
-   * <h3>Non-finite values</h3>
+   * <h4>Non-finite values</h4>
    *
    * <p>If the dataset contains any non-finite values ({@link Double#POSITIVE_INFINITY}, {@link
    * Double#NEGATIVE_INFINITY}, or {@link Double#NaN}) then the result is {@link Double#NaN}.
@@ -164,7 +164,7 @@ public final class PairedStatsAccumulator {
    * @throws IllegalStateException if the dataset is empty or contains a single pair of values, or
    *     either the {@code x} and {@code y} dataset has zero population variance
    */
-  public final double pearsonsCorrelationCoefficient() {
+  public double pearsonsCorrelationCoefficient() {
     checkState(count() > 1);
     if (isNaN(sumOfProductsOfDeltas)) {
       return NaN;
@@ -202,7 +202,7 @@ public final class PairedStatsAccumulator {
    * does not normally minimize that error: to do that, you should swap the roles of {@code x} and
    * {@code y}.
    *
-   * <h3>Non-finite values</h3>
+   * <h4>Non-finite values</h4>
    *
    * <p>If the dataset contains any non-finite values ({@link Double#POSITIVE_INFINITY}, {@link
    * Double#NEGATIVE_INFINITY}, or {@link Double#NaN}) then the result is {@link
@@ -211,7 +211,7 @@ public final class PairedStatsAccumulator {
    * @throws IllegalStateException if the dataset is empty or contains a single pair of values, or
    *     both the {@code x} and {@code y} dataset have zero population variance
    */
-  public final LinearTransformation leastSquaresFit() {
+  public LinearTransformation leastSquaresFit() {
     checkState(count() > 1);
     if (isNaN(sumOfProductsOfDeltas)) {
       return LinearTransformation.forNaN();

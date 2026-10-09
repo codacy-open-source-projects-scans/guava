@@ -154,7 +154,6 @@ public class RateLimiterTest extends TestCase {
     assertThrows(IllegalArgumentException.class, () -> RateLimiter.create(1.0, -1, NANOSECONDS));
   }
 
-  @AndroidIncompatible // difference in String.format rounding?
   public void testWarmUp() {
     RateLimiter limiter = RateLimiter.create(2.0, 4000, MILLISECONDS, 3.0, stopwatch);
     for (int i = 0; i < 8; i++) {
@@ -220,7 +219,6 @@ public class RateLimiterTest extends TestCase {
         "R0.00, R0.20, R0.20, R0.20, R0.20, R0.20, R0.20, R0.20"); // #3
   }
 
-  @AndroidIncompatible // difference in String.format rounding?
   public void testWarmUpAndUpdate() {
     RateLimiter limiter = RateLimiter.create(2.0, 4000, MILLISECONDS, 3.0, stopwatch);
     for (int i = 0; i < 8; i++) {
@@ -470,7 +468,7 @@ public class RateLimiterTest extends TestCase {
     tester.testInstanceMethods(RateLimiter.create(5.0, stopwatch), Visibility.PACKAGE);
   }
 
-  public void testVerySmallDoubleValues() throws Exception {
+  public void testVerySmallDoubleValues() {
     RateLimiter rateLimiter = RateLimiter.create(Double.MIN_VALUE, stopwatch);
     assertTrue("Should acquire initial permit", rateLimiter.tryAcquire());
     assertFalse("Should not acquire additional permit", rateLimiter.tryAcquire());
@@ -503,7 +501,7 @@ public class RateLimiterTest extends TestCase {
     final List<String> events = new ArrayList<>();
 
     @Override
-    public long readMicros() {
+    protected long readMicros() {
       return NANOSECONDS.toMicros(instant);
     }
 

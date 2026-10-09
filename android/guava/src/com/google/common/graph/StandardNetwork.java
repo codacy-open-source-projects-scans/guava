@@ -103,17 +103,17 @@ class StandardNetwork<N, E> extends AbstractNetwork<N, E> {
   }
 
   @Override
-  public boolean isDirected() {
+  public final boolean isDirected() {
     return isDirected;
   }
 
   @Override
-  public boolean allowsParallelEdges() {
+  public final boolean allowsParallelEdges() {
     return allowsParallelEdges;
   }
 
   @Override
-  public boolean allowsSelfLoops() {
+  public final boolean allowsSelfLoops() {
     return allowsSelfLoops;
   }
 
@@ -133,7 +133,7 @@ class StandardNetwork<N, E> extends AbstractNetwork<N, E> {
   }
 
   @Override
-  public EndpointPair<N> incidentNodes(E edge) {
+  public final EndpointPair<N> incidentNodes(E edge) {
     N nodeU = checkedReferenceNode(edge);
     // requireNonNull is safe because checkedReferenceNode made sure the edge is in the network.
     N nodeV = requireNonNull(nodeConnections.get(nodeU)).adjacentNode(edge);
@@ -145,8 +145,11 @@ class StandardNetwork<N, E> extends AbstractNetwork<N, E> {
     return nodeInvalidatableSet(checkedConnections(node).adjacentNodes(), node);
   }
 
+  @SuppressWarnings("ReferenceEquality") // see comment below
   @Override
   public Set<E> edgesConnecting(N nodeU, N nodeV) {
+    checkNotNull(nodeU);
+    checkNotNull(nodeV);
     NetworkConnections<N, E> connectionsU = checkedConnections(nodeU);
     if (!allowsSelfLoops && nodeU == nodeV) { // just an optimization, only check reference equality
       return ImmutableSet.of();
@@ -194,10 +197,12 @@ class StandardNetwork<N, E> extends AbstractNetwork<N, E> {
   }
 
   final boolean containsNode(N node) {
+    checkNotNull(node);
     return nodeConnections.containsKey(node);
   }
 
   final boolean containsEdge(E edge) {
+    checkNotNull(edge);
     return edgeToReferenceNode.containsKey(edge);
   }
 }

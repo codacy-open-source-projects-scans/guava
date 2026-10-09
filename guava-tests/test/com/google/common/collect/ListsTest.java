@@ -21,8 +21,11 @@ import static com.google.common.collect.Iterables.elementsEqual;
 import static com.google.common.collect.Lists.cartesianProduct;
 import static com.google.common.collect.Lists.charactersOf;
 import static com.google.common.collect.Lists.computeArrayListCapacity;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
+import static com.google.common.collect.Lists.newCopyOnWriteArrayList;
+import static com.google.common.collect.Lists.newLinkedList;
 import static com.google.common.collect.Lists.partition;
 import static com.google.common.collect.Lists.transform;
 import static com.google.common.collect.testing.IteratorFeature.UNMODIFIABLE;
@@ -58,6 +61,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.Spliterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -95,7 +99,7 @@ public class ListsTest extends TestCase {
     @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
-  private static final List<Integer> SOME_LIST = Lists.newArrayList(1, 2, 3, 4);
+  private static final ImmutableList<Integer> SOME_LIST = ImmutableList.of(1, 2, 3, 4);
 
   private static final List<Integer> SOME_SEQUENTIAL_LIST = new LinkedList<>(asList(1, 2, 3, 4));
 
@@ -201,7 +205,7 @@ public class ListsTest extends TestCase {
                 new TestStringListGenerator() {
                   @Override
                   protected List<String> create(String[] elements) {
-                    List<String> fromList = Lists.newArrayList(elements);
+                    List<String> fromList = newArrayList(elements);
                     return transform(fromList, Functions.identity());
                   }
                 })
@@ -331,7 +335,7 @@ public class ListsTest extends TestCase {
 
   public void testNewArrayListEmpty() {
     @SuppressWarnings("UseCollectionConstructor") // test of factory method
-    ArrayList<Integer> list = Lists.newArrayList();
+    ArrayList<Integer> list = newArrayList();
     assertEquals(emptyList(), list);
   }
 
@@ -360,8 +364,8 @@ public class ListsTest extends TestCase {
   }
 
   public void testNewArrayListVarArgs() {
-    ArrayList<Integer> list = Lists.newArrayList(0, 1, 1);
-    assertEquals(SOME_COLLECTION, list);
+    ArrayList<Integer> list = newArrayList(0, 1, 1);
+    assertThat(list).containsExactly(0, 1, 1).inOrder();
   }
 
   public void testComputeArrayListCapacity() {
@@ -374,49 +378,51 @@ public class ListsTest extends TestCase {
 
   public void testNewArrayListFromCollection() {
     @SuppressWarnings("UseCollectionConstructor") // test of factory method
-    ArrayList<Integer> list = Lists.newArrayList(SOME_COLLECTION);
-    assertEquals(SOME_COLLECTION, list);
+    ArrayList<Integer> list = newArrayList(SOME_COLLECTION);
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
   public void testNewArrayListFromIterable() {
-    ArrayList<Integer> list = Lists.newArrayList(SOME_ITERABLE);
-    assertEquals(SOME_COLLECTION, list);
+    ArrayList<Integer> list = newArrayList(SOME_ITERABLE);
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
   public void testNewArrayListFromIterator() {
-    ArrayList<Integer> list = Lists.newArrayList(SOME_COLLECTION.iterator());
-    assertEquals(SOME_COLLECTION, list);
+    ArrayList<Integer> list = newArrayList(SOME_COLLECTION.iterator());
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
   public void testNewLinkedListEmpty() {
     @SuppressWarnings("UseCollectionConstructor") // test of factory method
-    LinkedList<Integer> list = Lists.newLinkedList();
+    LinkedList<Integer> list = newLinkedList();
     assertEquals(emptyList(), list);
   }
 
   public void testNewLinkedListFromCollection() {
     @SuppressWarnings("UseCollectionConstructor") // test of factory method
-    LinkedList<Integer> list = Lists.newLinkedList(SOME_COLLECTION);
-    assertEquals(SOME_COLLECTION, list);
+    LinkedList<Integer> list = newLinkedList(SOME_COLLECTION);
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
   public void testNewLinkedListFromIterable() {
-    LinkedList<Integer> list = Lists.newLinkedList(SOME_ITERABLE);
-    assertEquals(SOME_COLLECTION, list);
+    LinkedList<Integer> list = newLinkedList(SOME_ITERABLE);
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
+  // We need to test our factory method.
+  @SuppressWarnings({"UseCollectionConstructor", "InlineMeInliner"})
   @J2ktIncompatible
   @GwtIncompatible // CopyOnWriteArrayList
   public void testNewCOWALEmpty() {
-    CopyOnWriteArrayList<Integer> list = Lists.newCopyOnWriteArrayList();
+    CopyOnWriteArrayList<Integer> list = newCopyOnWriteArrayList();
     assertEquals(emptyList(), list);
   }
 
   @J2ktIncompatible
   @GwtIncompatible // CopyOnWriteArrayList
   public void testNewCOWALFromIterable() {
-    CopyOnWriteArrayList<Integer> list = Lists.newCopyOnWriteArrayList(SOME_ITERABLE);
-    assertEquals(SOME_COLLECTION, list);
+    CopyOnWriteArrayList<Integer> list = newCopyOnWriteArrayList(SOME_ITERABLE);
+    assertThat(list).containsExactlyElementsIn(SOME_COLLECTION).inOrder();
   }
 
   @J2ktIncompatible
@@ -431,7 +437,7 @@ public class ListsTest extends TestCase {
    * Lists#newArrayList}.
    */
   public void testArraysAsList() {
-    List<String> ourWay = Lists.newArrayList("foo", "bar", "baz");
+    List<String> ourWay = newArrayList("foo", "bar", "baz");
     List<String> otherWay = asList("foo", "bar", "baz");
 
     // They're logically equal
@@ -555,11 +561,11 @@ public class ListsTest extends TestCase {
     assertEquals(asList(6, 4, 3, 9, 2, 5), toList);
     fromList.remove(Integer.valueOf(2));
     assertEquals(asList(6, 4, 3, 9, 5), toList);
-    fromList.remove(3);
+    fromList.remove(/* index */ 3);
     assertEquals(asList(6, 3, 9, 5), toList);
 
     /* toList modifications reflected in fromList */
-    toList.remove(0);
+    toList.remove(/* index */ 0);
     assertEquals(asList(5, 9, 3), fromList);
     toList.add(7);
     assertEquals(asList(7, 5, 9, 3), fromList);
@@ -643,10 +649,10 @@ public class ListsTest extends TestCase {
     List<Integer> x = list(1, 2);
     List<String> y = list("3", "4");
 
-    List<Object> exp1 = list((Object) 1, "3");
-    List<Object> exp2 = list((Object) 1, "4");
-    List<Object> exp3 = list((Object) 2, "3");
-    List<Object> exp4 = list((Object) 2, "4");
+    List<Object> exp1 = list(1, "3");
+    List<Object> exp2 = list(1, "4");
+    List<Object> exp3 = list(2, "3");
+    List<Object> exp4 = list(2, "4");
 
     assertThat(Lists.<Object>cartesianProduct(x, y))
         .containsExactly(exp1, exp2, exp3, exp4)
@@ -712,7 +718,7 @@ public class ListsTest extends TestCase {
     assertEquals(asList("5", "2", "3", "4", "6"), toList);
     fromList.remove(Integer.valueOf(2));
     assertEquals(asList("5", "3", "4", "6"), toList);
-    fromList.remove(2);
+    fromList.remove(/* index */ 2);
     assertEquals(asList("5", "3", "6"), toList);
 
     /* toList modifications reflected in fromList */
@@ -815,6 +821,104 @@ public class ListsTest extends TestCase {
     List<Integer> fromList = new LinkedList<>(SOME_SEQUENTIAL_LIST);
     List<String> list = transform(fromList, SOME_FUNCTION);
     assertTransformIterator(list);
+  }
+
+  @J2ktIncompatible
+  @GwtIncompatible // CopyOnWriteArrayList, Spliterator
+  public void testTransformSpliteratorDoesNotThrowConcurrentModificationException() {
+    // CopyOnWriteArrayList is documented to never throw ConcurrentModificationException; Lists
+    // .transform() is documented to return a threadsafe list when the input list and function are
+    // threadsafe. The spliterator of the transformed list must honor that by delegating to the
+    // backing list's own (snapshotting) spliterator, rather than falling back to the JDK's default
+    // index-based RandomAccessSpliterator, which translates concurrent structural changes into a
+    // ConcurrentModificationException.
+    CopyOnWriteArrayList<Integer> fromList = new CopyOnWriteArrayList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    Spliterator<String> spliterator = transformed.spliterator();
+    List<String> results = new ArrayList<>();
+    assertTrue(spliterator.tryAdvance(results::add));
+
+    // Structurally mutate the backing list after the spliterator was created but before it has
+    // finished being consumed.
+    fromList.clear();
+
+    // Must not throw, and must still report the elements from the original snapshot, exactly as
+    // fromList.spliterator() itself would.
+    spliterator.forEachRemaining(results::add);
+    assertEquals(SOME_STRING_LIST, results);
+  }
+
+  @J2ktIncompatible
+  @GwtIncompatible // CopyOnWriteArrayList, Spliterator
+  public void testTransformSpliteratorPropagatesBackingListCharacteristics() {
+    CopyOnWriteArrayList<Integer> fromList = new CopyOnWriteArrayList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    // CopyOnWriteArrayList.spliterator() reports IMMUTABLE (among other bits); a spliterator that
+    // instead falls back to the default RandomAccessSpliterator would not, since that
+    // implementation has no way of knowing the backing list is safe to snapshot.
+    assertTrue(transformed.spliterator().hasCharacteristics(Spliterator.IMMUTABLE));
+  }
+
+  @GwtIncompatible // Spliterator
+  public void testTransformSpliteratorRandomAccess() {
+    List<Integer> fromList = new ArrayList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    List<String> results = new ArrayList<>();
+    transformed.spliterator().forEachRemaining(results::add);
+    assertEquals(SOME_STRING_LIST, results);
+  }
+
+  public void testTransformForEachRandomAccess() {
+    List<Integer> fromList = new ArrayList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    List<String> results = new ArrayList<>();
+    transformed.forEach(results::add);
+    assertEquals(SOME_STRING_LIST, results);
+  }
+
+  @J2ktIncompatible
+  @GwtIncompatible // CopyOnWriteArrayList, Spliterator
+  public void testTransformSpliteratorSequentialPropagatesBackingListCharacteristics() {
+    CopyOnWriteArrayList<Integer> cowal = new CopyOnWriteArrayList<>(SOME_LIST);
+    List<Integer> nonRandomAccess =
+        new ForwardingList<Integer>() {
+          @Override
+          protected List<Integer> delegate() {
+            return cowal;
+          }
+
+          @Override
+          public Spliterator<Integer> spliterator() {
+            return cowal.spliterator();
+          }
+        };
+    assertFalse(nonRandomAccess instanceof RandomAccess);
+    List<String> transformed = transform(nonRandomAccess, SOME_FUNCTION);
+    assertFalse(transformed instanceof RandomAccess);
+    assertTrue(transformed.spliterator().hasCharacteristics(Spliterator.IMMUTABLE));
+  }
+
+  @GwtIncompatible // Spliterator
+  public void testTransformSpliteratorSequential() {
+    List<Integer> fromList = new LinkedList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    List<String> results = new ArrayList<>();
+    transformed.spliterator().forEachRemaining(results::add);
+    assertEquals(SOME_STRING_LIST, results);
+  }
+
+  public void testTransformForEachSequential() {
+    List<Integer> fromList = new LinkedList<>(SOME_LIST);
+    List<String> transformed = transform(fromList, SOME_FUNCTION);
+
+    List<String> results = new ArrayList<>();
+    transformed.forEach(results::add);
+    assertEquals(SOME_STRING_LIST, results);
   }
 
   /**

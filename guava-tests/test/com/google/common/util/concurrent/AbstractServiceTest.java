@@ -37,6 +37,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link AbstractService}.
@@ -49,8 +50,8 @@ import org.jspecify.annotations.NullUnmarked;
 public class AbstractServiceTest extends TestCase {
 
   private static final long LONG_TIMEOUT_MILLIS = 10000;
-  private Thread executionThread;
-  private Throwable thrownByExecutionThread;
+  private @Nullable Thread executionThread;
+  private @Nullable Throwable thrownByExecutionThread;
 
   public void testNoOpServiceStartStop() throws Exception {
     NoOpService service = new NoOpService();
@@ -74,7 +75,7 @@ public class AbstractServiceTest extends TestCase {
         listener.getStateHistory());
   }
 
-  public void testNoOpServiceStartAndWaitStopAndWait() throws Exception {
+  public void testNoOpServiceStartAndWaitStopAndWait() {
     NoOpService service = new NoOpService();
 
     service.startAsync().awaitRunning();
@@ -84,7 +85,7 @@ public class AbstractServiceTest extends TestCase {
     assertThat(service.state()).isEqualTo(State.TERMINATED);
   }
 
-  public void testNoOpServiceStartAsyncAndAwaitStopAsyncAndAwait() throws Exception {
+  public void testNoOpServiceStartAsyncAndAwaitStopAsyncAndAwait() {
     NoOpService service = new NoOpService();
 
     service.startAsync().awaitRunning();
@@ -108,7 +109,7 @@ public class AbstractServiceTest extends TestCase {
         listener.getStateHistory());
   }
 
-  public void testNoOpServiceStopIdempotenceAfterWait() throws Exception {
+  public void testNoOpServiceStopIdempotenceAfterWait() {
     NoOpService service = new NoOpService();
 
     service.startAsync().awaitRunning();
@@ -118,7 +119,7 @@ public class AbstractServiceTest extends TestCase {
     assertThat(service.state()).isEqualTo(State.TERMINATED);
   }
 
-  public void testNoOpServiceStopIdempotenceDoubleWait() throws Exception {
+  public void testNoOpServiceStopIdempotenceDoubleWait() {
     NoOpService service = new NoOpService();
 
     service.startAsync().awaitRunning();
@@ -129,7 +130,7 @@ public class AbstractServiceTest extends TestCase {
     assertThat(service.state()).isEqualTo(State.TERMINATED);
   }
 
-  public void testNoOpServiceStartStopAndWaitUninterruptible() throws Exception {
+  public void testNoOpServiceStartStopAndWaitUninterruptible() {
     NoOpService service = new NoOpService();
 
     currentThread().interrupt();
@@ -238,7 +239,7 @@ public class AbstractServiceTest extends TestCase {
    * {@link State#STARTING} more than once, the {@link Listener#stopping(State)} callback would get
    * called multiple times.
    */
-  public void testManualServiceStopMultipleTimesWhileStarting() throws Exception {
+  public void testManualServiceStopMultipleTimesWhileStarting() {
     ManualSwitchedService service = new ManualSwitchedService();
     AtomicInteger stoppingCount = new AtomicInteger();
     service.addListener(

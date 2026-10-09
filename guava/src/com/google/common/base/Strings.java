@@ -63,7 +63,7 @@ public final class Strings {
    * <p>Consider normalizing your string references with {@link #nullToEmpty}. If you do, you can
    * use {@link String#isEmpty()} instead of this method, and you won't need special null-safe forms
    * of methods like {@link String#toUpperCase} either. Or, if you'd like to normalize "in the other
-   * direction," converting empty strings to {@code null}, you can use {@link #emptyToNull}.
+   * direction" (converting empty strings to {@code null}), you can use {@link #emptyToNull}.
    *
    * @param string a string reference to check
    * @return {@code true} if the string is null or is the empty string
@@ -261,7 +261,7 @@ public final class Strings {
    *     non-null values are converted to strings using {@link Object#toString()}.
    * @since 25.1
    */
-  // TODO(diamondm) consider using Arrays.toString() for array parameters
+  // TODO(b/136042644): consider using Arrays.toString() for array parameters
   public static String lenientFormat(
       @Nullable String template, @Nullable Object @Nullable ... args) {
     template = String.valueOf(template); // null -> "null"

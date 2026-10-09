@@ -29,7 +29,9 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Static utility methods pertaining to {@code Predicate} instances.
+ * Static utility methods pertaining to {@link Predicate com.google.common.base.Predicate}
+ * instances; see that class for information about migrating to {@link java.util.function.Predicate
+ * java.util.function}.
  *
  * <p>All methods return serializable predicates as long as they're given serializable parameters.
  *
@@ -363,7 +365,7 @@ public final class Predicates {
     };
 
     @SuppressWarnings("unchecked") // safe contravariant cast
-    <T extends @Nullable Object> Predicate<T> withNarrowedType() {
+    final <T extends @Nullable Object> Predicate<T> withNarrowedType() {
       return (Predicate<T>) this;
     }
   }
@@ -588,7 +590,7 @@ public final class Predicates {
       return "Predicates.instanceOf(" + clazz.getName() + ")";
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -627,7 +629,7 @@ public final class Predicates {
       return "Predicates.subtypeOf(" + clazz.getName() + ")";
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    private static final long serialVersionUID = 0;
   }
 
   /**
@@ -737,14 +739,14 @@ public final class Predicates {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
       // Pattern uses Object.hashCode, so we have to reach
       // inside to build a hashCode consistent with equals.
       return Objects.hash(pattern.pattern(), pattern.flags());
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public final boolean equals(@Nullable Object obj) {
       if (obj instanceof ContainsPatternPredicate) {
         ContainsPatternPredicate that = (ContainsPatternPredicate) obj;
 
@@ -766,7 +768,7 @@ public final class Predicates {
       return "Predicates.contains(" + patternString + ")";
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   /**
@@ -784,7 +786,7 @@ public final class Predicates {
       return "Predicates.containsPattern(" + pattern.pattern() + ")";
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @J2ktIncompatible private static final long serialVersionUID = 0;
   }
 
   private static <T> List<T> defensiveCopy(T[] array) {

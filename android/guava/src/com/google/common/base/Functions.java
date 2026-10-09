@@ -27,8 +27,9 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Static utility methods pertaining to {@code com.google.common.base.Function} instances; see that
- * class for information about migrating to {@code java.util.function}.
+ * Static utility methods pertaining to {@link Function com.google.common.base.Function} instances;
+ * see that class for information about migrating to {@link java.util.function.Function
+ * java.util.function}.
  *
  * <p>All methods return serializable functions as long as they're given serializable parameters.
  *
@@ -226,7 +227,6 @@ public final class Functions {
 
     @Override
     public String toString() {
-      // TODO(cpovirk): maybe remove "defaultValue=" to make this look like the method call does
       return "Functions.forMap(" + map + ", defaultValue=" + defaultValue + ")";
     }
 
@@ -234,8 +234,9 @@ public final class Functions {
   }
 
   /**
-   * Returns the composition of two functions. For {@code f: A->B} and {@code g: B->C}, composition
-   * is defined as the function h such that {@code h(a) == g(f(a))} for each {@code a}.
+   * Returns the <a href="https://en.wikipedia.org/wiki/Function_composition">composition</a> of two
+   * functions. For {@code f: A->B} and {@code g: B->C}, composition is defined as the function
+   * {@code h} such that {@code h(a) == g(f(a))} for each {@code a}.
    *
    * <p><b>JRE users and Android users who opt in to library desugaring:</b> use {@code
    * g.compose(f)} or (probably clearer) {@code f.andThen(g)} instead. Note that it is not
@@ -243,8 +244,6 @@ public final class Functions {
    *
    * @param g the second function to apply
    * @param f the first function to apply
-   * @return the composition of {@code f} and {@code g}
-   * @see <a href="//en.wikipedia.org/wiki/Function_composition">function composition</a>
    */
   public static <A extends @Nullable Object, B extends @Nullable Object, C extends @Nullable Object>
       Function<A, C> compose(Function<B, C> g, Function<A, ? extends B> f) {
@@ -284,7 +283,6 @@ public final class Functions {
 
     @Override
     public String toString() {
-      // TODO(cpovirk): maybe make this look like the method call does ("Functions.compose(...)")
       return g + "(" + f + ")";
     }
 

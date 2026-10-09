@@ -28,7 +28,6 @@ import com.google.common.collect.testing.AbstractCollectionTester;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import java.lang.reflect.Method;
-import org.junit.Ignore;
 
 /**
  * A generic JUnit test which tests creation (typically through a constructor or static factory
@@ -38,9 +37,6 @@ import org.junit.Ignore;
  * @author Chris Povirk
  */
 @GwtCompatible
-@Ignore("test runners must not instantiate and run this directly, only via suites we build")
-// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-@SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class CollectionCreationTester<E> extends AbstractCollectionTester<E> {
   @CollectionFeature.Require(ALLOWS_NULL_VALUES)
   @CollectionSize.Require(absent = ZERO)
@@ -55,11 +51,7 @@ public class CollectionCreationTester<E> extends AbstractCollectionTester<E> {
   public void testCreateWithNull_unsupported() {
     E[] array = createArrayWithNullElement();
 
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          Object unused = getSubjectGenerator().create(array);
-        });
+    assertThrows(NullPointerException.class, () -> getSubjectGenerator().create(array));
   }
 
   /**

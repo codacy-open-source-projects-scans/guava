@@ -17,6 +17,7 @@
 package com.google.common.io;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.util.Collections.nCopies;
 
 import com.google.common.collect.ImmutableList;
 import java.io.FilterReader;
@@ -35,26 +36,27 @@ public class MultiReaderTest extends TestCase {
   public void testOnlyOneOpen() throws Exception {
     String testString = "abcdefgh";
     CharSource source = newCharSource(testString);
-    int[] counter = new int[1];
     CharSource reader =
         new CharSource() {
+          private int openStreams = 0;
+
           @Override
           public Reader openStream() throws IOException {
-            if (counter[0]++ != 0) {
+            if (openStreams++ != 0) {
               throw new IllegalStateException("More than one source open");
             }
             return new FilterReader(source.openStream()) {
               @Override
               public void close() throws IOException {
                 super.close();
-                counter[0]--;
+                openStreams--;
               }
             };
           }
         };
     Reader joinedReader = CharSource.concat(reader, reader, reader).openStream();
     String result = CharStreams.toString(joinedReader);
-    assertEquals(testString.length() * 3, result.length());
+    assertThat(result).hasLength(testString.length() * 3);
   }
 
   public void testReady() throws Exception {
@@ -76,6 +78,13 @@ public class MultiReaderTest extends TestCase {
 
     String expectedString = testString + testString;
     assertThat(CharStreams.toString(joinedReader)).isEqualTo(expectedString);
+  }
+
+  public void testRead_noStackOverflow_manyEmptySources() throws IOException {
+    try (Reader joinedReader =
+        CharSource.concat(nCopies(100_000, CharSource.empty())).openStream()) {
+      assertEquals(-1, joinedReader.read());
+    }
   }
 
   private static CharSource newCharSource(String text) {

@@ -22,8 +22,6 @@ import static com.google.common.collect.Sets.hashCodeImpl;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.errorprone.annotations.concurrent.LazyInit;
-import com.google.j2objc.annotations.WeakOuter;
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
@@ -109,30 +107,18 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
     return result;
   }
 
-  @LazyInit private transient @Nullable Collection<Entry<K, V>> entries;
-
-  @Override
-  public Collection<Entry<K, V>> entries() {
-    Collection<Entry<K, V>> result = entries;
-    return (result == null) ? entries = createEntries() : result;
-  }
-
-  abstract Collection<Entry<K, V>> createEntries();
-
-  @WeakOuter
   class Entries extends Multimaps.Entries<K, V> {
     @Override
-    Multimap<K, V> multimap() {
+    final Multimap<K, V> multimap() {
       return AbstractMultimap.this;
     }
 
     @Override
-    public Iterator<Entry<K, V>> iterator() {
+    public final Iterator<Entry<K, V>> iterator() {
       return entryIterator();
     }
   }
 
-  @WeakOuter
   final class EntrySet extends Entries implements Set<Entry<K, V>> {
     @Override
     public int hashCode() {
@@ -147,37 +133,6 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
 
   abstract Iterator<Entry<K, V>> entryIterator();
 
-  @LazyInit private transient @Nullable Set<K> keySet;
-
-  @Override
-  public Set<K> keySet() {
-    Set<K> result = keySet;
-    return (result == null) ? keySet = createKeySet() : result;
-  }
-
-  abstract Set<K> createKeySet();
-
-  @LazyInit private transient @Nullable Multiset<K> keys;
-
-  @Override
-  public Multiset<K> keys() {
-    Multiset<K> result = keys;
-    return (result == null) ? keys = createKeys() : result;
-  }
-
-  abstract Multiset<K> createKeys();
-
-  @LazyInit private transient @Nullable Collection<V> values;
-
-  @Override
-  public Collection<V> values() {
-    Collection<V> result = values;
-    return (result == null) ? values = createValues() : result;
-  }
-
-  abstract Collection<V> createValues();
-
-  @WeakOuter
   final class Values extends AbstractCollection<V> {
     @Override
     public Iterator<V> iterator() {
@@ -203,16 +158,6 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
   Iterator<V> valueIterator() {
     return Maps.valueIterator(entries().iterator());
   }
-
-  @LazyInit private transient @Nullable Map<K, Collection<V>> asMap;
-
-  @Override
-  public Map<K, Collection<V>> asMap() {
-    Map<K, Collection<V>> result = asMap;
-    return (result == null) ? asMap = createAsMap() : result;
-  }
-
-  abstract Map<K, Collection<V>> createAsMap();
 
   // Comparison and hashing
 
@@ -241,7 +186,7 @@ abstract class AbstractMultimap<K extends @Nullable Object, V extends @Nullable 
    * @return a string representation of the multimap
    */
   @Override
-  public String toString() {
+  public final String toString() {
     return asMap().toString();
   }
 }

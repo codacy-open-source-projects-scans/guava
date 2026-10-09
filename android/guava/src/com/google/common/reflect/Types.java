@@ -16,15 +16,17 @@ package com.google.common.reflect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.isEmpty;
+import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.Keep;
@@ -57,6 +59,8 @@ final class Types {
 
   /** Class#toString without the "class " and "interface " prefixes */
   private static final Joiner COMMA_JOINER = Joiner.on(", ").useForNull("null");
+
+  private static final Joiner AMPERSAND_JOINER = Joiner.on(" & ");
 
   /** Returns the array type of {@code componentType}. */
   static Type newArrayType(Type componentType) {
@@ -302,6 +306,9 @@ final class Types {
 
     @Override
     public boolean equals(@Nullable Object other) {
+      if (other == this) {
+        return true;
+      }
       if (!(other instanceof ParameterizedType)) {
         return false;
       }
@@ -341,7 +348,7 @@ final class Types {
    * of {@code TypeVariable} from {@link TypeResolver#resolveType} will not be able to call {@code
    * getAnnotatedBounds()} on it, but that should hopefully be rare.
    *
-   * <p>TODO: b/147144588 - We are currently also missing the methods inherited from {@link
+   * <p>TODO(b/147144588): We are currently also missing the methods inherited from {@link
    * AnnotatedElement}, which {@code TypeVariable} began to extend only in Java 8. Those methods
    * refer only to types present under Android, so we could implement them in {@code
    * TypeVariableImpl} today. (We could probably then make {@code TypeVariableImpl} implement {@code
@@ -502,6 +509,9 @@ final class Types {
 
     @Override
     public boolean equals(@Nullable Object obj) {
+      if (obj == this) {
+        return true;
+      }
       if (obj instanceof WildcardType) {
         WildcardType that = (WildcardType) obj;
         return lowerBounds.equals(asList(that.getLowerBounds()))
@@ -521,8 +531,11 @@ final class Types {
       for (Type lowerBound : lowerBounds) {
         builder.append(" super ").append(JavaVersion.CURRENT.typeName(lowerBound));
       }
-      for (Type upperBound : filterUpperBounds(upperBounds)) {
-        builder.append(" extends ").append(JavaVersion.CURRENT.typeName(upperBound));
+      Iterable<Type> filteredUpperBounds = filterUpperBounds(upperBounds);
+      if (!isEmpty(filteredUpperBounds)) {
+        builder.append(" extends ");
+        AMPERSAND_JOINER.appendTo(
+            builder, transform(filteredUpperBounds, JavaVersion.CURRENT::typeName));
       }
       return builder.toString();
     }
@@ -535,7 +548,10 @@ final class Types {
   }
 
   private static Iterable<Type> filterUpperBounds(Iterable<Type> bounds) {
-    return filter(bounds, not(Predicates.equalTo(Object.class)));
+    if (size(bounds) > 1) {
+      return bounds;
+    }
+    return filter(bounds, not(equalTo(Object.class)));
   }
 
   private static void disallowPrimitiveType(Type[] types, String usedAs) {

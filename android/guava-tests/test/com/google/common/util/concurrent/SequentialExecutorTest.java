@@ -81,7 +81,7 @@ public class SequentialExecutorTest extends TestCase {
   private SequentialExecutor e;
 
   @Override
-  public void setUp() {
+  protected void setUp() {
     fakePool = new FakeExecutor();
     e = new SequentialExecutor(fakePool);
   }
@@ -163,7 +163,7 @@ public class SequentialExecutorTest extends TestCase {
     assertEquals(2, numCalls.get());
   }
 
-  public void testInterrupt_beforeRunRestoresInterruption() throws Exception {
+  public void testInterrupt_beforeRunRestoresInterruption() {
     // Run a task on the composed Executor that interrupts its thread (i.e. this thread).
     fakePool.execute(() -> Thread.currentThread().interrupt());
     // Run a task that expects that it is not interrupted while it is running.
@@ -178,7 +178,7 @@ public class SequentialExecutorTest extends TestCase {
     assertThat(Thread.interrupted()).isTrue();
   }
 
-  public void testInterrupt_doesNotInterruptSubsequentTask() throws Exception {
+  public void testInterrupt_doesNotInterruptSubsequentTask() {
     // Run a task that interrupts its thread (i.e. this thread).
     e.execute(() -> Thread.currentThread().interrupt());
     // Run a task that expects that it is not interrupted while it is running.
@@ -287,9 +287,9 @@ public class SequentialExecutorTest extends TestCase {
         };
     SequentialExecutor executor = new SequentialExecutor(delegate);
     ExecutorService blocked = newCachedThreadPool();
-    Future<?> first = blocked.submit(() -> executor.execute(Runnables.doNothing()));
+    Future<?> first = blocked.submit(() -> executor.execute(() -> {}));
     future.get(10, SECONDS);
-    assertThrows(RejectedExecutionException.class, () -> executor.execute(Runnables.doNothing()));
+    assertThrows(RejectedExecutionException.class, () -> executor.execute(() -> {}));
     latch.countDown();
     ExecutionException expected =
         assertThrows(ExecutionException.class, () -> first.get(10, SECONDS));

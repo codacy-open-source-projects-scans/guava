@@ -111,8 +111,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
      * of non-null entries.
      */
     @SuppressWarnings("nullness")
-    Entry<K, V>[] entries =
-        (n == entryArray.length) ? (Entry<K, V>[]) entryArray : createEntryArray(n);
+    Entry<K, V>[] entries = (n == entryArray.length) ? entryArray : createEntryArray(n);
     int tableSize = closedTableSize(n, MAX_LOAD_FACTOR);
     @Nullable ImmutableMapEntry<K, V>[] table = createEntryArray(tableSize);
     int mask = tableSize - 1;
@@ -305,12 +304,12 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
   }
 
   @Override
-  ImmutableSet<Entry<K, V>> createEntrySet() {
+  public ImmutableSet<Entry<K, V>> entrySet() {
     return new ImmutableMapEntrySet.RegularEntrySet<>(this, entries);
   }
 
   @Override
-  ImmutableSet<K> createKeySet() {
+  public ImmutableSet<K> keySet() {
     return new KeySet<>(this);
   }
 
@@ -365,12 +364,23 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
         return map.keySet();
       }
 
-      @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+      private static final long serialVersionUID = 0;
     }
   }
 
+  /*
+   * While we *could* declare a return type of ImmutableList on this package-private implementation
+   * type, no user would see it, so all we'd end up with is an extra method in the class file.
+   *
+   * (Arguably it would have been even better not to have returned an ImmutableList in the first
+   * place. It's especially a bit strange given that ImmutableMap.of(k, v).values() (a
+   * SingletonImmutableBiMap) returns an ImmutubleSet. Surely users have already come to depend on
+   * these implementation details, such as through `equals` calls. Maybe we should have returned a
+   * more vanilla ImmutableCollection with a fast asList() method?))
+   */
+  @SuppressWarnings("PreferredInterfaceType")
   @Override
-  ImmutableCollection<V> createValues() {
+  public ImmutableCollection<V> values() {
     return new Values<>(this);
   }
 
@@ -420,7 +430,7 @@ final class RegularImmutableMap<K, V> extends ImmutableMap<K, V> {
         return map.values();
       }
 
-      @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+      private static final long serialVersionUID = 0;
     }
   }
 

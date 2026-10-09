@@ -40,6 +40,8 @@ import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,7 @@ public class BloomFilterTest extends TestCase {
     assertThat(bf.approximateElementCount()).isAtMost((long) (sizeGuess * 1.01));
   }
 
+  // Android: takes ~20s
   public void testCreateAndCheckMitz32BloomFilterWithKnownFalsePositives() {
     int numInsertions = 1000000;
     BloomFilter<String> bf =
@@ -133,6 +136,7 @@ public class BloomFilterTest extends TestCase {
     assertThat(actualReportedFpp).isWithin(0.00015).of(expectedReportedFpp);
   }
 
+  // Android: takes ~20s
   public void testCreateAndCheckBloomFilterWithKnownFalsePositives64() {
     int numInsertions = 1000000;
     BloomFilter<String> bf =
@@ -174,6 +178,7 @@ public class BloomFilterTest extends TestCase {
     assertThat(actualReportedFpp).isWithin(0.00033).of(expectedReportedFpp);
   }
 
+  // Android: takes ~20s
   public void testCreateAndCheckBloomFilterWithKnownUtf8FalsePositives64() {
     int numInsertions = 1000000;
     BloomFilter<String> bf =
@@ -281,10 +286,8 @@ public class BloomFilterTest extends TestCase {
     IllegalArgumentException expected =
         assertThrows(
             IllegalArgumentException.class,
-            () -> {
-              BloomFilter<String> unused =
-                  BloomFilter.create(HashTestUtils.BAD_FUNNEL, Integer.MAX_VALUE, Double.MIN_VALUE);
-            });
+            () ->
+                BloomFilter.create(HashTestUtils.BAD_FUNNEL, Integer.MAX_VALUE, Double.MIN_VALUE));
     assertThat(expected)
         .hasMessageThat()
         .isEqualTo("Could not create BloomFilter of 3327428144502 bits");
@@ -333,7 +336,6 @@ public class BloomFilterTest extends TestCase {
     }
   }
 
-  @AndroidIncompatible // slow
   public void testBitSize() {
     double fpp = 0.03;
     for (int i = 1; i < 10000; i++) {
@@ -533,6 +535,83 @@ public class BloomFilterTest extends TestCase {
     assertThat(read.expectedFpp()).isGreaterThan(0);
   }
 
+  public void testCustomSerializationWithAllowedSize() throws Exception {
+    Funnel<byte[]> funnel = byteArrayFunnel();
+    BloomFilter<byte[]> bf = BloomFilter.create(funnel, 100);
+    for (int i = 0; i < 100; i++) {
+      bf.put(Ints.toByteArray(i));
+    }
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    bf.writeTo(out);
+
+    // Deserializing with a maxAllowedSizeInBits equal to the actual bit size should succeed
+    BloomFilter<byte[]> read =
+        BloomFilter.readFrom(new ByteArrayInputStream(out.toByteArray()), funnel, bf.bitSize());
+    assertThat(read).isEqualTo(bf);
+    assertThat(read.expectedFpp()).isGreaterThan(0);
+
+    // Deserializing with a maxAllowedSizeInBits larger than the actual bit size should succeed
+    BloomFilter<byte[]> readLarger =
+        BloomFilter.readFrom(
+            new ByteArrayInputStream(out.toByteArray()), funnel, bf.bitSize() + 100);
+    assertThat(readLarger).isEqualTo(bf);
+
+    // Deserializing with a maxAllowedSizeInBits smaller than the actual bit size should fail
+    long maxAllowedSizeInBits = bf.bitSize() - 1;
+    IOException expected =
+        assertThrows(
+            IOException.class,
+            () ->
+                BloomFilter.readFrom(
+                    new ByteArrayInputStream(out.toByteArray()), funnel, maxAllowedSizeInBits));
+    assertThat(expected).hasCauseThat().isInstanceOf(IllegalArgumentException.class);
+
+    int longArraySize = (out.toByteArray().length - 6) / 8;
+    assertThat(expected)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo(
+            String.format(
+                "longArraySize (%s) must be <= %s", longArraySize, maxAllowedSizeInBits / 64));
+  }
+
+  public void testCustomSerializationWithInvalidDataLength() throws Exception {
+    Funnel<byte[]> funnel = byteArrayFunnel();
+
+    // 1 byte strategy, 1 byte numHashFunctions, 4 bytes longArraySize (int), followed by longs.
+    // Let's write a stream where longArraySize is -1 (0xFFFFFFFF)
+    byte[] invalidDataLengthBytes;
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+        DataOutputStream dataOut = new DataOutputStream(out)) {
+      dataOut.writeByte(0x01); // strategy ordinal
+      dataOut.writeByte(0x05); // numHashFunctions
+      dataOut.writeInt(-1); // longArraySize = -1
+      invalidDataLengthBytes = out.toByteArray();
+    }
+
+    IOException expected =
+        assertThrows(
+            IOException.class,
+            () -> BloomFilter.readFrom(new ByteArrayInputStream(invalidDataLengthBytes), funnel));
+    assertThat(expected).hasCauseThat().isInstanceOf(IllegalArgumentException.class);
+    assertThat(expected)
+        .hasCauseThat()
+        .hasMessageThat()
+        .isEqualTo("longArraySize (-1) must be >= 0");
+  }
+
+  public void testReadFromWithNegativeMaxAllowedSizeInBits() {
+    Funnel<byte[]> funnel = byteArrayFunnel();
+    ByteArrayInputStream emptyStream = new ByteArrayInputStream(new byte[] {});
+
+    IllegalArgumentException expected =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> BloomFilter.readFrom(emptyStream, funnel, /* maxAllowedSizeInBits= */ -1));
+    assertThat(expected).hasMessageThat().isEqualTo("maxAllowedSizeInBits (-1) must be >= 0");
+  }
+
   /**
    * This test will fail whenever someone updates/reorders the BloomFilterStrategies constants. Only
    * appending a new constant is allowed.
@@ -547,7 +626,7 @@ public class BloomFilterTest extends TestCase {
   }
 
 
-  public void testNoRaceConditions() throws Exception {
+  public void testNoRaceConditions() {
     BloomFilter<Integer> bloomFilter = BloomFilter.create(integerFunnel(), 15_000_000, 0.01);
 
     // This check has to be BEFORE the loop because the random insertions can

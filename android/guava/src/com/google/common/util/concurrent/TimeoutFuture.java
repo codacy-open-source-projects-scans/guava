@@ -92,7 +92,7 @@ final class TimeoutFuture<V extends @Nullable Object> extends FluentFuture.Trust
     }
 
     @Override
-    // TODO: b/227335009 - Maybe change interruption behavior, but it requires thought.
+    // TODO(b/227335009): Maybe change interruption behavior, but it requires thought.
     @SuppressWarnings("Interruption")
     public void run() {
       // If either of these reads return null then we must be after a successful cancel or another
@@ -120,7 +120,7 @@ final class TimeoutFuture<V extends @Nullable Object> extends FluentFuture.Trust
        */
       timeoutFutureRef = null;
       if (delegate.isDone()) {
-        timeoutFuture.setFuture(delegate);
+        timeoutFuture.setFutureInternal(delegate);
       } else {
         try {
           @RetainedLocalRef ScheduledFuture<?> timer = timeoutFuture.timer;

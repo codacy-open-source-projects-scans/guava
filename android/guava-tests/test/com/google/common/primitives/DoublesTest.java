@@ -276,11 +276,7 @@ public class DoublesTest extends TestCase {
     double[] sharedArray = new double[arraysDim2];
     Arrays.fill(arrays, sharedArray);
 
-    try {
-      Doubles.concat(arrays);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> Doubles.concat(arrays));
   }
 
   public void testEnsureCapacity() {
@@ -660,7 +656,7 @@ public class DoublesTest extends TestCase {
     }
   }
 
-  @AndroidIncompatible // slow
+  @AndroidIncompatible // takes ~30s
   @GwtIncompatible // Doubles.tryParse
   public void testTryParseAllCodePoints() {
     // Exercise non-ASCII digit test cases and the like.
@@ -770,7 +766,7 @@ public class DoublesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
-  public void testStringConverter_nullPointerTester() throws Exception {
+  public void testStringConverter_nullPointerTester() {
     NullPointerTester tester = new NullPointerTester();
     tester.testAllPublicInstanceMethods(Doubles.stringConverter());
   }

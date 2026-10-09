@@ -78,8 +78,7 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
      * of non-null entries.
      */
     @SuppressWarnings("nullness")
-    Entry<K, V>[] entries =
-        (n == entryArray.length) ? (Entry<K, V>[]) entryArray : createEntryArray(n);
+    Entry<K, V>[] entries = (n == entryArray.length) ? entryArray : createEntryArray(n);
     int hashCode = 0;
 
     for (int i = 0; i < n; i++) {
@@ -152,14 +151,14 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
   }
 
   @Override
-  ImmutableSet<Entry<K, V>> createEntrySet() {
+  public ImmutableSet<Entry<K, V>> entrySet() {
     return isEmpty()
         ? ImmutableSet.of()
         : new ImmutableMapEntrySet.RegularEntrySet<K, V>(this, entries);
   }
 
   @Override
-  ImmutableSet<K> createKeySet() {
+  public ImmutableSet<K> keySet() {
     return new ImmutableMapKeySet<>(this);
   }
 
@@ -199,7 +198,10 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
       return ImmutableBiMap.of();
     }
     ImmutableBiMap<V, K> result = inverse;
-    return (result == null) ? inverse = new Inverse() : result;
+    if (result == null) {
+      result = inverse = new Inverse();
+    }
+    return result;
   }
 
   private final class Inverse extends ImmutableBiMap<V, K> {
@@ -237,12 +239,12 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
     }
 
     @Override
-    ImmutableSet<V> createKeySet() {
+    public ImmutableSet<V> keySet() {
       return new ImmutableMapKeySet<>(this);
     }
 
     @Override
-    ImmutableSet<Entry<V, K>> createEntrySet() {
+    public ImmutableSet<Entry<V, K>> entrySet() {
       return new InverseEntrySet();
     }
 
@@ -337,7 +339,7 @@ final class RegularImmutableBiMap<K, V> extends ImmutableBiMap<K, V> {
       return forward.inverse();
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 1;
+    @GwtIncompatible private static final long serialVersionUID = 1;
   }
 
   // redeclare to help optimizers with b/310253115

@@ -19,7 +19,6 @@ package com.google.common.collect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Maps.immutableEntry;
-import static com.google.common.collect.Maps.newEnumMap;
 import static com.google.common.collect.Maps.newTreeMap;
 import static com.google.common.collect.Multimaps.filterKeys;
 import static com.google.common.collect.Multimaps.synchronizedListMultimap;
@@ -54,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -374,25 +374,25 @@ public class MultimapsTest extends TestCase {
     Multimap<String, Integer> multimap =
         Multimaps.newMultimap(new HashMap<String, Collection<Integer>>(), new QueueSupplier());
     Map<String, Collection<Integer>> map = Multimaps.asMap(multimap);
-    assertThat(map).isSameInstanceAs(multimap.asMap());
+    assertThat(map).isEqualTo(multimap.asMap());
   }
 
   public void testAsMap_listMultimap() {
     ListMultimap<String, Integer> listMultimap = ArrayListMultimap.create();
     Map<String, List<Integer>> map = Multimaps.asMap(listMultimap);
-    assertThat(map).isSameInstanceAs(listMultimap.asMap());
+    assertThat(map).isEqualTo(listMultimap.asMap());
   }
 
   public void testAsMap_setMultimap() {
     SetMultimap<String, Integer> setMultimap = LinkedHashMultimap.create();
     Map<String, Set<Integer>> map = Multimaps.asMap(setMultimap);
-    assertThat(map).isSameInstanceAs(setMultimap.asMap());
+    assertThat(map).isEqualTo(setMultimap.asMap());
   }
 
   public void testAsMap_sortedSetMultimap() {
     SortedSetMultimap<String, Integer> sortedSetMultimap = TreeMultimap.create();
     Map<String, SortedSet<Integer>> map = Multimaps.asMap(sortedSetMultimap);
-    assertThat(map).isSameInstanceAs(sortedSetMultimap.asMap());
+    assertThat(map).isEqualTo(sortedSetMultimap.asMap());
   }
 
   public void testForMap() {
@@ -548,7 +548,7 @@ public class MultimapsTest extends TestCase {
      * reserializing the multimap.
      */
     @SuppressWarnings("JdkObsolete")
-    public Queue<Integer> getImpl() {
+    Queue<Integer> getImpl() {
       return new LinkedList<>();
     }
 
@@ -581,7 +581,7 @@ public class MultimapsTest extends TestCase {
           }
         };
 
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     Multimap<Color, Integer> multimap = Multimaps.newMultimap(map, factory);
     assertThrows(IllegalArgumentException.class, () -> multimap.put(Color.BLUE, -1));
     multimap.put(Color.RED, 1);
@@ -595,7 +595,7 @@ public class MultimapsTest extends TestCase {
     // The ubiquitous EnumLinkedListMultimap
     CountingSupplier<Queue<Integer>> factory = new QueueSupplier();
 
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     Multimap<Color, Integer> multimap = Multimaps.newMultimap(map, factory);
     assertEquals(0, factory.count);
     multimap.putAll(Color.BLUE, asList(3, 1, 4));
@@ -617,14 +617,14 @@ public class MultimapsTest extends TestCase {
 
   public void testNewMultimapValueCollectionMatchesNavigableSet() {
     Supplier<TreeSet<Integer>> factory = new SortedSetSupplier();
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     Multimap<Color, Integer> multimap = Multimaps.newMultimap(map, factory);
     assertTrue(multimap.get(Color.BLUE) instanceof NavigableSet);
   }
 
   public void testNewMultimapValueCollectionMatchesList() {
     Supplier<LinkedList<Integer>> factory = new ListSupplier();
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     Multimap<Color, Integer> multimap = Multimaps.newMultimap(map, factory);
     assertTrue(multimap.get(Color.BLUE) instanceof List);
   }
@@ -633,7 +633,7 @@ public class MultimapsTest extends TestCase {
   @GwtIncompatible // SerializableTester
   public void testNewMultimapSerialization() {
     CountingSupplier<Queue<Integer>> factory = new QueueSupplier();
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     Multimap<Color, Integer> multimap = Multimaps.newMultimap(map, factory);
     multimap.putAll(Color.BLUE, asList(3, 1, 4));
     multimap.putAll(Color.RED, asList(2, 7, 1, 8));
@@ -642,7 +642,7 @@ public class MultimapsTest extends TestCase {
 
   private static class ListSupplier extends CountingSupplier<LinkedList<Integer>> {
     @Override
-    public LinkedList<Integer> getImpl() {
+    LinkedList<Integer> getImpl() {
       return new LinkedList<>();
     }
 
@@ -678,7 +678,7 @@ public class MultimapsTest extends TestCase {
 
   private static class SetSupplier extends CountingSupplier<Set<Integer>> {
     @Override
-    public Set<Integer> getImpl() {
+    Set<Integer> getImpl() {
       return new HashSet<>(4);
     }
 
@@ -710,7 +710,7 @@ public class MultimapsTest extends TestCase {
 
   private static class SortedSetSupplier extends CountingSupplier<TreeSet<Integer>> {
     @Override
-    public TreeSet<Integer> getImpl() {
+    TreeSet<Integer> getImpl() {
       return newTreeSet(INT_COMPARATOR);
     }
 
@@ -719,7 +719,7 @@ public class MultimapsTest extends TestCase {
 
   public void testNewSortedSetMultimap() {
     CountingSupplier<TreeSet<Integer>> factory = new SortedSetSupplier();
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     SortedSetMultimap<Color, Integer> multimap = Multimaps.newSortedSetMultimap(map, factory);
     // newSortedSetMultimap calls the factory once to determine the comparator.
     assertEquals(1, factory.count);
@@ -735,7 +735,7 @@ public class MultimapsTest extends TestCase {
   @GwtIncompatible // SerializableTester
   public void testNewSortedSetMultimapSerialization() {
     CountingSupplier<TreeSet<Integer>> factory = new SortedSetSupplier();
-    Map<Color, Collection<Integer>> map = newEnumMap(Color.class);
+    Map<Color, Collection<Integer>> map = new EnumMap<>(Color.class);
     SortedSetMultimap<Color, Integer> multimap = Multimaps.newSortedSetMultimap(map, factory);
     multimap.putAll(Color.BLUE, asList(3, 1, 4));
     multimap.putAll(Color.RED, asList(2, 7, 1, 8));
@@ -799,9 +799,7 @@ public class MultimapsTest extends TestCase {
 
   public void testIndex_nullValue() {
     List<@Nullable Integer> values = Arrays.asList(1, null);
-    assertThrows(
-        NullPointerException.class,
-        () -> Multimaps.index((List<Integer>) values, Functions.identity()));
+    assertThrows(NullPointerException.class, () -> Multimaps.index(values, Functions.identity()));
   }
 
   public void testIndex_nullKey() {

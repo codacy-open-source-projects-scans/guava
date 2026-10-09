@@ -766,7 +766,7 @@ public final class Streams {
    * Streams and thus hasn't had a chance to see Streams's annotation?
    */
   @IgnoreJRERequirement
-  private abstract static class MapWithIndexSpliterator<
+  abstract static class MapWithIndexSpliterator<
           F extends Spliterator<?>,
           R extends @Nullable Object,
           S extends MapWithIndexSpliterator<F, R, S>>
@@ -782,7 +782,7 @@ public final class Streams {
     abstract S createSplit(F from, long i);
 
     @Override
-    public @Nullable S trySplit() {
+    public final @Nullable S trySplit() {
       Spliterator<?> splitOrNull = fromSpliterator.trySplit();
       if (splitOrNull == null) {
         return null;
@@ -795,12 +795,12 @@ public final class Streams {
     }
 
     @Override
-    public long estimateSize() {
+    public final long estimateSize() {
       return fromSpliterator.estimateSize();
     }
 
     @Override
-    public int characteristics() {
+    public final int characteristics() {
       return fromSpliterator.characteristics()
           & (Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED);
     }
@@ -891,6 +891,8 @@ public final class Streams {
          */
         return requireNonNull(value);
       }
+
+      OptionalState() {}
     }
     OptionalState state = new OptionalState();
 

@@ -57,7 +57,6 @@ import java.lang.ref.Reference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -89,14 +88,14 @@ import org.jspecify.annotations.Nullable;
  *       captured by any of the steps in the pipeline are closed.
  * </ol>
  *
- * <h3>Starting a pipeline</h3>
+ * <h2>Starting a pipeline</h2>
  *
  * Start a {@code ClosingFuture} pipeline {@linkplain #submit(ClosingCallable, Executor) from a
  * callable block} that may capture objects for later closing. To start a pipeline from a {@link
  * ListenableFuture} that doesn't create resources that should be closed later, you can use {@link
  * #from(ListenableFuture)} instead.
  *
- * <h3>Derived steps</h3>
+ * <h2>Derived steps</h2>
  *
  * A {@code ClosingFuture} step can be derived from one or more input {@code ClosingFuture} steps in
  * ways similar to {@link FluentFuture}s:
@@ -113,35 +112,35 @@ import org.jspecify.annotations.Nullable;
  * exception, or combine it with others, you cannot do anything else with it, including declare it
  * to be the last step of the pipeline.
  *
- * <h4>Transforming</h4>
+ * <h3>Transforming</h3>
  *
  * To derive the next step by asynchronously applying a function to an input step's value, call
  * {@link #transform(ClosingFunction, Executor)} or {@link #transformAsync(AsyncClosingFunction,
  * Executor)} on the input step.
  *
- * <h4>Catching</h4>
+ * <h3>Catching</h3>
  *
  * To derive the next step from a failed input step, call {@link #catching(Class, ClosingFunction,
  * Executor)} or {@link #catchingAsync(Class, AsyncClosingFunction, Executor)} on the input step.
  *
- * <h4>Combining</h4>
+ * <h3>Combining</h3>
  *
  * To derive a {@code ClosingFuture} from two or more input steps, pass the input steps to {@link
  * #whenAllComplete(Iterable)} or {@link #whenAllSucceed(Iterable)} or its overloads.
  *
- * <h3>Cancelling</h3>
+ * <h2>Cancelling</h2>
  *
  * Any step in a pipeline can be {@linkplain #cancel(boolean) cancelled}, even after another step
  * has been derived, with the same semantics as cancelling a {@link Future}. In addition, a
  * successfully cancelled step will immediately start closing all objects captured for later closing
  * by it and by its input steps.
  *
- * <h3>Ending a pipeline</h3>
+ * <h2>Ending a pipeline</h2>
  *
  * Each {@code ClosingFuture} pipeline must be ended. To end a pipeline, decide whether you want to
  * close the captured objects automatically or manually.
  *
- * <h4>Automatically closing</h4>
+ * <h3>Automatically closing</h3>
  *
  * You can extract a {@link Future} that represents the result of the last step in the pipeline by
  * calling {@link #finishToFuture()}. All objects the pipeline has captured for closing will begin
@@ -162,7 +161,7 @@ import org.jspecify.annotations.Nullable;
  * In this example, when the {@code userName} {@link Future} is done, the transaction and the query
  * result cursor will both be closed, even if the operation is cancelled or fails.
  *
- * <h4>Manually closing</h4>
+ * <h3>Manually closing</h3>
  *
  * If you want to close the captured objects manually, after you've used the final result, call
  * {@link #finishToValueAndCloser(ValueAndCloserConsumer, Executor)} to get an object that holds the
@@ -2055,7 +2054,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
   @Override
   public String toString() {
-    return state.closingFutureToString();
+    return state.toString();
   }
 
   private static void closeQuietly(@Nullable AutoCloseable closeable, Executor executor) {
@@ -2108,7 +2107,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
     }
 
     void close() {
-      logger.get().log(FINER, "closing {0}", closingFutureToString());
+      logger.get().log(FINER, "closing {0}", this);
       closeables.close();
     }
 
@@ -2119,7 +2118,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
     FluentFuture<V> finishToFuture() {
       if (compareAndUpdateStatus(OPEN, WILL_CLOSE)) {
-        logger.get().log(FINER, "will close {0}", closingFutureToString());
+        logger.get().log(FINER, "will close {0}", this);
         future.addListener(
             () -> {
               checkAndUpdateStatus(WILL_CLOSE, CLOSING);
@@ -2176,7 +2175,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
 
     @SuppressWarnings("Interruption") // We are propagating an interrupt from a caller.
     boolean cancel(boolean mayInterruptIfRunning) {
-      logger.get().log(FINER, "cancelling {0}", closingFutureToString());
+      logger.get().log(FINER, "cancelling {0}", this);
       boolean cancelled = future.cancel(mayInterruptIfRunning);
       if (cancelled) {
         close();
@@ -2188,15 +2187,13 @@ public final class ClosingFuture<V extends @Nullable Object> {
       if (status.get().equals(OPEN)) {
         logger
             .get()
-            .log(
-                SEVERE,
-                "Uh oh! An open ClosingFuture has leaked and will close: {0}",
-                closingFutureToString());
+            .log(SEVERE, "Uh oh! An open ClosingFuture has leaked and will close: {0}", this);
         FluentFuture<V> unused = finishToFuture();
       }
     }
 
-    String closingFutureToString() {
+    @Override
+    public String toString() {
       // TODO(dpb): Better toString, in the style of Futures.transform etc.
       return toStringHelper("ClosingFuture")
           .add("status", status.get())
@@ -2251,7 +2248,7 @@ public final class ClosingFuture<V extends @Nullable Object> {
         }
         closed = true;
       }
-      for (Map.Entry<AutoCloseable, Executor> entry : entrySet()) {
+      for (Entry<AutoCloseable, Executor> entry : entrySet()) {
         closeQuietly(entry.getKey(), entry.getValue());
       }
       clear();
@@ -2286,7 +2283,8 @@ public final class ClosingFuture<V extends @Nullable Object> {
           return new CountDownLatch(0);
         }
         checkState(whenClosed == null);
-        return whenClosed = new CountDownLatch(1);
+        whenClosed = new CountDownLatch(1);
+        return whenClosed;
       }
     }
   }

@@ -20,10 +20,12 @@ import static com.google.common.collect.Iterators.size;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ordering;
 import com.google.common.testing.EqualsTester;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Set;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /** Utility methods used in various common.graph tests. */
 @NullUnmarked
@@ -40,24 +42,60 @@ final class TestUtil {
     DIRECTED;
   }
 
+  enum NetworkType {
+    BASIC(false, false, ElementOrder.insertion(), ElementOrder.insertion()),
+    WITH_SELF_LOOPS(true, false, ElementOrder.insertion(), ElementOrder.insertion()),
+    NATURAL_ORDERING(
+        false,
+        false,
+        ElementOrder.sorted(Ordering.natural()),
+        ElementOrder.sorted(Ordering.natural())),
+    WITH_SELF_LOOPS_AND_PARALLEL_EDGES(
+        true, true, ElementOrder.insertion(), ElementOrder.insertion());
+
+    final boolean allowsSelfLoops;
+    final boolean allowsParallelEdges;
+    final ElementOrder<Integer> nodeOrder;
+    final ElementOrder<String> edgeOrder;
+
+    NetworkType(
+        boolean allowsSelfLoops,
+        boolean allowsParallelEdges,
+        ElementOrder<Integer> nodeOrder,
+        ElementOrder<String> edgeOrder) {
+      this.allowsSelfLoops = allowsSelfLoops;
+      this.allowsParallelEdges = allowsParallelEdges;
+      this.nodeOrder = nodeOrder;
+      this.edgeOrder = edgeOrder;
+    }
+
+    NetworkBuilder<Integer, String> configure(NetworkBuilder<Object, Object> builder) {
+      return builder
+          .allowsSelfLoops(allowsSelfLoops)
+          .allowsParallelEdges(allowsParallelEdges)
+          .nodeOrder(nodeOrder)
+          .edgeOrder(edgeOrder);
+    }
+  }
+
   private TestUtil() {}
 
-  static void assertNodeNotInGraphErrorMessage(Throwable throwable) {
+  static void assertNodeNotInGraphErrorMessage(@Nullable Throwable throwable) {
     assertThat(throwable).hasMessageThat().startsWith(NODE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_NOT_IN_GRAPH);
   }
 
-  static void assertEdgeNotInGraphErrorMessage(Throwable throwable) {
+  static void assertEdgeNotInGraphErrorMessage(@Nullable Throwable throwable) {
     assertThat(throwable).hasMessageThat().startsWith(EDGE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_NOT_IN_GRAPH);
   }
 
-  static void assertNodeRemovedFromGraphErrorMessage(Throwable throwable) {
+  static void assertNodeRemovedFromGraphErrorMessage(@Nullable Throwable throwable) {
     assertThat(throwable).hasMessageThat().startsWith(NODE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_REMOVED);
   }
 
-  static void assertEdgeRemovedFromGraphErrorMessage(Throwable throwable) {
+  static void assertEdgeRemovedFromGraphErrorMessage(@Nullable Throwable throwable) {
     assertThat(throwable).hasMessageThat().startsWith(EDGE_STRING);
     assertThat(throwable).hasMessageThat().contains(ERROR_ELEMENT_REMOVED);
   }

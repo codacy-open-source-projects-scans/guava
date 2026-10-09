@@ -166,7 +166,7 @@ public class FluentIterableTest extends TestCase {
    * This test passes if the {@code concat(…).filter(…).filter(…)} statement at the end compiles.
    * That statement compiles only if {@link FluentIterable#concat concat(aIterable, bIterable)}
    * returns a {@link FluentIterable} of elements of an anonymous type whose supertypes are the <a
-   * href="https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html#jls-4.9">intersection</a>
+   * href="https://docs.oracle.com/javase/specs/jls/se27/html/jls-4.html#jls-4.9">intersection</a>
    * of the supertypes of {@code A} and the supertypes of {@code B}.
    */
   public void testConcatIntersectionType() {
@@ -337,18 +337,11 @@ public class FluentIterableTest extends TestCase {
   public void testAppend_nullPointerException() {
     assertThrows(
         NullPointerException.class,
-        () -> {
-          FluentIterable<Integer> unused =
-              FluentIterable.from(asList(1, 2)).append((List<Integer>) null);
-        });
+        () -> FluentIterable.from(asList(1, 2)).append((List<Integer>) null));
   }
 
   /*
    * Tests for partition(int size) method.
-   */
-
-  /*
-   * Tests for partitionWithPadding(int size) method.
    */
 
   public void testFilter() {
@@ -369,7 +362,7 @@ public class FluentIterableTest extends TestCase {
   private static class HasBoth extends TypeA implements TypeB {}
 
   @GwtIncompatible // Iterables.filter(Iterable, Class)
-  public void testFilterByType() throws Exception {
+  public void testFilterByType() {
     HasBoth hasBoth = new HasBoth();
     FluentIterable<TypeA> alist =
         FluentIterable.from(asList(new TypeA(), new TypeA(), hasBoth, new TypeA()));
@@ -411,7 +404,7 @@ public class FluentIterableTest extends TestCase {
 
   private static final class IntegerValueOfFunction implements Function<String, Integer> {
     @Override
-    public Integer apply(String from) {
+    public Integer apply(@Nullable String from) {
       return Integer.valueOf(from);
     }
   }
@@ -437,7 +430,7 @@ public class FluentIterableTest extends TestCase {
 
   private static final class StringValueOfFunction implements Function<Integer, String> {
     @Override
-    public String apply(Integer from) {
+    public String apply(@Nullable Integer from) {
       return String.valueOf(from);
     }
   }
@@ -582,7 +575,7 @@ public class FluentIterableTest extends TestCase {
     assertEquals(newArrayList("a", "b"), newArrayList(FluentIterable.from(list).skip(0)));
   }
 
-  public void testSkip_iterator() throws Exception {
+  public void testSkip_iterator() {
     new IteratorTester<Integer>(
         5, IteratorFeature.MODIFIABLE, newArrayList(2, 3), IteratorTester.KnownOrder.KNOWN_ORDER) {
       @Override
@@ -594,7 +587,7 @@ public class FluentIterableTest extends TestCase {
     }.test();
   }
 
-  public void testSkip_iteratorList() throws Exception {
+  public void testSkip_iteratorList() {
     new IteratorTester<Integer>(
         5, IteratorFeature.MODIFIABLE, newArrayList(2, 3), IteratorTester.KnownOrder.KNOWN_ORDER) {
       @Override
@@ -604,7 +597,7 @@ public class FluentIterableTest extends TestCase {
     }.test();
   }
 
-  public void testSkip_nonStructurallyModifiedList() throws Exception {
+  public void testSkip_nonStructurallyModifiedList() {
     List<String> list = newArrayList("a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(list).skip(1);
     Iterator<String> tailIterator = tail.iterator();
@@ -614,7 +607,7 @@ public class FluentIterableTest extends TestCase {
     assertFalse(tailIterator.hasNext());
   }
 
-  public void testSkip_structurallyModifiedSkipSome() throws Exception {
+  public void testSkip_structurallyModifiedSkipSome() {
     Collection<String> set = new LinkedHashSet<>();
     Collections.addAll(set, "a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(set).skip(1);
@@ -623,7 +616,7 @@ public class FluentIterableTest extends TestCase {
     assertThat(tail).containsExactly("c", "X", "Y", "Z").inOrder();
   }
 
-  public void testSkip_structurallyModifiedSkipSomeList() throws Exception {
+  public void testSkip_structurallyModifiedSkipSomeList() {
     List<String> list = newArrayList("a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(list).skip(1);
     list.subList(1, 3).clear();
@@ -631,7 +624,7 @@ public class FluentIterableTest extends TestCase {
     assertThat(tail).containsExactly("Y", "Z", "a").inOrder();
   }
 
-  public void testSkip_structurallyModifiedSkipAll() throws Exception {
+  public void testSkip_structurallyModifiedSkipAll() {
     Collection<String> set = new LinkedHashSet<>();
     Collections.addAll(set, "a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(set).skip(2);
@@ -640,7 +633,7 @@ public class FluentIterableTest extends TestCase {
     assertFalse(tail.iterator().hasNext());
   }
 
-  public void testSkip_structurallyModifiedSkipAllList() throws Exception {
+  public void testSkip_structurallyModifiedSkipAllList() {
     List<String> list = newArrayList("a", "b", "c");
     FluentIterable<String> tail = FluentIterable.from(list).skip(2);
     list.subList(0, 2).clear();
@@ -664,10 +657,7 @@ public class FluentIterableTest extends TestCase {
   public void testLimit_illegalArgument() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          FluentIterable<String> unused =
-              FluentIterable.from(newArrayList("a", "b", "c")).limit(-1);
-        });
+        () -> FluentIterable.from(newArrayList("a", "b", "c")).limit(-1));
   }
 
   public void testIsEmpty() {
@@ -762,21 +752,12 @@ public class FluentIterableTest extends TestCase {
   }
 
   public void testIndex_nullKey() {
-    assertThrows(
-        NullPointerException.class,
-        () -> {
-          ImmutableListMultimap<Object, Integer> unused =
-              fluent(1, 2, 3).index(Functions.constant(null));
-        });
+    assertThrows(NullPointerException.class, () -> fluent(1, 2, 3).index(Functions.constant(null)));
   }
 
   public void testIndex_nullValue() {
     assertThrows(
-        NullPointerException.class,
-        () -> {
-          ImmutableListMultimap<String, Integer> unused =
-              fluent(1, null, 2).index(Functions.constant("foo"));
-        });
+        NullPointerException.class, () -> fluent(1, null, 2).index(Functions.constant("foo")));
   }
 
   public void testUniqueIndex() {
@@ -796,17 +777,15 @@ public class FluentIterableTest extends TestCase {
   public void testUniqueIndex_duplicateKey() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          ImmutableMap<Integer, String> unused =
-              FluentIterable.from(asList("one", "two", "three", "four"))
-                  .uniqueIndex(
-                      new Function<String, Integer>() {
-                        @Override
-                        public Integer apply(String input) {
-                          return input.length();
-                        }
-                      });
-        });
+        () ->
+            FluentIterable.from(asList("one", "two", "three", "four"))
+                .uniqueIndex(
+                    new Function<String, Integer>() {
+                      @Override
+                      public Integer apply(String input) {
+                        return input.length();
+                      }
+                    }));
   }
 
   public void testUniqueIndex_nullKey() {
@@ -817,17 +796,15 @@ public class FluentIterableTest extends TestCase {
   public void testUniqueIndex_nullValue() {
     assertThrows(
         NullPointerException.class,
-        () -> {
-          ImmutableMap<Object, Integer> unused =
-              fluent(1, null, 2)
-                  .uniqueIndex(
-                      new Function<Integer, Object>() {
-                        @Override
-                        public Object apply(@Nullable Integer input) {
-                          return String.valueOf(input);
-                        }
-                      });
-        });
+        () ->
+            fluent(1, null, 2)
+                .uniqueIndex(
+                    new Function<Integer, Object>() {
+                      @Override
+                      public Object apply(@Nullable Integer input) {
+                        return String.valueOf(input);
+                      }
+                    }));
   }
 
   public void testCopyInto_list() {

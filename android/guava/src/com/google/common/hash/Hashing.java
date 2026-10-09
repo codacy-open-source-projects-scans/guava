@@ -603,15 +603,16 @@ public final class Hashing {
   @J2ktIncompatible
   public static int consistentHash(long input, int buckets) {
     checkArgument(buckets > 0, "buckets must be positive: %s", buckets);
-    LinearCongruentialGenerator generator = new LinearCongruentialGenerator(input);
+    long generatorState = input;
     int candidate = 0;
-    int next;
+    int generated;
 
     // Jump from bucket to bucket until we go out of range
     while (true) {
-      next = (int) ((candidate + 1) / generator.nextDouble());
-      if (next >= 0 && next < buckets) {
-        candidate = next;
+      generatorState = LinearCongruentialGenerator.nextState(generatorState);
+      generated = (int) ((candidate + 1) / LinearCongruentialGenerator.toDouble(generatorState));
+      if (generated >= 0 && generated < buckets) {
+        candidate = generated;
       } else {
         return candidate;
       }
@@ -634,7 +635,7 @@ public final class Hashing {
     int bits = iterator.next().bits();
     byte[] resultBytes = new byte[bits / 8];
     for (HashCode hashCode : hashCodes) {
-      byte[] nextBytes = hashCode.asBytes();
+      byte[] nextBytes = hashCode.getBytesInternal();
       checkArgument(
           nextBytes.length == resultBytes.length, "All hashcodes must have the same bit length.");
       for (int i = 0; i < nextBytes.length; i++) {
@@ -659,7 +660,7 @@ public final class Hashing {
     checkArgument(iterator.hasNext(), "Must be at least 1 hash code to combine.");
     byte[] resultBytes = new byte[iterator.next().bits() / 8];
     for (HashCode hashCode : hashCodes) {
-      byte[] nextBytes = hashCode.asBytes();
+      byte[] nextBytes = hashCode.getBytesInternal();
       checkArgument(
           nextBytes.length == resultBytes.length, "All hashcodes must have the same bit length.");
       for (int i = 0; i < nextBytes.length; i++) {
@@ -772,14 +773,13 @@ public final class Hashing {
    * http://en.wikipedia.org/wiki/Linear_congruential_generator
    */
   private static final class LinearCongruentialGenerator {
-    private long state;
-
-    LinearCongruentialGenerator(long seed) {
-      this.state = seed;
+    /** Generator state is managed by the caller to avoid unnecessary allocations. */
+    static long nextState(long state) {
+      return 2862933555777941757L * state + 1;
     }
 
-    double nextDouble() {
-      state = 2862933555777941757L * state + 1;
+    /** Generator state must be updated with {@link #nextState} before calling {@link #toDouble}. */
+    static double toDouble(long state) {
       return ((double) ((int) (state >>> 33) + 1)) / 0x1.0p31;
     }
   }

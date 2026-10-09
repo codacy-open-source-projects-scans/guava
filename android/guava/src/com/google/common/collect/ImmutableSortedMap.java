@@ -60,6 +60,7 @@ import org.jspecify.annotations.Nullable;
  * @author Louis Wasserman
  * @since 2.0 (implements {@code NavigableMap} since 12.0)
  */
+@SuppressWarnings("TooManyParameters")
 @GwtCompatible
 public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     implements NavigableMap<K, V> {
@@ -475,7 +476,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     if (map instanceof ImmutableSortedMap) {
       // TODO(kevinb): Prove that this cast is safe, even though
       // Collections.unmodifiableSortedMap requires the same key type.
-      @SuppressWarnings("unchecked")
+
       ImmutableSortedMap<K, V> kvMap = (ImmutableSortedMap<K, V>) map;
       if (!kvMap.isPartialView()) {
         return kvMap;
@@ -671,7 +672,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     /**
      * Associates {@code key} with {@code value} in the built map. Duplicate keys, according to the
      * comparator (which might be the keys' natural order), are not allowed, and will cause {@link
-     * #build} to fail.
+     * #build()} to fail.
      */
     @CanIgnoreReturnValue
     @Override
@@ -687,7 +688,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     /**
      * Adds the given {@code entry} to the map, making it immutable if necessary. Duplicate keys,
      * according to the comparator (which might be the keys' natural order), are not allowed, and
-     * will cause {@link #build} to fail.
+     * will cause {@link #build()} to fail.
      *
      * @since 11.0
      */
@@ -701,7 +702,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
     /**
      * Associates all of the given map's keys and values in the built map. Duplicate keys, according
      * to the comparator (which might be the keys' natural order), are not allowed, and will cause
-     * {@link #build} to fail.
+     * {@link #build()} to fail.
      *
      * @throws NullPointerException if any key or value in {@code map} is null
      */
@@ -714,7 +715,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
 
     /**
      * Adds all the given entries to the built map. Duplicate keys, according to the comparator
-     * (which might be the keys' natural order), are not allowed, and will cause {@link #build} to
+     * (which might be the keys' natural order), are not allowed, and will cause {@link #build()} to
      * fail.
      *
      * @throws NullPointerException if any key, value, or entry is null
@@ -747,7 +748,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
      * so its return value will get used naturally.
      */
     @SuppressWarnings("CanIgnoreReturnValueSuggester")
-    Builder<K, V> combine(ImmutableSortedMap.Builder<K, V> other) {
+    final Builder<K, V> combine(ImmutableSortedMap.Builder<K, V> other) {
       ensureCapacity(size + other.size);
       System.arraycopy(other.keys, 0, this.keys, this.size, other.size);
       System.arraycopy(other.values, 0, this.values, this.size, other.size);
@@ -878,73 +879,64 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   /** Returns an immutable set of the mappings in this map, sorted by the key ordering. */
   @Override
   public ImmutableSet<Entry<K, V>> entrySet() {
-    return super.entrySet();
+    return isEmpty() ? ImmutableSet.of() : new EntrySet();
   }
 
-  @Override
-  ImmutableSet<Entry<K, V>> createEntrySet() {
-    final class EntrySet extends ImmutableMapEntrySet<K, V> {
-      @Override
-      public UnmodifiableIterator<Entry<K, V>> iterator() {
-        return asList().iterator();
-      }
-
-      @Override
-      ImmutableList<Entry<K, V>> createAsList() {
-        return new ImmutableList<Entry<K, V>>() {
-          @Override
-          public Entry<K, V> get(int index) {
-            return new AbstractMap.SimpleImmutableEntry<>(
-                keySet.asList().get(index), valueList.get(index));
-          }
-
-          @Override
-          boolean isPartialView() {
-            return true;
-          }
-
-          @Override
-          public int size() {
-            return ImmutableSortedMap.this.size();
-          }
-
-          // redeclare to help optimizers with b/310253115
-          @SuppressWarnings("RedundantOverride")
-          @Override
-          @J2ktIncompatible
-          @GwtIncompatible
-                    Object writeReplace() {
-            return super.writeReplace();
-          }
-        };
-      }
-
-      @Override
-      ImmutableMap<K, V> map() {
-        return ImmutableSortedMap.this;
-      }
-
-      // redeclare to help optimizers with b/310253115
-      @SuppressWarnings("RedundantOverride")
-      @Override
-      @J2ktIncompatible
-      @GwtIncompatible
-            Object writeReplace() {
-        return super.writeReplace();
-      }
+  private final class EntrySet extends ImmutableMapEntrySet<K, V> {
+    @Override
+    public UnmodifiableIterator<Entry<K, V>> iterator() {
+      return asList().iterator();
     }
-    return isEmpty() ? ImmutableSet.of() : new EntrySet();
+
+    @Override
+    ImmutableList<Entry<K, V>> createAsList() {
+      return new ImmutableList<Entry<K, V>>() {
+        @Override
+        public Entry<K, V> get(int index) {
+          return new AbstractMap.SimpleImmutableEntry<>(
+              keySet.asList().get(index), valueList.get(index));
+        }
+
+        @Override
+        boolean isPartialView() {
+          return true;
+        }
+
+        @Override
+        public int size() {
+          return ImmutableSortedMap.this.size();
+        }
+
+        // redeclare to help optimizers with b/310253115
+        @SuppressWarnings("RedundantOverride")
+        @Override
+        @J2ktIncompatible
+        @GwtIncompatible
+                Object writeReplace() {
+          return super.writeReplace();
+        }
+      };
+    }
+
+    @Override
+    ImmutableMap<K, V> map() {
+      return ImmutableSortedMap.this;
+    }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible
+    @GwtIncompatible
+        Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   /** Returns an immutable sorted set of the keys in this map. */
   @Override
   public ImmutableSortedSet<K> keySet() {
     return keySet;
-  }
-
-  @Override
-  ImmutableSet<K> createKeySet() {
-    throw new AssertionError("should never be called");
   }
 
   /**
@@ -954,11 +946,6 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   @Override
   public ImmutableCollection<V> values() {
     return valueList;
-  }
-
-  @Override
-  ImmutableCollection<V> createValues() {
-    throw new AssertionError("should never be called");
   }
 
   /**
@@ -1153,7 +1140,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  public final @Nullable Entry<K, V> pollFirstEntry() {
+  public @Nullable Entry<K, V> pollFirstEntry() {
     throw new UnsupportedOperationException();
   }
 
@@ -1167,7 +1154,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  public final @Nullable Entry<K, V> pollLastEntry() {
+  public @Nullable Entry<K, V> pollLastEntry() {
     throw new UnsupportedOperationException();
   }
 
@@ -1219,7 +1206,7 @@ public final class ImmutableSortedMap<K, V> extends ImmutableMap<K, V>
       return new Builder<>(comparator);
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @GwtIncompatible private static final long serialVersionUID = 0;
   }
 
   @Override

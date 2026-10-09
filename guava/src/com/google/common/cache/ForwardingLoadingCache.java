@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutionException;
  * @since 11.0
  */
 @GwtIncompatible
+@J2ktIncompatible // Compiles fine, but hidden for safety because the tests have not been ported
 public abstract class ForwardingLoadingCache<K, V> extends ForwardingCache<K, V>
     implements LoadingCache<K, V> {
 
@@ -65,8 +66,6 @@ public abstract class ForwardingLoadingCache<K, V> extends ForwardingCache<K, V>
     return delegate().apply(key);
   }
 
-  @GwtIncompatible
-  @J2ktIncompatible
   @Override
   public void refresh(K key) {
     delegate().refresh(key);
@@ -82,6 +81,7 @@ public abstract class ForwardingLoadingCache<K, V> extends ForwardingCache<K, V>
       extends ForwardingLoadingCache<K, V> {
     private final LoadingCache<K, V> delegate;
 
+    /** Constructor for use by subclasses. */
     protected SimpleForwardingLoadingCache(LoadingCache<K, V> delegate) {
       this.delegate = Preconditions.checkNotNull(delegate);
     }

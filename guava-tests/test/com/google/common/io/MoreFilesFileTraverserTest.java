@@ -40,21 +40,21 @@ public class MoreFilesFileTraverserTest extends TestCase {
   private Path rootDir;
 
   @Override
-  public void setUp() throws IOException {
+  protected void setUp() throws IOException {
     rootDir = Jimfs.newFileSystem(Configuration.unix()).getPath("/tmp");
     Files.createDirectory(rootDir);
   }
 
   @Override
-  public void tearDown() throws IOException {
+  protected void tearDown() throws IOException {
     rootDir.getFileSystem().close();
   }
 
-  public void testFileTraverser_emptyDirectory() throws Exception {
+  public void testFileTraverser_emptyDirectory() {
     assertThat(MoreFiles.fileTraverser().breadthFirst(rootDir)).containsExactly(rootDir);
   }
 
-  public void testFileTraverser_nonExistingFile() throws Exception {
+  public void testFileTraverser_nonExistingFile() {
     Path file = rootDir.resolve("file-that-doesnt-exist");
 
     assertThat(MoreFiles.fileTraverser().breadthFirst(file)).containsExactly(file);

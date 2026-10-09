@@ -111,7 +111,6 @@ public final class MutableClassToInstanceMap<B extends @Nullable Object>
       }
 
       @Override
-      @GwtIncompatible // Spliterator
       public Spliterator<Entry<Class<? extends @NonNull B>, B>> spliterator() {
         return CollectSpliterators.map(
             delegate().spliterator(),
@@ -156,7 +155,7 @@ public final class MutableClassToInstanceMap<B extends @Nullable Object>
   @Override
   @CanIgnoreReturnValue
   public @Nullable B put(Class<? extends @NonNull B> key, @ParametricNullness B value) {
-    cast(key, value);
+    cast(key, value); // If we pass this result to `put` below, it upsets our nullness checker.
     return super.put(key, value);
   }
 

@@ -25,12 +25,11 @@ import com.google.common.annotations.J2ktIncompatible;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
 
@@ -128,13 +127,31 @@ public class WrappingScheduledExecutorServiceTest extends TestCase {
       assertThat(lastUnit).isEqualTo(unit);
     }
 
+    private static final class NonFunctionalScheduledFuture<V> extends ForwardingFuture<V>
+        implements ScheduledFuture<V> {
+      @Override
+      protected Future<V> delegate() {
+        throw new AssertionError();
+      }
+
+      @Override
+      public long getDelay(TimeUnit unit) {
+        throw new AssertionError();
+      }
+
+      @Override
+      public int compareTo(Delayed other) {
+        throw new AssertionError();
+      }
+    }
+
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
       assertThat(command).isInstanceOf(WrappedRunnable.class);
       lastMethodCalled = "scheduleRunnable";
       lastDelay = delay;
       lastUnit = unit;
-      return null;
+      return new NonFunctionalScheduledFuture<>();
     }
 
     @Override
@@ -143,7 +160,7 @@ public class WrappingScheduledExecutorServiceTest extends TestCase {
       lastMethodCalled = "scheduleCallable";
       lastDelay = delay;
       lastUnit = unit;
-      return null;
+      return new NonFunctionalScheduledFuture<>();
     }
 
     @Override
@@ -154,7 +171,7 @@ public class WrappingScheduledExecutorServiceTest extends TestCase {
       lastInitialDelay = initialDelay;
       lastDelay = period;
       lastUnit = unit;
-      return null;
+      return new NonFunctionalScheduledFuture<>();
     }
 
     @Override
@@ -165,7 +182,7 @@ public class WrappingScheduledExecutorServiceTest extends TestCase {
       lastInitialDelay = initialDelay;
       lastDelay = delay;
       lastUnit = unit;
-      return null;
+      return new NonFunctionalScheduledFuture<>();
     }
 
     // No need to test these methods as they are handled by WrappingExecutorServiceTest
@@ -175,27 +192,23 @@ public class WrappingScheduledExecutorServiceTest extends TestCase {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-        throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) {
       throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> List<Future<T>> invokeAll(
-        Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-        throws InterruptedException {
+        Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
-        throws ExecutionException, InterruptedException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-        throws ExecutionException, InterruptedException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
     }
 

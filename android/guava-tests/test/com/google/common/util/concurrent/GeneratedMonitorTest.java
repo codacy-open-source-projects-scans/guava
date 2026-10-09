@@ -456,7 +456,7 @@ public class GeneratedMonitorTest extends TestCase {
 
   private final Method method;
   private final Scenario scenario;
-  private final Timeout timeout;
+  private final @Nullable Timeout timeout;
   private final Outcome expectedOutcome;
   private final Monitor monitor;
   private final FlagGuard guard;
@@ -513,7 +513,7 @@ public class GeneratedMonitorTest extends TestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     // We don't want to leave stray threads running after each test. At this point, every thread
     // launched by this test is either:
     //

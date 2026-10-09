@@ -228,7 +228,8 @@ public final class Longs {
    * unchanged. If {@code value} is less than {@code min}, {@code min} is returned, and if {@code
    * value} is greater than {@code max}, {@code max} is returned.
    *
-   * <p><b>Java 21+ users:</b> Use {@code Math.clamp} instead. Note that that method is capable of
+   * <p><b>Java 21+ users:</b> Use {@link Math#clamp(long, long, long)} instead. Note that that
+   * method comes with {@linkplain Math#clamp(long, int, int) an overload} that is capable of
    * constraining a {@code long} input to an {@code int} range.
    *
    * @param value the {@code long} value to constrain
@@ -283,9 +284,10 @@ public final class Longs {
    * use a shared {@link java.nio.ByteBuffer} instance, or use {@link
    * com.google.common.io.ByteStreams#newDataOutput()} to get a growable buffer.
    */
+  // We use `& 0xff` before casting to `(byte)` to keep GWT from letting the byte be out of range:
+  // https://www.gwtproject.org/doc/latest/DevGuideCodingBasicsCompatibility
+  @SuppressWarnings("MaskAndCastToByte")
   public static byte[] toByteArray(long value) {
-    // Note that this code needs to stay compatible with GWT, which has known
-    // bugs when narrowing byte casts of long values occur.
     byte[] result = new byte[8];
     for (int i = 7; i >= 0; i--) {
       result[i] = (byte) (value & 0xffL);

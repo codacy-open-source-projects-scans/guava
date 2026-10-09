@@ -25,6 +25,7 @@ import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.errorprone.annotations.Keep;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -199,7 +200,7 @@ public class SourceSinkFactories {
   private static class StringSourceFactory implements CharSourceFactory {
 
     @Override
-    public CharSource createSource(String data) throws IOException {
+    public CharSource createSource(String data) {
       return CharSource.wrap(data);
     }
 
@@ -209,13 +210,13 @@ public class SourceSinkFactories {
     }
 
     @Override
-    public void tearDown() throws IOException {}
+    public void tearDown() {}
   }
 
   private static class ByteArraySourceFactory implements ByteSourceFactory {
 
     @Override
-    public ByteSource createSource(byte[] bytes) throws IOException {
+    public ByteSource createSource(byte[] bytes) {
       return ByteSource.wrap(bytes);
     }
 
@@ -225,13 +226,13 @@ public class SourceSinkFactories {
     }
 
     @Override
-    public void tearDown() throws IOException {}
+    public void tearDown() {}
   }
 
   private static class EmptyCharSourceFactory implements CharSourceFactory {
 
     @Override
-    public CharSource createSource(String data) throws IOException {
+    public CharSource createSource(String data) {
       return CharSource.empty();
     }
 
@@ -241,13 +242,13 @@ public class SourceSinkFactories {
     }
 
     @Override
-    public void tearDown() throws IOException {}
+    public void tearDown() {}
   }
 
   private static class EmptyByteSourceFactory implements ByteSourceFactory {
 
     @Override
-    public ByteSource createSource(byte[] bytes) throws IOException {
+    public ByteSource createSource(byte[] bytes) {
       return ByteSource.empty();
     }
 
@@ -257,7 +258,7 @@ public class SourceSinkFactories {
     }
 
     @Override
-    public void tearDown() throws IOException {}
+    public void tearDown() {}
   }
 
   private abstract static class FileFactory {
@@ -277,8 +278,8 @@ public class SourceSinkFactories {
     }
 
     // acts as an override in subclasses that implement SourceSinkFactory
-    @SuppressWarnings("EffectivelyPrivate")
-    public final void tearDown() throws IOException {
+    @Keep
+    public final void tearDown() {
       if (!fileThreadLocal.get().delete()) {
         logger.warning("Unable to delete file: " + fileThreadLocal.get());
       }
@@ -309,7 +310,7 @@ public class SourceSinkFactories {
 
   private static class FileByteSinkFactory extends FileFactory implements ByteSinkFactory {
 
-    private final byte[] initialBytes;
+    private final byte @Nullable [] initialBytes;
 
     private FileByteSinkFactory(byte @Nullable [] initialBytes) {
       this.initialBytes = initialBytes;
@@ -379,7 +380,7 @@ public class SourceSinkFactories {
 
   private static class FileCharSinkFactory extends FileFactory implements CharSinkFactory {
 
-    private final String initialString;
+    private final @Nullable String initialString;
 
     private FileCharSinkFactory(@Nullable String initialString) {
       this.initialString = initialString;

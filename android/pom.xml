@@ -54,41 +54,46 @@
     <surefire.toolchain.version>${java.specification.version}</surefire.toolchain.version>
     <!-- Override this with -Dtest.include="**/SomeTest.java" on the CLI -->
     <test.include>%regex[.*.class]</test.include>
-    <animal-sniffer-maven-plugin.version>1.27</animal-sniffer-maven-plugin.version>
-    <asm.version>9.9.1</asm.version>
-    <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
+    <animal-sniffer-maven-plugin.version>1.28</animal-sniffer-maven-plugin.version>
+    <asm.version>9.10.1</asm.version>
+    <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
     <caliper.version>1.0-beta-3</caliper.version>
-    <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
-    <error_prone_annotations.version>2.47.0</error_prone_annotations.version>
-    <error_prone_core.version>2.47.0</error_prone_core.version>
+    <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
+    <error_prone_annotations.version>2.50.0</error_prone_annotations.version>
+    <error_prone_core.version>2.50.0</error_prone_core.version>
     <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
     <failureaccess.version>1.0.3</failureaccess.version>
-    <gummy-bears-api-23-version>0.12.0</gummy-bears-api-23-version>
-    <gwt-maven-plugin.version>1.1.0</gwt-maven-plugin.version>
-    <gwt.version>2.13.0</gwt.version>
+    <gummy-bears-api-24-version>0.15.0</gummy-bears-api-24-version>
+    <gwt-maven-plugin.version>1.3.0</gwt-maven-plugin.version>
+    <gwt.version>2.13.1</gwt.version>
     <j2objc.version>3.1</j2objc.version>
     <java18-signature.version>1.0</java18-signature.version>
     <javahome-resolver-maven-plugin.version>1.0.2</javahome-resolver-maven-plugin.version>
     <jimfs.version>1.3.1</jimfs.version>
-    <jspecify.version>1.0.0</jspecify.version>
+    <jspecify.version>1.0.1</jspecify.version>
     <jsr305.version>3.0.2</jsr305.version>
     <junit.version>4.13.2</junit.version>
     <listenablefuture.version>9999.0-empty-to-avoid-conflict-with-guava</listenablefuture.version>
     <maven-antrun-plugin.version>3.2.0</maven-antrun-plugin.version>
-    <maven-bundle-plugin.version>5.1.9</maven-bundle-plugin.version>
-    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-    <maven-dependency-plugin.version>3.10.0</maven-dependency-plugin.version>
-    <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
-    <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+    <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+    <maven-bundle-plugin.version>6.2.0</maven-bundle-plugin.version>
+    <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
+    <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+    <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
+    <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
+    <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-    <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
-    <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+    <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
+    <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-    <maven-resources-plugin.version>3.4.0</maven-resources-plugin.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+    <maven-site-plugin.version>3.22.0</maven-site-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
-    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
-    <maven-toolchains-plugin.version>3.2.0</maven-toolchains-plugin.version>
+    <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
+    <maven-toolchains-plugin.version>3.3.0</maven-toolchains-plugin.version>
     <mockito.version>4.11.0</mockito.version>
+    <test-parameter-injector.version>1.22</test-parameter-injector.version>
     <toolchains-maven-plugin.version>4.5.0</toolchains-maven-plugin.version>
     <truth.version>1.4.5</truth.version>
     <project.build.outputTimestamp>2026-01-02T00:00:00Z</project.build.outputTimestamp>
@@ -194,6 +199,15 @@
           <version>${maven-antrun-plugin.version}</version>
         </plugin>
         <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>${maven-assembly-plugin.version}</version>
+          <!-- I'm not aware of any normal situation in which we use maven-assembly-plugin. But it still shows up in the effective-pom, and I don't like having plugin versions that change automatically with the Maven version or, worse, whatever the most recently released version is. -->
+        </plugin>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin.version}</version>
           <configuration>
@@ -201,21 +215,13 @@
             <target>1.8</target>
             <encoding>UTF-8</encoding>
             <parameters>true</parameters>
-            <compilerArgs combine.children="override">
+            <compilerArgs>
               <!-- https://errorprone.info/docs/installation#maven -->
               <arg>-XDcompilePolicy=simple</arg>
               <arg>--should-stop=ifError=FLOW</arg>
 
               <!-- https://errorprone.info/docs/installation#maven -->
-              <!-- TODO(cpovirk): Enable NullArgumentForNonNullParameter for
-                   prod code. It's disabled automatically for "test code"
-                   (which is good: our tests have intentional violations), but
-                   Error Prone doesn't know it's building test code unless we
-                   pass -XepCompilingTestOnlyCode, and that argument needs to
-                   be passed as part of the same <arg> as -Xplugin:ErrorProne,
-                   and I gave up trying to figure out how to do that for test
-                   compilation only. -->
-              <arg>-Xplugin:ErrorProne -Xep:NullArgumentForNonNullParameter:OFF -Xep:Java8ApiChecker:ERROR -XepDisableAllWarnings</arg>
+              <arg>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR -XepDisableAllWarnings</arg>
               <!-- https://github.com/google/error-prone/blob/f8e33bc460be82ab22256a7ef8b979d7a2cacaba/docs/installation.md#jdk-16 -->
               <!-- TODO(cpovirk): Use .mvn/jvm.config instead (per
                    https://errorprone.info/docs/installation#maven). -->
@@ -299,11 +305,6 @@
               <!-- Avoid duplicating compiled classes within the `META-INF/versions/9/` root. -->
               <exclude>META-INF/versions/9/com/**/*.class</exclude>
             </excludes>
-            <archive>
-              <manifestEntries>
-                <Multi-Release>true</Multi-Release>
-              </manifestEntries>
-            </archive>
           </configuration>
         </plugin>
         <plugin>
@@ -312,6 +313,8 @@
           <configuration>
             <quiet>true</quiet>
             <notimestamp>true</notimestamp>
+            <doctitle>${project.name} API</doctitle>
+            <windowtitle>${project.name} API</windowtitle>
             <encoding>UTF-8</encoding>
             <docencoding>UTF-8</docencoding>
             <charset>UTF-8</charset>
@@ -329,8 +332,18 @@
           </executions>
         </plugin>
         <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${maven-release-plugin.version}</version>
+          <!-- I'm not aware of any normal situation in which we use maven-release-plugin. But it still shows up in the effective-pom, and I don't like having plugin versions that change automatically with the Maven version or, worse, whatever the most recently released version is. -->
+        </plugin>
+        <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>${maven-resources-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>${maven-site-plugin.version}</version>
+          <!-- I'm not aware of any normal situation in which we use maven-site-plugin. But it still shows up in the effective-pom, and I don't like having plugin versions that change automatically with the Maven version or, worse, whatever the most recently released version is. -->
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -357,13 +370,15 @@
             <!-- By having our own entries here, we also override the default exclusion filter, which excludes all nested classes. -->
             <excludes>
               <!-- https://github.com/google/guava/issues/2840 -->
-              <exclude>%regex[.*PackageSanityTests.*.class]</exclude>
+              <exclude>%regex[.*PackageSanityTest.class]</exclude>
               <!-- FeatureUtilTest.*ExampleDerivedInterfaceTester, com.google.common.io.*Tester, incidentally FeatureSpecificTestSuiteBuilderTest.MyAbstractTester (but we don't care either way because it's not meant to run on its own but works OK if it does)... but not NullPointerTesterTest, etc. -->
               <exclude>%regex[.*Tester.class]</exclude>
               <!-- Anonymous TestCase subclasses in GeneratedMonitorTest -->
               <exclude>%regex[.*[$]\d+.class]</exclude>
             </excludes>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <!-- https://github.com/google/guava/issues/8295 -->
+            <useManifestOnlyJar>false</useManifestOnlyJar>
             <runOrder>alphabetical</runOrder>
             <!-- Set max heap for tests. -->
             <!-- Catch dependencies on the default locale by setting it to hi-IN. -->
@@ -383,7 +398,7 @@
           <configuration>
             <toolchains>
               <jdk>
-                <version>26</version>
+                <version>27</version>
               </jdk>
             </toolchains>
           </configuration>
@@ -417,8 +432,8 @@
             <checkTestClasses>true</checkTestClasses>
             <signature>
               <groupId>com.toasttab.android</groupId>
-              <artifactId>gummy-bears-api-23</artifactId>
-              <version>${gummy-bears-api-23-version}</version>
+              <artifactId>gummy-bears-api-24</artifactId>
+              <version>${gummy-bears-api-24-version}</version>
             </signature>
             <ignores>
               <!-- Unsafe isn't part of the documented Android API, but it is available.
@@ -453,14 +468,14 @@
             (But don't run that if you have put something into ~/.m2/toolchains.xml yourself.)
             -->
             <execution>
-              <id>download-26-and-surefire-version</id>
+              <id>download-27-and-surefire-version</id>
               <goals>
                 <goal>toolchain</goal>
               </goals>
               <configuration>
                 <toolchains>
                   <jdk>
-                    <version>26</version>
+                    <version>27</version>
                     <vendor>temurin</vendor>
                   </jdk>
                   <testJdk>
@@ -598,6 +613,88 @@
                     <argument>${javaHome}</argument>
                   </arguments>
                   <outputFile>${project.build.directory}/java_11_home</outputFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>print-java-17-home</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.mvnsearch</groupId>
+            <artifactId>toolchains-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>download-17</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>toolchain</goal>
+                </goals>
+                <configuration>
+                  <toolchains>
+                    <jdk>
+                      <version>17</version>
+                      <vendor>temurin</vendor>
+                    </jdk>
+                  </toolchains>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-toolchains-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>select-java-17</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <toolchains>
+                <jdk>
+                  <version>17</version>
+                </jdk>
+              </toolchains>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.diamondq.maven</groupId>
+            <artifactId>javahome-resolver-maven-plugin</artifactId>
+            <version>${javahome-resolver-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>resolve-java-17</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>resolve</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>${exec-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>print-java-17-home</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>echo</executable>
+                  <arguments>
+                    <argument>${javaHome}</argument>
+                  </arguments>
+                  <outputFile>${project.build.directory}/java_17_home</outputFile>
                 </configuration>
               </execution>
             </executions>

@@ -372,7 +372,10 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
   @Override
   public ImmutableList<E> asList() {
     ImmutableList<E> result = asList;
-    return (result == null) ? asList = createAsList() : result;
+    if (result == null) {
+      result = asList = createAsList();
+    }
+    return result;
   }
 
   ImmutableList<E> createAsList() {
@@ -398,7 +401,7 @@ public abstract class ImmutableSet<E> extends ImmutableCollection<E> implements 
       return copyOf(elements);
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @GwtIncompatible private static final long serialVersionUID = 0;
   }
 
   @Override

@@ -34,6 +34,7 @@ import org.jspecify.annotations.Nullable;
  * @since 10.0
  */
 @GwtIncompatible
+@J2ktIncompatible // Compiles fine, but hidden for safety because the tests have not been ported
 public abstract class ForwardingCache<K, V> extends ForwardingObject implements Cache<K, V> {
 
   /** Constructor for use by subclasses. */
@@ -116,7 +117,6 @@ public abstract class ForwardingCache<K, V> extends ForwardingObject implements 
   }
 
   @Override
-  @J2ktIncompatible
   public ConcurrentMap<K, V> asMap() {
     return delegate().asMap();
   }
@@ -135,6 +135,7 @@ public abstract class ForwardingCache<K, V> extends ForwardingObject implements 
   public abstract static class SimpleForwardingCache<K, V> extends ForwardingCache<K, V> {
     private final Cache<K, V> delegate;
 
+    /** Constructor for use by subclasses. */
     protected SimpleForwardingCache(Cache<K, V> delegate) {
       this.delegate = Preconditions.checkNotNull(delegate);
     }

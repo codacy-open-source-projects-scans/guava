@@ -44,9 +44,9 @@ import org.jspecify.annotations.Nullable;
  *         .catching(RpcException.class, e -> false, directExecutor());
  * }
  *
- * <h3>Alternatives</h3>
+ * <h2>Alternatives</h2>
  *
- * <h4>Frameworks</h4>
+ * <h3>Frameworks</h3>
  *
  * <p>When chaining together a graph of asynchronous operations, you will often find it easier to
  * use a framework. Frameworks automate the process, often adding features like monitoring,
@@ -56,8 +56,8 @@ import org.jspecify.annotations.Nullable;
  *   <li><a href="https://dagger.dev/producers.html">Dagger Producers</a>
  * </ul>
  *
- * <h4>{@link java.util.concurrent.CompletableFuture} / {@link java.util.concurrent.CompletionStage}
- * </h4>
+ * <h3>{@link java.util.concurrent.CompletableFuture} / {@link java.util.concurrent.CompletionStage}
+ * </h3>
  *
  * <p>Users of {@code CompletableFuture} will likely want to continue using {@code
  * CompletableFuture}. {@code FluentFuture} is targeted at people who use {@code ListenableFuture},
@@ -65,7 +65,14 @@ import org.jspecify.annotations.Nullable;
  * need to adapt between {@code CompletableFuture} and {@code ListenableFuture}, consider <a
  * href="https://github.com/lukas-krecan/future-converter">Future Converter</a>.)
  *
- * <h3>Extension</h3>
+ * <h3>{@link ClosingFuture}</h3>
+ *
+ * <p>If the steps of your pipeline create objects that must be closed when the computation is done,
+ * such as database connections or file handles, use {@code ClosingFuture}. It supports the same
+ * kinds of derived steps as {@code FluentFuture} but closes those objects once the pipeline
+ * completes, fails, or is cancelled.
+ *
+ * <h2>Extension</h2>
  *
  * If you want a class like {@code FluentFuture} but with extra methods, we recommend declaring your
  * own subclass of {@link ListenableFuture}, complete with a method like {@link #from} to adapt an
@@ -84,7 +91,7 @@ public abstract class FluentFuture<V extends @Nullable Object>
    * that {@link #get} calls exactly the implementation of {@link AbstractFuture#get}.
    */
   abstract static class TrustedFuture<V extends @Nullable Object> extends FluentFuture<V>
-      implements AbstractFuture.Trusted<V> {
+      implements Trusted<V> {
     @CanIgnoreReturnValue
     @Override
     @ParametricNullness
@@ -298,7 +305,8 @@ public abstract class FluentFuture<V extends @Nullable Object>
   /**
    * Returns a new {@code Future} whose result is asynchronously derived from the result of this
    * {@code Future}. If the input {@code Future} fails, the returned {@code Future} fails with the
-   * same exception (and the function is not invoked).
+   * same exception (and the function is not invoked). If the function throws an exception, the
+   * returned {@code Future} fails with that exception.
    *
    * <p>More precisely, the returned {@code Future} takes its result from a {@code Future} produced
    * by applying the given {@code AsyncFunction} to the result of the original {@code Future}.
@@ -342,7 +350,8 @@ public abstract class FluentFuture<V extends @Nullable Object>
   /**
    * Returns a new {@code Future} whose result is derived from the result of this {@code Future}. If
    * this input {@code Future} fails, the returned {@code Future} fails with the same exception (and
-   * the function is not invoked). Example usage:
+   * the function is not invoked). If the function throws an exception, the returned {@code Future}
+   * fails with that exception. Example usage:
    *
    * {@snippet :
    * ListenableFuture<List<Row>> rowsFuture = queryFuture.transform(QueryResult::getRows, executor);

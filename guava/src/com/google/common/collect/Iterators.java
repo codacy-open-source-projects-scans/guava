@@ -595,6 +595,9 @@ public final class Iterators {
    * As a consequence, passing values like {@code Integer.MAX_VALUE} can lead to {@link
    * OutOfMemoryError}.
    *
+   * <p><b>Java 24+ users:</b> The {@code Stream} equivalent of this method is {@code
+   * stream.gather(Gatherers.windowFixed(size))}.
+   *
    * @param iterator the iterator to return a partitioned view of
    * @param size the desired size of each partition (the last may be smaller)
    * @return an iterator of immutable lists containing the elements of {@code iterator} divided into
@@ -1317,7 +1320,7 @@ public final class Iterators {
       extends UnmodifiableIterator<T> {
 
     // Wrapper class to track insertion order for stable sorting
-    private static class IndexedIterator<E extends @Nullable Object> {
+    private static final class IndexedIterator<E extends @Nullable Object> {
       final PeekingIterator<E> iterator;
       final int index;
 
@@ -1375,7 +1378,8 @@ public final class Iterators {
     private @Nullable Iterator<? extends T> toRemove;
 
     /* The iterator currently returning elements. */
-    private Iterator<? extends T> iterator;
+    // For discussion of @Nullable, see the checkNotNull call in hasNext() below.
+    private @Nullable Iterator<? extends T> iterator;
 
     /*
      * We track the "meta iterators," the iterators-of-iterators, below.  Usually, topMetaIterator
@@ -1408,8 +1412,8 @@ public final class Iterators {
 
     @Override
     public boolean hasNext() {
-      while (!checkNotNull(iterator).hasNext()) {
-        // this weird checkNotNull positioning appears required by our tests, which expect
+      while (!requireNonNull(iterator).hasNext()) {
+        // This weird requireNonNull positioning appears to be required by our tests, which expect
         // both hasNext and next to throw NPE if an input iterator is null.
 
         topMetaIterator = getTopMetaIterator();
@@ -1449,7 +1453,8 @@ public final class Iterators {
     public T next() {
       if (hasNext()) {
         toRemove = iterator;
-        return iterator.next();
+        // For discussion of requireNonNull, see hasNext() above.
+        return requireNonNull(iterator).next();
       } else {
         throw new NoSuchElementException();
       }

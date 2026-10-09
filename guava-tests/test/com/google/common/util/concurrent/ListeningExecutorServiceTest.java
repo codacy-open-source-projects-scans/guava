@@ -33,9 +33,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 @NullUnmarked
 @GwtIncompatible
@@ -79,10 +79,11 @@ public final class ListeningExecutorServiceTest extends TestCase {
     assertThat(Duration.ofNanos(recordedTimeout)).isEqualTo(Duration.ofMinutes(144));
   }
 
-  private class FakeExecutorService extends AbstractListeningExecutorService {
+  private final class FakeExecutorService extends AbstractListeningExecutorService {
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException {
+    public <T extends @Nullable Object> T invokeAny(
+        Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+        throws ExecutionException {
       recordedTasks = tasks;
       recordedTimeout = timeout;
       recordedTimeUnit = unit;
@@ -94,9 +95,8 @@ public final class ListeningExecutorServiceTest extends TestCase {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(
-        Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-        throws InterruptedException {
+    public <T extends @Nullable Object> List<Future<T>> invokeAll(
+        Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
       recordedTasks = tasks;
       recordedTimeout = timeout;
       recordedTimeUnit = unit;

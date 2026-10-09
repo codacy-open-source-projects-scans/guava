@@ -74,6 +74,7 @@ public class ImmutableBiMapTest extends TestCase {
                 MapFeature.REJECTS_DUPLICATES_AT_CREATION,
                 MapFeature.ALLOWS_ANY_NULL_QUERIES)
             .suppressing(BiMapInverseTester.getInverseSameAfterSerializingMethods())
+            .suppressing(BiMapInverseTester.getInverseSameMethod())
             .createTestSuite());
     suite.addTest(
         BiMapTestSuiteBuilder.using(new ImmutableBiMapCopyOfGenerator())
@@ -84,6 +85,7 @@ public class ImmutableBiMapTest extends TestCase {
                 CollectionFeature.KNOWN_ORDER,
                 MapFeature.ALLOWS_ANY_NULL_QUERIES)
             .suppressing(BiMapInverseTester.getInverseSameAfterSerializingMethods())
+            .suppressing(BiMapInverseTester.getInverseSameMethod())
             .createTestSuite());
     suite.addTest(
         BiMapTestSuiteBuilder.using(new ImmutableBiMapCopyOfEntriesGenerator())
@@ -95,6 +97,7 @@ public class ImmutableBiMapTest extends TestCase {
                 MapFeature.REJECTS_DUPLICATES_AT_CREATION,
                 MapFeature.ALLOWS_ANY_NULL_QUERIES)
             .suppressing(BiMapInverseTester.getInverseSameAfterSerializingMethods())
+            .suppressing(BiMapInverseTester.getInverseSameMethod())
             .createTestSuite());
     suite.addTestSuite(ImmutableBiMapTest.class);
 
@@ -463,14 +466,10 @@ public class ImmutableBiMapTest extends TestCase {
 
   public void testOfEntriesNull() {
     Entry<@Nullable Integer, Integer> nullKey = entry(null, 23);
-    assertThrows(
-        NullPointerException.class,
-        () -> ImmutableBiMap.ofEntries((Entry<Integer, Integer>) nullKey));
+    assertThrows(NullPointerException.class, () -> ImmutableBiMap.ofEntries(nullKey));
     Entry<Integer, @Nullable Integer> nullValue =
         ImmutableBiMapTest.<@Nullable Integer>entry(23, null);
-    assertThrows(
-        NullPointerException.class,
-        () -> ImmutableBiMap.ofEntries((Entry<Integer, Integer>) nullValue));
+    assertThrows(NullPointerException.class, () -> ImmutableBiMap.ofEntries(nullValue));
   }
 
   private static <T extends @Nullable Object> Entry<T, T> entry(T key, T value) {

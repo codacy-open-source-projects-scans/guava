@@ -32,7 +32,6 @@ import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.primitives.Ints;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.j2objc.annotations.WeakOuter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -179,7 +178,7 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
    * 1. Both superclass toArray methods assume that size() gives a correct answer, while our size()
    * might not (and the answer might change while we're building the array).
    *
-   * TODO: cpovirk - Is this an issue anywhere anymore? It looks to have been fixed for Java 8
+   * TODO(cpovirk): Is this an issue anywhere anymore? It looks to have been fixed for Java 8
    * (https://bugs.openjdk.org/browse/JDK-7121314) and before Lollipop
    * (https://r.android.com/47508). We *would* need to worry for J2KT, whose own concurrency support
    * is evolving (b/381065164, b/458160722), but this class is @J2ktIncompatible.
@@ -205,7 +204,7 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
    */
   private List<E> snapshotElementsToList() {
     List<E> list = newArrayListWithExpectedSize(size());
-    for (Multiset.Entry<E> entry : entrySet()) {
+    for (Entry<E> entry : entrySet()) {
       E element = entry.getElement();
       for (int i = entry.getCount(); i > 0; i--) {
         list.add(element);
@@ -472,7 +471,7 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
   // Views
 
   @Override
-  Set<E> createElementSet() {
+  public Set<E> elementSet() {
     Set<E> delegate = countMap.keySet();
     return new ForwardingSet<E>() {
       @Override
@@ -511,13 +510,17 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
    * @deprecated Internal method, use {@link #entrySet()}.
    */
   @Deprecated
+  public Set<Entry<E>> createEntrySet() {
+    return entrySet();
+  }
+
   @Override
-  public Set<Multiset.Entry<E>> createEntrySet() {
+  public Set<Entry<E>> entrySet() {
     return new EntrySet();
   }
 
   @Override
-  int distinctElements() {
+  int internalDistinctElements() {
     return countMap.size();
   }
 
@@ -527,7 +530,7 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
   }
 
   @Override
-  Iterator<Entry<E>> entryIterator() {
+  Iterator<Entry<E>> internalEntryIterator() {
     // AbstractIterator makes this fairly clean, but it doesn't support remove(). To support
     // remove(), we create an AbstractIterator, and then use ForwardingIterator to delegate to it.
     Iterator<Entry<E>> readOnlyIterator =
@@ -583,7 +586,6 @@ public final class ConcurrentHashMultiset<E> extends AbstractMultiset<E> impleme
     countMap.clear();
   }
 
-  @WeakOuter
   private final class EntrySet extends AbstractMultiset<E>.EntrySet {
     @Override
     ConcurrentHashMultiset<E> multiset() {

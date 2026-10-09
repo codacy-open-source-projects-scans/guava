@@ -30,7 +30,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import com.google.j2objc.annotations.RetainedWith;
-import com.google.j2objc.annotations.Weak;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
@@ -59,6 +58,7 @@ import org.jspecify.annotations.Nullable;
  * @author Mike Ward
  * @since 2.0
  */
+@SuppressWarnings("TooManyParameters")
 @GwtCompatible
 public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     implements SetMultimap<K, V> {
@@ -541,7 +541,7 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
    * parameters used to build this multimap.
    */
   @Override
-  public ImmutableSet<V> get(K key) {
+  public final ImmutableSet<V> get(K key) {
     // This cast is safe as its type is known in constructor.
     ImmutableSet<V> set = (ImmutableSet<V>) map.get(key);
     return MoreObjects.firstNonNull(set, emptySet);
@@ -555,11 +555,16 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
    * <p>Because an inverse of a set multimap cannot contain multiple pairs with the same key and
    * value, this method returns an {@code ImmutableSetMultimap} rather than the {@code
    * ImmutableMultimap} specified in the {@code ImmutableMultimap} class.
+   *
+   * @since 11.0
    */
   @Override
-  public ImmutableSetMultimap<V, K> inverse() {
+  public final ImmutableSetMultimap<V, K> inverse() {
     ImmutableSetMultimap<V, K> result = inverse;
-    return (result == null) ? (inverse = invert()) : result;
+    if (result == null) {
+      result = inverse = invert();
+    }
+    return result;
   }
 
   private ImmutableSetMultimap<V, K> invert() {
@@ -600,20 +605,17 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     throw new UnsupportedOperationException();
   }
 
-  @LazyInit @RetainedWith private transient @Nullable ImmutableSet<Entry<K, V>> entries;
-
   /**
    * Returns an immutable collection of all key-value pairs in the multimap. Its iterator traverses
    * the values for the first key, the values for the second key, and so on.
    */
   @Override
-  public ImmutableSet<Entry<K, V>> entries() {
-    ImmutableSet<Entry<K, V>> result = entries;
-    return result == null ? (entries = new EntrySet<>(this)) : result;
+  public final ImmutableSet<Entry<K, V>> entries() {
+    return new EntrySet<>(this);
   }
 
   private static final class EntrySet<K, V> extends ImmutableSet<Entry<K, V>> {
-    @Weak private final transient ImmutableSetMultimap<K, V> multimap;
+    private final transient ImmutableSetMultimap<K, V> multimap;
 
     EntrySet(ImmutableSetMultimap<K, V> multimap) {
       this.multimap = multimap;

@@ -17,6 +17,7 @@
 package com.google.common.graph;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 import static com.google.common.graph.GraphConstants.NODE_NOT_IN_GRAPH;
@@ -226,7 +227,7 @@ public final class Graphs extends GraphsBridgeMethods {
     switch (strategy) {
       case ADD_SELF_LOOPS_ALWAYS: // always include 'node'
         return traverser.breadthFirst(node);
-      case ADD_SELF_LOOPS_FOR_CYCLES: // include 'node' iff there's an incident cycle
+      case ADD_SELF_LOOPS_FOR_CYCLES: // include 'node' if and only if there's an incident cycle
         // note that if 'node' has a self-loop, it will appear in its successors
         return traverser.breadthFirst(graph.successors(node));
     }
@@ -275,6 +276,7 @@ public final class Graphs extends GraphsBridgeMethods {
    * @since 33.1.0 (present with return type {@code Set} since 20.0)
    */
   public static <N> ImmutableSet<N> reachableNodes(Graph<N> graph, N node) {
+    checkNotNull(node);
     checkArgument(graph.nodes().contains(node), NODE_NOT_IN_GRAPH, node);
     return ImmutableSet.copyOf(Traverser.forGraph(graph).breadthFirst(node));
   }

@@ -171,7 +171,7 @@ public final class Splitter {
         (splitter, toSplit) ->
             new SplittingIterator(splitter, toSplit) {
               @Override
-              public int separatorStart(int start) {
+              int separatorStart(int start) {
                 int separatorLength = separator.length();
 
                 positions:
@@ -187,7 +187,7 @@ public final class Splitter {
               }
 
               @Override
-              public int separatorEnd(int separatorPosition) {
+              int separatorEnd(int separatorPosition) {
                 return separatorPosition + separator.length();
               }
             });
@@ -220,12 +220,12 @@ public final class Splitter {
           CommonMatcher matcher = separatorPattern.matcher(toSplit);
           return new SplittingIterator(splitter, toSplit) {
             @Override
-            public int separatorStart(int start) {
+            int separatorStart(int start) {
               return matcher.find(start) ? matcher.start() : -1;
             }
 
             @Override
-            public int separatorEnd(int separatorPosition) {
+            int separatorEnd(int separatorPosition) {
               return matcher.end();
             }
           };
@@ -274,13 +274,13 @@ public final class Splitter {
         (splitter, toSplit) ->
             new SplittingIterator(splitter, toSplit) {
               @Override
-              public int separatorStart(int start) {
+              int separatorStart(int start) {
                 int nextChunkStart = start + length;
                 return (nextChunkStart < toSplit.length() ? nextChunkStart : -1);
               }
 
               @Override
-              public int separatorEnd(int separatorPosition) {
+              int separatorEnd(int separatorPosition) {
                 return separatorPosition;
               }
             });
@@ -300,6 +300,8 @@ public final class Splitter {
    * iterable, but when using this option, it can (if the input sequence consists of nothing but
    * separators).
    *
+   * <p>If a limit is also specified, see {@link #limit} for how the two options interact.
+   *
    * @return a splitter with the desired configuration
    */
   public Splitter omitEmptyStrings() {
@@ -317,6 +319,13 @@ public final class Splitter {
    * an iterable containing {@code ["a", "b", "c,d"]}. When trim is requested, all entries are
    * trimmed, including the last. Hence {@code Splitter.on(',').limit(3).trimResults().split(" a , b
    * , c , d ")} results in {@code ["a", "b", "c , d"]}.
+   *
+   * <p>Note that when empty strings are omitted, they do not count even in determining where the
+   * final element begins. The final element starts with the first piece that is not omitted, so
+   * separators that delimit omitted empty strings do not appear in it, even though later separators
+   * do. For example, {@code Splitter.on(',').limit(2).omitEmptyStrings().split("a,,b,c")} returns
+   * an iterable containing {@code ["a", "b,c"]}, not {@code ["a", ",b,c"]}: the second comma
+   * delimits an empty string, so it is not part of the final element.
    *
    * @param maxItems the maximum number of items returned
    * @return a splitter with the desired configuration

@@ -105,7 +105,7 @@ public class PredicatesTest extends TestCase {
     assertEvalsToTrue(Predicates.alwaysTrue());
   }
 
-  public void testAlwaysTrue_equality() throws Exception {
+  public void testAlwaysTrue_equality() {
     new EqualsTester()
         .addEqualityGroup(TRUE, Predicates.alwaysTrue())
         .addEqualityGroup(isOdd())
@@ -123,11 +123,11 @@ public class PredicatesTest extends TestCase {
    * Tests for Predicates.alwaysFalse().
    */
 
-  public void testAlwaysFalse_apply() throws Exception {
+  public void testAlwaysFalse_apply() {
     assertEvalsToFalse(Predicates.alwaysFalse());
   }
 
-  public void testAlwaysFalse_equality() throws Exception {
+  public void testAlwaysFalse_equality() {
     new EqualsTester()
         .addEqualityGroup(FALSE, Predicates.alwaysFalse())
         .addEqualityGroup(isOdd())
@@ -255,6 +255,7 @@ public class PredicatesTest extends TestCase {
     checkSerialization(and(TRUE, isOdd()));
   }
 
+  @SuppressWarnings("DistinctVarargsChecker")
   public void testAnd_applyTernary() {
     assertEvalsLikeOdd(and(isOdd(), TRUE, TRUE));
     assertEvalsLikeOdd(and(TRUE, isOdd(), TRUE));
@@ -377,6 +378,7 @@ public class PredicatesTest extends TestCase {
     checkSerialization(or(isOdd()));
   }
 
+  @SuppressWarnings("DistinctVarargsChecker")
   public void testOr_applyBinary() {
     Predicate<@Nullable Integer> falseOrFalse = or(FALSE, FALSE);
     Predicate<@Nullable Integer> falseOrTrue = or(FALSE, TRUE);
@@ -402,6 +404,7 @@ public class PredicatesTest extends TestCase {
     checkSerialization(or(isOdd(), TRUE));
   }
 
+  @SuppressWarnings("DistinctVarargsChecker")
   public void testOr_applyTernary() {
     assertEvalsLikeOdd(or(isOdd(), FALSE, FALSE));
     assertEvalsLikeOdd(or(FALSE, isOdd(), FALSE));
@@ -762,7 +765,7 @@ public class PredicatesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // SerializableTester
-  public void testCascadingSerialization() throws Exception {
+  public void testCascadingSerialization() {
     // Eclipse says Predicate<Integer>; javac says Predicate<Object>.
     Predicate<? super Integer> nasty =
         not(
@@ -843,7 +846,7 @@ public class PredicatesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
-  public void testContainsPattern_nulls() throws Exception {
+  public void testContainsPattern_nulls() {
     NullPointerTester tester = new NullPointerTester();
     Predicate<CharSequence> isWooString = Predicates.containsPattern("Woo");
 
@@ -852,7 +855,7 @@ public class PredicatesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
-  public void testContains_nulls() throws Exception {
+  public void testContains_nulls() {
     NullPointerTester tester = new NullPointerTester();
     Predicate<CharSequence> isWooPattern = Predicates.contains(Pattern.compile("Woo"));
 
@@ -906,7 +909,6 @@ public class PredicatesTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // reflection
-  @AndroidIncompatible // TODO(cpovirk): ClassNotFoundException: com.google.common.base.Function
   public void testEqualsAndSerializable() throws Exception {
     new ClassSanityTester().forAllPublicStaticMethods(Predicates.class).testEqualsAndSerializable();
   }

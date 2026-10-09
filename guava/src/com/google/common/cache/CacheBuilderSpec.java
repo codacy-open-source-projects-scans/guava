@@ -24,6 +24,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
@@ -86,6 +87,7 @@ import org.jspecify.annotations.Nullable;
  */
 @SuppressWarnings("GoodTime") // lots of violations (nanosecond math)
 @GwtIncompatible
+@J2ktIncompatible
 public final class CacheBuilderSpec {
   /** Parses a single value. */
   private interface ValueParser {
@@ -191,7 +193,8 @@ public final class CacheBuilderSpec {
         case WEAK:
           builder.weakKeys();
           break;
-        default:
+        case SOFT:
+        case STRONG:
           throw new AssertionError();
       }
     }
@@ -203,7 +206,7 @@ public final class CacheBuilderSpec {
         case WEAK:
           builder.weakValues();
           break;
-        default:
+        case STRONG:
           throw new AssertionError();
       }
     }

@@ -31,8 +31,6 @@ import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.DoNotMock;
-import com.google.j2objc.annotations.Weak;
-import com.google.j2objc.annotations.WeakOuter;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -41,7 +39,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.BiConsumer;
 import org.jspecify.annotations.Nullable;
@@ -72,6 +69,7 @@ import org.jspecify.annotations.Nullable;
  * @author Jared Levy
  * @since 2.0
  */
+@SuppressWarnings("TooManyParameters")
 @GwtCompatible
 public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V>
     implements Serializable {
@@ -183,7 +181,7 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
       // otherwise, leave it null to be constructed lazily
     }
 
-    Map<K, ImmutableCollection.Builder<V>> ensureBuilderMapNonNull() {
+    final Map<K, ImmutableCollection.Builder<V>> ensureBuilderMapNonNull() {
       Map<K, ImmutableCollection.Builder<V>> result = builderMap;
       if (result == null) {
         result = Platform.preservesInsertionOrderOnPutsMap();
@@ -542,24 +540,24 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
    * to determine whether {@code copyOf} implementations should make an explicit copy to avoid
    * memory leaks.
    */
-  boolean isPartialView() {
+  final boolean isPartialView() {
     return map.isPartialView();
   }
 
   // accessors
 
   @Override
-  public boolean containsKey(@Nullable Object key) {
+  public final boolean containsKey(@Nullable Object key) {
     return map.containsKey(key);
   }
 
   @Override
-  public boolean containsValue(@Nullable Object value) {
+  public final boolean containsValue(@Nullable Object value) {
     return value != null && super.containsValue(value);
   }
 
   @Override
-  public int size() {
+  public final int size() {
     return size;
   }
 
@@ -570,13 +568,8 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
    * appear in this multimap.
    */
   @Override
-  public ImmutableSet<K> keySet() {
+  public final ImmutableSet<K> keySet() {
     return map.keySet();
-  }
-
-  @Override
-  Set<K> createKeySet() {
-    throw new AssertionError("unreachable");
   }
 
   /**
@@ -589,24 +582,14 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
     return (ImmutableMap) map;
   }
 
-  @Override
-  Map<K, Collection<V>> createAsMap() {
-    throw new AssertionError("should never be called");
-  }
-
   /** Returns an immutable collection of all key-value pairs in the multimap. */
   @Override
   public ImmutableCollection<Entry<K, V>> entries() {
-    return (ImmutableCollection<Entry<K, V>>) super.entries();
-  }
-
-  @Override
-  ImmutableCollection<Entry<K, V>> createEntries() {
     return new EntryCollection<>(this);
   }
 
   private static final class EntryCollection<K, V> extends ImmutableCollection<Entry<K, V>> {
-    @Weak final ImmutableMultimap<K, V> multimap;
+    final ImmutableMultimap<K, V> multimap;
 
     EntryCollection(ImmutableMultimap<K, V> multimap) {
       this.multimap = multimap;
@@ -649,7 +632,7 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
   }
 
   @Override
-  UnmodifiableIterator<Entry<K, V>> entryIterator() {
+  final UnmodifiableIterator<Entry<K, V>> entryIterator() {
     return new UnmodifiableIterator<Entry<K, V>>() {
       final Iterator<? extends Entry<K, ? extends ImmutableCollection<V>>> asMapItr =
           map.entrySet().iterator();
@@ -679,7 +662,7 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
 
   @Override
   @GwtIncompatible // Spliterator
-  Spliterator<Entry<K, V>> entrySpliterator() {
+  final Spliterator<Entry<K, V>> entrySpliterator() {
     return CollectSpliterators.flatMap(
         asMap().entrySet().spliterator(),
         keyToValueCollectionEntry -> {
@@ -695,7 +678,7 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
   }
 
   @Override
-  public void forEach(BiConsumer<? super K, ? super V> action) {
+  public final void forEach(BiConsumer<? super K, ? super V> action) {
     checkNotNull(action);
     asMap()
         .forEach(
@@ -705,20 +688,14 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
   /**
    * Returns an immutable multiset containing all the keys in this multimap, in the same order and
    * with the same frequencies as they appear in this multimap; to get only a single occurrence of
-   * each key, use {@link #keySet}.
+   * each key, use {@link #keySet()}.
    */
   @Override
-  public ImmutableMultiset<K> keys() {
-    return (ImmutableMultiset<K>) super.keys();
-  }
-
-  @Override
-  ImmutableMultiset<K> createKeys() {
+  public final ImmutableMultiset<K> keys() {
     return new Keys();
   }
 
   @SuppressWarnings("serial") // Uses writeReplace, not default serialization
-  @WeakOuter
   private final class Keys extends ImmutableMultiset<K> {
     @Override
     public boolean contains(@Nullable Object object) {
@@ -778,6 +755,8 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
     Object readResolve() {
       return multimap.keys();
     }
+
+    private static final long serialVersionUID = 3363316627763621892L;
   }
 
   /**
@@ -785,17 +764,12 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
    * values for the first key, the values for the second key, and so on.
    */
   @Override
-  public ImmutableCollection<V> values() {
-    return (ImmutableCollection<V>) super.values();
-  }
-
-  @Override
-  ImmutableCollection<V> createValues() {
+  public final ImmutableCollection<V> values() {
     return new Values<>(this);
   }
 
   @Override
-  UnmodifiableIterator<V> valueIterator() {
+  final UnmodifiableIterator<V> valueIterator() {
     return new UnmodifiableIterator<V>() {
       final Iterator<? extends ImmutableCollection<V>> valueCollectionItr = map.values().iterator();
       Iterator<V> valueItr = emptyIterator();
@@ -816,7 +790,7 @@ public abstract class ImmutableMultimap<K, V> extends BaseImmutableMultimap<K, V
   }
 
   private static final class Values<K, V> extends ImmutableCollection<V> {
-    @Weak private final transient ImmutableMultimap<K, V> multimap;
+    private final transient ImmutableMultimap<K, V> multimap;
 
     Values(ImmutableMultimap<K, V> multimap) {
       this.multimap = multimap;

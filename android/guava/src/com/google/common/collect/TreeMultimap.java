@@ -27,7 +27,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.SortedSet;
@@ -73,7 +72,7 @@ import org.jspecify.annotations.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object>
+public final class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractSortedKeySortedSetMultimap<K, V> {
   private transient Comparator<? super K> keyComparator;
   private transient Comparator<? super V> valueComparator;
@@ -122,11 +121,6 @@ public class TreeMultimap<K extends @Nullable Object, V extends @Nullable Object
       Multimap<? extends K, ? extends V> multimap) {
     this(keyComparator, valueComparator);
     putAll(multimap);
-  }
-
-  @Override
-  Map<K, Collection<V>> createAsMap() {
-    return createMaybeNavigableAsMap();
   }
 
   /**

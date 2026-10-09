@@ -20,12 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.annotations.GwtCompatible;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.escape.testing.EscaperAsserts;
-import java.io.IOException;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
-import org.jspecify.annotations.Nullable;
 
 /**
  * @author David Beaumont
@@ -33,7 +30,7 @@ import org.jspecify.annotations.Nullable;
 @GwtCompatible
 @NullUnmarked
 public class EscapersTest extends TestCase {
-  public void testNullEscaper() throws IOException {
+  public void testNullEscaper() {
     Escaper escaper = Escapers.nullEscaper();
     EscaperAsserts.assertBasic(escaper);
     String s = "\0\n\t\\az09~\uD800\uDC00\uFFFF";
@@ -84,25 +81,5 @@ public class EscapersTest extends TestCase {
     // Test both escapers after modifying the builder.
     assertThat(first.escape("The Quick Brown Fox!")).isEqualTo("Xhe_Xuick_Xrown_XoxX");
     assertThat(second.escape("The Quick Brown Fox!")).isEqualTo("Xhe-Xuick-Xrown-Xox$");
-  }
-
-  // A trivial non-optimized escaper for testing.
-  static CharEscaper createSimpleCharEscaper(ImmutableMap<Character, char[]> replacementMap) {
-    return new CharEscaper() {
-      @Override
-      protected char @Nullable [] escape(char c) {
-        return replacementMap.get(c);
-      }
-    };
-  }
-
-  // A trivial non-optimized escaper for testing.
-  static UnicodeEscaper createSimpleUnicodeEscaper(ImmutableMap<Integer, char[]> replacementMap) {
-    return new UnicodeEscaper() {
-      @Override
-      protected char @Nullable [] escape(int cp) {
-        return replacementMap.get(cp);
-      }
-    };
   }
 }

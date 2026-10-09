@@ -125,6 +125,9 @@ import org.jspecify.annotations.Nullable;
  * @author Louis Wasserman
  * @since 14.0
  */
+// We use `& 0xff` before casting to `(byte)` to keep GWT from letting the byte be out of range:
+// https://www.gwtproject.org/doc/latest/DevGuideCodingBasicsCompatibility
+@SuppressWarnings("MaskAndCastToByte")
 @GwtCompatible
 public abstract class BaseEncoding {
   // TODO(lowasser): consider making encodeTo(Appendable, byte[], int, int) public.
@@ -523,8 +526,8 @@ public abstract class BaseEncoding {
       return chars[bits];
     }
 
-    boolean isValidPaddingStartPosition(int index) {
-      return validPadding[index % charsPerChunk];
+    boolean isValidPaddingStartPosition(long index) {
+      return validPadding[(int) (index % charsPerChunk)];
     }
 
     boolean canDecode(char ch) {
@@ -692,7 +695,7 @@ public abstract class BaseEncoding {
       }
     }
 
-    void encodeChunkTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
+    final void encodeChunkTo(Appendable target, byte[] bytes, int off, int len) throws IOException {
       checkNotNull(target);
       checkPositionIndexes(off, off + len, bytes.length);
       checkArgument(len <= alphabet.bytesPerChunk);
@@ -723,7 +726,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    CharSequence trimTrailingPadding(CharSequence chars) {
+    final CharSequence trimTrailingPadding(CharSequence chars) {
       checkNotNull(chars);
       if (paddingChar == null) {
         return chars;
@@ -786,7 +789,7 @@ public abstract class BaseEncoding {
       return new InputStream() {
         int bitBuffer = 0;
         int bitBufferLength = 0;
-        int readChars = 0;
+        long readChars = 0;
         boolean hitPadding = false;
 
         @Override
@@ -921,7 +924,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       StringBuilder builder = new StringBuilder("BaseEncoding.");
       builder.append(alphabet);
       if (8 % alphabet.bitsPerChar != 0) {
@@ -935,7 +938,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public boolean equals(@Nullable Object other) {
+    public final boolean equals(@Nullable Object other) {
       if (other instanceof StandardBaseEncoding) {
         StandardBaseEncoding that = (StandardBaseEncoding) other;
         return this.alphabet.equals(that.alphabet)
@@ -945,7 +948,7 @@ public abstract class BaseEncoding {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
       return alphabet.hashCode() ^ Objects.hashCode(paddingChar);
     }
   }
@@ -1070,7 +1073,7 @@ public abstract class BaseEncoding {
       }
 
       @Override
-      public int read(char[] cbuf, int off, int len) throws IOException {
+      public int read(char[] cbuf, int off, int len) {
         throw new UnsupportedOperationException();
       }
 
@@ -1123,7 +1126,7 @@ public abstract class BaseEncoding {
       }
 
       @Override
-      public void write(char[] chars, int off, int len) throws IOException {
+      public void write(char[] chars, int off, int len) {
         throw new UnsupportedOperationException();
       }
 

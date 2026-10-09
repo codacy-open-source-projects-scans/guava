@@ -84,7 +84,7 @@ public class OrderingTest extends TestCase {
 
   // From https://github.com/google/guava/issues/1342
   public void testComplicatedOrderingExample() {
-    Integer nullInt = (Integer) null;
+    Integer nullInt = null;
     Ordering<@Nullable Iterable<@Nullable Integer>> example =
         Ordering.<Integer>natural()
             .<Integer>nullsFirst()
@@ -221,16 +221,16 @@ public class OrderingTest extends TestCase {
 
   @J2ktIncompatible // ArbitraryOrdering
   public void testArbitrary_withCollisions() {
-    List<Integer> list = new ArrayList<>();
+    List<MyInteger> list = new ArrayList<>();
     for (int i = 0; i < 50; i++) {
-      list.add(i);
+      list.add(new MyInteger(i));
     }
 
     Ordering<Object> arbitrary =
         new ArbitraryOrdering() {
           @Override
           int identityHashCode(Object object) {
-            return ((Integer) object) % 5; // fake tons of collisions!
+            return ((MyInteger) object).intValue() % 5; // fake tons of collisions!
           }
         };
 
@@ -304,8 +304,8 @@ public class OrderingTest extends TestCase {
   }
 
   public void testCompound_instance_generics() {
-    Ordering<Object> objects = Ordering.explicit((Object) 1);
-    Ordering<Number> numbers = Ordering.explicit((Number) 1);
+    Ordering<Object> objects = Ordering.explicit(1);
+    Ordering<Number> numbers = Ordering.explicit(1);
     Ordering<Integer> integers = Ordering.explicit(1);
 
     // Like by like equals like
@@ -472,10 +472,7 @@ public class OrderingTest extends TestCase {
     List<@Nullable Integer> listWithNull = asList(5, 3, null, 9);
     assertThrows(
         NullPointerException.class,
-        () ->
-            Ordering.<Integer>natural()
-                .nullsFirst()
-                .immutableSortedCopy((List<Integer>) listWithNull));
+        () -> Ordering.<Integer>natural().nullsFirst().immutableSortedCopy(listWithNull));
   }
 
   public void testIsOrdered() {
@@ -982,7 +979,7 @@ public class OrderingTest extends TestCase {
       assertEquals(strictlyOrderedList, ordering.sortedCopy(shuffledList));
 
       if (!strictlyOrderedList.contains(null)) {
-        List<@NonNull T> nonNullShuffledList = (List<@NonNull T>) shuffledList;
+        List<@NonNull T> nonNullShuffledList = shuffledList;
         assertEquals(strictlyOrderedList, ordering.immutableSortedCopy(nonNullShuffledList));
       }
     }

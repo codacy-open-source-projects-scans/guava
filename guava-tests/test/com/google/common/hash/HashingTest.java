@@ -149,7 +149,7 @@ public class HashingTest extends TestCase {
   }
 
   @J2ktIncompatible
-  @AndroidIncompatible // slow TODO(cpovirk): Maybe just reduce iterations under Android.
+  @AndroidIncompatible // takes ~30s. TODO(cpovirk): Maybe just reduce iterations under Android.
   public void testGoodFastHash() {
     for (int i = 1; i < 200; i += 17) {
       HashFunction hasher = Hashing.goodFastHash(i);
@@ -291,11 +291,8 @@ public class HashingTest extends TestCase {
   public void testCombineOrdered_differentBitLengths() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          HashCode unused =
-              Hashing.combineOrdered(
-                  ImmutableList.of(HashCode.fromInt(32), HashCode.fromLong(32L)));
-        });
+        () ->
+            Hashing.combineOrdered(ImmutableList.of(HashCode.fromInt(32), HashCode.fromLong(32L))));
   }
 
   @J2ktIncompatible
@@ -338,11 +335,9 @@ public class HashingTest extends TestCase {
   public void testCombineUnordered_differentBitLengths() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          HashCode unused =
-              Hashing.combineUnordered(
-                  ImmutableList.of(HashCode.fromInt(32), HashCode.fromLong(32L)));
-        });
+        () ->
+            Hashing.combineUnordered(
+                ImmutableList.of(HashCode.fromInt(32), HashCode.fromLong(32L))));
   }
 
   @J2ktIncompatible
@@ -505,7 +500,7 @@ public class HashingTest extends TestCase {
    * testSeededHashFunctionEquals}.
    */
   @J2ktIncompatible
-  public void testGoodFastHashEquals() throws Exception {
+  public void testGoodFastHashEquals() {
     HashFunction hashFunction1a = Hashing.goodFastHash(1);
     HashFunction hashFunction1b = Hashing.goodFastHash(32);
     HashFunction hashFunction2a = Hashing.goodFastHash(33);

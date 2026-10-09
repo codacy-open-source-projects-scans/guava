@@ -40,7 +40,6 @@ import org.jspecify.annotations.NullUnmarked;
  *
  * @author Ben Yu
  */
-@AndroidIncompatible // lots of failures, possibly some related to bad equals() implementations?
 @NullUnmarked
 public class TypeTokenResolutionTest extends TestCase {
 
@@ -330,6 +329,7 @@ public class TypeTokenResolutionTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // TODO(cpovirk): expected Integer but was String?
   public void test1() {
     Red<String> redString = new Red<String>() {};
     Red<Integer> redInteger = new Red<Integer>() {};
@@ -343,6 +343,7 @@ public class TypeTokenResolutionTest extends TestCase {
     assertThat(yellowInteger.getB().getClassDirect()).isEqualTo(Integer.class);
   }
 
+  @AndroidIncompatible // TODO(cpovirk): expected Integer but was String?
   public void test2() {
     Red<String> redString = new Red<>();
     Red<Integer> redInteger = new Red<>();
@@ -418,6 +419,7 @@ public class TypeTokenResolutionTest extends TestCase {
     assertEquals(newArrayType(int[].class), listType.getActualTypeArguments()[0]);
   }
 
+  @SuppressWarnings("UnusedVariable")
   private abstract class WithGenericBound<A> {
 
     @Keep
@@ -481,7 +483,7 @@ public class TypeTokenResolutionTest extends TestCase {
     assertEquals(String.class, wildcardType.getUpperBounds()[0]);
   }
 
-  public void testInterfaceTypeParameterResolution() throws Exception {
+  public void testInterfaceTypeParameterResolution() {
     assertEquals(
         String.class,
         TypeToken.of(new TypeToken<ArrayList<String>>() {}.getType())
@@ -493,6 +495,7 @@ public class TypeTokenResolutionTest extends TestCase {
     return new TypeToken<Map<Object, Object>>() {};
   }
 
+  @SuppressWarnings("UnusedMethod")
   // Looks like recursive, but legit.
   private interface WithFalseRecursiveType<K, V> {
     WithFalseRecursiveType<List<V>, String> keyShouldNotResolveToStringList();
@@ -502,6 +505,7 @@ public class TypeTokenResolutionTest extends TestCase {
     SubtypeOfWithFalseRecursiveType<List<V>, List<K>> evenSubtypeWorks();
   }
 
+  @SuppressWarnings("UnusedMethod")
   private interface SubtypeOfWithFalseRecursiveType<K1, V1>
       extends WithFalseRecursiveType<List<K1>, List<V1>> {
     SubtypeOfWithFalseRecursiveType<V1, K1> revertKeyAndValueTypes();

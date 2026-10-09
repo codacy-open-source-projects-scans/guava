@@ -48,6 +48,7 @@ import java.util.concurrent.Future;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests for {@link MoreFiles}.
@@ -94,7 +95,7 @@ public class MoreFilesTest extends TestCase {
     return FS.getRootDirectories().iterator().next();
   }
 
-  private Path tempDir;
+  private @Nullable Path tempDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -116,7 +117,7 @@ public class MoreFilesTest extends TestCase {
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            public FileVisitResult postVisitDirectory(Path dir, @Nullable IOException exc)
                 throws IOException {
               if (exc != null) {
                 return FileVisitResult.TERMINATE;
@@ -298,7 +299,7 @@ public class MoreFilesTest extends TestCase {
 
   public void testCreateParentDirectories_noPermission() {
     if (isWindows()) {
-      return; // TODO: b/136041958 - Create/find a directory that we don't have permissions on?
+      return; // TODO(b/136041958): Create/find a directory that we don't have permissions on?
     }
     Path file = root().resolve("parent/nonexistent.file");
     Path parent = file.getParent();
@@ -593,7 +594,7 @@ public class MoreFilesTest extends TestCase {
    * <p>We can only test this with a file system that supports SecureDirectoryStream, because it's
    * not possible to protect against this if the file system doesn't.
    */
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+  @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
   public void testDirectoryDeletion_directorySymlinkRace() throws Exception {
     int iterations = isAndroid() ? 100 : 5000;
     for (DirectoryDeleteMethod method : EnumSet.allOf(DirectoryDeleteMethod.class)) {
@@ -664,7 +665,7 @@ public class MoreFilesTest extends TestCase {
    * between being a directory and being a symlink, while the given {@code target} is the target the
    * symlink should have.
    */
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+  @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
   private static Future<?> startDirectorySymlinkSwitching(
       Path file, Path target, ExecutorService executor) {
     return executor.submit(
@@ -694,12 +695,12 @@ public class MoreFilesTest extends TestCase {
   private enum DirectoryDeleteMethod {
     DELETE_DIRECTORY_CONTENTS {
       @Override
-      public void delete(Path path, RecursiveDeleteOption... options) throws IOException {
+      void delete(Path path, RecursiveDeleteOption... options) throws IOException {
         MoreFiles.deleteDirectoryContents(path, options);
       }
 
       @Override
-      public void assertDeleteSucceeded(Path path) throws IOException {
+      void assertDeleteSucceeded(Path path) throws IOException {
         assertEquals(
             "contents of directory " + path + " not deleted with delete method " + this,
             0,
@@ -708,12 +709,12 @@ public class MoreFilesTest extends TestCase {
     },
     DELETE_RECURSIVELY {
       @Override
-      public void delete(Path path, RecursiveDeleteOption... options) throws IOException {
+      void delete(Path path, RecursiveDeleteOption... options) throws IOException {
         MoreFiles.deleteRecursively(path, options);
       }
 
       @Override
-      public void assertDeleteSucceeded(Path path) throws IOException {
+      void assertDeleteSucceeded(Path path) {
         assertFalse("file " + path + " not deleted with delete method " + this, Files.exists(path));
       }
     };

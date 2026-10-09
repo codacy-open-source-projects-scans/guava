@@ -16,7 +16,6 @@ package com.google.common.util.concurrent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
-import static com.google.common.collect.Maps.newEnumMap;
 import static com.google.common.collect.Sets.newIdentityHashSet;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
@@ -241,7 +240,7 @@ public class CycleDetectingLockFactory {
    * Creates a {@link ReentrantLock} with the given fairness policy. The {@code lockName} is used in
    * the warning or exception output to help identify the locks involved in the detected deadlock.
    */
-  public ReentrantLock newReentrantLock(String lockName, boolean fair) {
+  public final ReentrantLock newReentrantLock(String lockName, boolean fair) {
     return policy == Policies.DISABLED
         ? new ReentrantLock(fair)
         : new CycleDetectingReentrantLock(new LockGraphNode(lockName), fair);
@@ -257,7 +256,7 @@ public class CycleDetectingLockFactory {
    * is used in the warning or exception output to help identify the locks involved in the detected
    * deadlock.
    */
-  public ReentrantReadWriteLock newReentrantReadWriteLock(String lockName, boolean fair) {
+  public final ReentrantReadWriteLock newReentrantReadWriteLock(String lockName, boolean fair) {
     return policy == Policies.DISABLED
         ? new ReentrantReadWriteLock(fair)
         : new CycleDetectingReentrantReadWriteLock(new LockGraphNode(lockName), fair);
@@ -300,7 +299,7 @@ public class CycleDetectingLockFactory {
    */
   @VisibleForTesting
   static <E extends Enum<E>> Map<E, LockGraphNode> createNodes(Class<E> clazz) {
-    EnumMap<E, LockGraphNode> map = newEnumMap(clazz);
+    EnumMap<E, LockGraphNode> map = new EnumMap<>(clazz);
     E[] keys = clazz.getEnumConstants();
     int numKeys = keys.length;
     ArrayList<LockGraphNode> nodes = newArrayListWithCapacity(numKeys);
@@ -443,7 +442,7 @@ public class CycleDetectingLockFactory {
     }
   }
 
-  //////// Implementation /////////
+  // Implementation
 
   private static final LazyLogger logger = new LazyLogger(CycleDetectingLockFactory.class);
 
@@ -751,7 +750,7 @@ public class CycleDetectingLockFactory {
       this.lockGraphNode = Preconditions.checkNotNull(lockGraphNode);
     }
 
-    ///// CycleDetectingLock methods. /////
+    // CycleDetectingLock methods.
 
     @Override
     public LockGraphNode getLockGraphNode() {
@@ -763,7 +762,7 @@ public class CycleDetectingLockFactory {
       return isHeldByCurrentThread();
     }
 
-    ///// Overridden ReentrantLock methods. /////
+    // Overridden ReentrantLock methods.
 
     @Override
     public void lock() {
@@ -834,7 +833,7 @@ public class CycleDetectingLockFactory {
       this.lockGraphNode = Preconditions.checkNotNull(lockGraphNode);
     }
 
-    ///// Overridden ReentrantReadWriteLock methods. /////
+    // Overridden ReentrantReadWriteLock methods.
 
     @Override
     public ReadLock readLock() {
@@ -846,7 +845,7 @@ public class CycleDetectingLockFactory {
       return writeLock;
     }
 
-    ///// CycleDetectingLock methods. /////
+    // CycleDetectingLock methods.
 
     @Override
     public LockGraphNode getLockGraphNode() {

@@ -36,7 +36,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.junit.Ignore;
 
 /**
  * Testers for {@link SetMultimap#asMap}.
@@ -46,9 +45,6 @@ import org.junit.Ignore;
  * @param <V> The value type of the tested multimap.
  */
 @GwtCompatible
-@Ignore("test runners must not instantiate and run this directly, only via suites we build")
-// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-@SuppressWarnings("JUnit4ClassUsedInJUnit3")
 @NullMarked
 public class SetMultimapAsMapTester<K extends @Nullable Object, V extends @Nullable Object>
     extends AbstractMultimapTester<K, V, SetMultimap<K, V>> {
@@ -86,8 +82,8 @@ public class SetMultimapAsMapTester<K extends @Nullable Object, V extends @Nulla
   public void testEntrySetEquals() {
     resetContainer(mapEntry(k0(), v0()), mapEntry(k1(), v0()), mapEntry(k0(), v3()));
     Set<Entry<K, Collection<V>>> expected = new HashSet<>();
-    expected.add(mapEntry(k0(), (Collection<V>) newHashSet(v0(), v3())));
-    expected.add(mapEntry(k1(), (Collection<V>) newHashSet(v0())));
+    expected.add(mapEntry(k0(), newHashSet(v0(), v3())));
+    expected.add(mapEntry(k1(), newHashSet(v0())));
     new EqualsTester().addEqualityGroup(expected, multimap().asMap().entrySet()).testEquals();
   }
 

@@ -26,7 +26,6 @@ import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.concurrent.LazyInit;
-import com.google.j2objc.annotations.WeakOuter;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -220,7 +219,7 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
   ImmutableMultiset() {}
 
   @Override
-  public UnmodifiableIterator<E> iterator() {
+  public final UnmodifiableIterator<E> iterator() {
     Iterator<Entry<E>> entryIterator = entrySet().iterator();
     return new UnmodifiableIterator<E>() {
       int remaining;
@@ -251,9 +250,12 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
   @LazyInit private transient @Nullable ImmutableList<E> asList;
 
   @Override
-  public ImmutableList<E> asList() {
+  public final ImmutableList<E> asList() {
     ImmutableList<E> result = asList;
-    return (result == null) ? asList = super.asList() : result;
+    if (result == null) {
+      result = asList = super.asList();
+    }
+    return result;
   }
 
   @Override
@@ -319,8 +321,8 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
 
   @GwtIncompatible // not present in emulated superclass
   @Override
-  int copyIntoArray(@Nullable Object[] dst, int offset) {
-    for (Multiset.Entry<E> entry : entrySet()) {
+  final int copyIntoArray(@Nullable Object[] dst, int offset) {
+    for (Entry<E> entry : entrySet()) {
       Arrays.fill(dst, offset, offset + entry.getCount(), entry.getElement());
       offset += entry.getCount();
     }
@@ -328,7 +330,7 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
   }
 
   @Override
-  public boolean equals(@Nullable Object object) {
+  public final boolean equals(@Nullable Object object) {
     return Multisets.equalsImpl(this, object);
   }
 
@@ -338,7 +340,7 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return entrySet().toString();
   }
 
@@ -348,21 +350,13 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
   @Override
   public abstract ImmutableSet<E> elementSet();
 
-  @LazyInit private transient @Nullable ImmutableSet<Entry<E>> entrySet;
-
   @Override
-  public ImmutableSet<Entry<E>> entrySet() {
-    ImmutableSet<Entry<E>> es = entrySet;
-    return (es == null) ? (entrySet = createEntrySet()) : es;
-  }
-
-  private ImmutableSet<Entry<E>> createEntrySet() {
+  public final ImmutableSet<Entry<E>> entrySet() {
     return isEmpty() ? ImmutableSet.of() : new EntrySet();
   }
 
   abstract Entry<E> getEntry(int index);
 
-  @WeakOuter
   private final class EntrySet extends IndexedImmutableSet<Entry<E>> {
     @Override
     boolean isPartialView() {
@@ -425,6 +419,8 @@ public abstract class ImmutableMultiset<E> extends ImmutableCollection<E> implem
         Object readResolve() {
       return multiset.entrySet();
     }
+
+    private static final long serialVersionUID = -6456416336206982697L;
   }
 
   @GwtIncompatible

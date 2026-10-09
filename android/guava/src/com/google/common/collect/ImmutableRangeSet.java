@@ -408,10 +408,12 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
 
   private ImmutableRangeSet<C> lazyComplement() {
     ImmutableRangeSet<C> result = lazyComplement;
-    return result == null
-        ? lazyComplement =
-            new ImmutableRangeSet<>(new ComplementRanges<>(ranges), /* complement= */ this)
-        : result;
+    if (result == null) {
+      result =
+          lazyComplement =
+              new ImmutableRangeSet<>(new ComplementRanges<>(ranges), /* complement= */ this);
+    }
+    return result;
   }
 
   /**
@@ -520,7 +522,6 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
         @SuppressWarnings("RedundantOverride")
         @Override
         @J2ktIncompatible
-        @GwtIncompatible
                 Object writeReplace() {
           return super.writeReplace();
         }
@@ -632,7 +633,6 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     }
 
     @Override
-    @GwtIncompatible // NavigableSet
     public UnmodifiableIterator<C> descendingIterator() {
       return new AbstractIterator<C>() {
         final Iterator<Range<C>> rangeItr = ranges.reverse().iterator();
@@ -749,6 +749,8 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     Object readResolve() {
       return new ImmutableRangeSet<C>(ranges).asSet(domain);
     }
+
+    @J2ktIncompatible private static final long serialVersionUID = -2839311563508230214L;
   }
 
   /**
@@ -774,6 +776,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
   public static class Builder<C extends Comparable<?>> {
     private final List<Range<C>> ranges;
 
+    /** Constructs a new builder. */
     public Builder() {
       this.ranges = new ArrayList<>();
     }
@@ -819,7 +822,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     }
 
     @CanIgnoreReturnValue
-    Builder<C> combine(Builder<C> builder) {
+    final Builder<C> combine(Builder<C> builder) {
       addAll(builder.ranges);
       return this;
     }
@@ -878,6 +881,8 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
         return new ImmutableRangeSet<C>(ranges);
       }
     }
+
+    @J2ktIncompatible private static final long serialVersionUID = 4183982527943143214L;
   }
 
   @J2ktIncompatible // java.io.ObjectInputStream

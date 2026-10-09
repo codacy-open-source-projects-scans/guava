@@ -29,26 +29,21 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.List;
-import org.junit.Ignore;
 
 /**
  * Tests for the {@code inverse} view of a BiMap.
  *
- * <p>This assumes that {@code bimap.inverse().inverse() == bimap}, which is not technically
- * required but is fulfilled by all current implementations.
- *
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore("test runners must not instantiate and run this directly, only via suites we build")
-// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-@SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class BiMapInverseTester<K, V> extends AbstractBiMapTester<K, V> {
 
+  // View caching is not required but was historically provided by some of our implementations.
   public void testInverseSame() {
     assertSame(getMap(), getMap().inverse().inverse());
   }
 
+  // View caching is not required but was historically provided by some of our implementations.
   @CollectionFeature.Require(SERIALIZABLE)
   public void testInverseSerialization() {
     BiMapPair<K, V> pair = new BiMapPair<>(getMap());
@@ -57,6 +52,26 @@ public class BiMapInverseTester<K, V> extends AbstractBiMapTester<K, V> {
     assertEquals(pair.backward, copy.backward);
     assertSame(copy.backward, copy.forward.inverse());
     assertSame(copy.forward, copy.backward.inverse());
+  }
+
+  /**
+   * @since 33.7.0
+   */
+  public void testInverseEquals() {
+    assertEquals(getMap(), getMap().inverse().inverse());
+  }
+
+  /**
+   * @since 33.7.0
+   */
+  @CollectionFeature.Require(SERIALIZABLE)
+  public void testInverseSerializationEquals() {
+    BiMapPair<K, V> pair = new BiMapPair<>(getMap());
+    BiMapPair<K, V> copy = reserialize(pair);
+    assertEquals(pair.forward, copy.forward);
+    assertEquals(pair.backward, copy.backward);
+    assertEquals(copy.backward, copy.forward.inverse());
+    assertEquals(copy.forward, copy.backward.inverse());
   }
 
   private static final class BiMapPair<K, V> implements Serializable {
@@ -69,6 +84,18 @@ public class BiMapInverseTester<K, V> extends AbstractBiMapTester<K, V> {
     }
 
     @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+  }
+
+  /**
+   * Returns {@link Method} instance for {@link #testInverseSame()} so that tests can suppress it
+   * with {@code FeatureSpecificTestSuiteBuilder.suppressing()}.
+   *
+   * @since 33.7.0
+   */
+  @J2ktIncompatible
+  @GwtIncompatible // reflection
+  public static Method getInverseSameMethod() {
+    return getMethod("testInverseSame");
   }
 
   /**

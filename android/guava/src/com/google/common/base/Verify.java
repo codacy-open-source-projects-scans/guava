@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  *     "Unexpected bill status: %s", bill.status());
  * }
  *
- * <h3>Comparison to alternatives</h3>
+ * <h2>Comparison to alternatives</h2>
  *
  * <p><b>Note:</b> In some cases the differences explained below can be subtle. When it's unclear
  * which approach to use, <b>don't worry</b> too much about it; just pick something that seems
@@ -45,7 +45,7 @@ import org.jspecify.annotations.Nullable;
  *       (such as by passing an invalid argument), use the utilities of the {@link Preconditions}
  *       class instead.
  *   <li>If checking an <i>impossible</i> condition (which <i>cannot</i> happen unless your own
- *       class or its <i>trusted</i> dependencies is badly broken), this is what ordinary Java
+ *       class or its <i>trusted</i> dependencies are badly broken), this is what ordinary Java
  *       assertions are for. Note that assertions are not enabled by default; they are essentially
  *       considered "compiled comments."
  *   <li>An explicit {@code if/throw} (as illustrated below) is always acceptable; we still
@@ -56,7 +56,7 @@ import org.jspecify.annotations.Nullable;
  *       same function with more clarity.
  * </ul>
  *
- * <h3>Warning about performance</h3>
+ * <h2>Warning about performance</h2>
  *
  * <p>Remember that parameter values for message construction must all be computed eagerly, and
  * autoboxing and varargs array creation may happen as well, even when the verification succeeds and
@@ -70,7 +70,7 @@ import org.jspecify.annotations.Nullable;
  * }
  * }
  *
- * <h3>Only {@code %s} is supported</h3>
+ * <h2>Only {@code %s} is supported</h2>
  *
  * <p>As with {@link Preconditions}, {@code Verify} uses {@link Strings#lenientFormat} to format
  * error message template strings. This only supports the {@code "%s"} specifier, not the full range
@@ -79,7 +79,7 @@ import org.jspecify.annotations.Nullable;
  * behave as expected, and will still include all argument values in the error message; the message
  * will simply not be formatted exactly as intended.
  *
- * <h3>More information</h3>
+ * <h2>More information</h2>
  *
  * See <a href="https://github.com/google/guava/wiki/ConditionalFailuresExplained">Conditional
  * failures explained</a> in the Guava User Guide for advice on when this class should be used.

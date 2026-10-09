@@ -316,7 +316,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
 
   @SuppressWarnings("unchecked")
   private RangeMap<K, V> emptySubRangeMap() {
-    return (RangeMap<K, V>) (RangeMap<?, ?>) EMPTY_SUB_RANGE_MAP;
+    return (RangeMap<K, V>) EMPTY_SUB_RANGE_MAP;
   }
 
   @SuppressWarnings("ConstantCaseForConstants") // This RangeMap is immutable.
@@ -353,10 +353,9 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
 
         @Override
         public void putAll(RangeMap<Comparable<?>, ? extends Object> rangeMap) {
-          if (!rangeMap.asMapOfRanges().isEmpty()) {
-            throw new IllegalArgumentException(
-                "Cannot putAll(nonEmptyRangeMap) into an empty subRangeMap");
-          }
+          checkArgument(
+              rangeMap.asMapOfRanges().isEmpty(),
+              "Cannot putAll(nonEmptyRangeMap) into an empty subRangeMap");
         }
 
         @Override
@@ -550,12 +549,12 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
     class SubRangeMapAsMap extends AbstractMap<Range<K>, V> {
 
       @Override
-      public boolean containsKey(@Nullable Object key) {
+      public final boolean containsKey(@Nullable Object key) {
         return get(key) != null;
       }
 
       @Override
-      public @Nullable V get(@Nullable Object key) {
+      public final @Nullable V get(@Nullable Object key) {
         try {
           if (key instanceof Range) {
             @SuppressWarnings("unchecked") // we catch ClassCastExceptions
@@ -588,7 +587,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
       }
 
       @Override
-      public @Nullable V remove(@Nullable Object key) {
+      public final @Nullable V remove(@Nullable Object key) {
         V value = get(key);
         if (value != null) {
           // it's definitely in the map, so the cast and requireNonNull are safe
@@ -601,7 +600,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
       }
 
       @Override
-      public void clear() {
+      public final void clear() {
         SubRangeMap.this.clear();
       }
 
@@ -619,7 +618,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
       }
 
       @Override
-      public Set<Range<K>> keySet() {
+      public final Set<Range<K>> keySet() {
         return new Maps.KeySet<Range<K>, V>(SubRangeMapAsMap.this) {
           @Override
           public boolean remove(@Nullable Object o) {
@@ -634,7 +633,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
       }
 
       @Override
-      public Set<Entry<Range<K>, V>> entrySet() {
+      public final Set<Entry<Range<K>, V>> entrySet() {
         return new Maps.EntrySet<Range<K>, V>() {
           @Override
           Map<Range<K>, V> map() {
@@ -691,7 +690,7 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
       }
 
       @Override
-      public Collection<V> values() {
+      public final Collection<V> values() {
         return new Maps.Values<Range<K>, V>(this) {
           @Override
           public boolean removeAll(Collection<?> c) {

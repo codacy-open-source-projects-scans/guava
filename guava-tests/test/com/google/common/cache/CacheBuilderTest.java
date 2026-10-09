@@ -22,10 +22,12 @@ import static com.google.common.cache.TestingRemovalListeners.countingRemovalLis
 import static com.google.common.cache.TestingRemovalListeners.nullRemovalListener;
 import static com.google.common.cache.TestingRemovalListeners.queuingRemovalListener;
 import static com.google.common.cache.TestingWeighers.constantWeigher;
+import static com.google.common.collect.Maps.immutableEntry;
 import static com.google.common.collect.Sets.newHashSetWithExpectedSize;
 import static com.google.common.collect.Sets.union;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -43,6 +45,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -355,6 +358,34 @@ public class CacheBuilderTest extends TestCase {
     assertThat(CacheBuilder.newBuilder().build().asMap().values() instanceof Set).isFalse();
   }
 
+  @J2ktIncompatible // asMap
+  public void testAsMapEntrySet_containsAndRemoveNulls() {
+    CountingRemovalListener<Integer, Integer> listener = countingRemovalListener();
+    Cache<Integer, Integer> cache = CacheBuilder.newBuilder().removalListener(listener).build();
+    cache.put(10, 20);
+
+    Set<Entry<Integer, Integer>> entries = cache.asMap().entrySet();
+    assertThat(entries.contains(null)).isFalse();
+    assertThat(entries.contains(immutableEntry(10, null))).isFalse();
+    assertThat(entries.contains(immutableEntry(99, null))).isFalse();
+    assertThat(entries.contains(immutableEntry(null, 20))).isFalse();
+    assertThat(entries.contains(immutableEntry(null, null))).isFalse();
+
+    assertThat(entries.remove(null)).isFalse();
+    assertThat(entries.remove(immutableEntry(10, null))).isFalse();
+    assertThat(entries.remove(immutableEntry(99, null))).isFalse();
+    assertThat(entries.remove(immutableEntry(null, 20))).isFalse();
+    assertThat(entries.remove(immutableEntry(null, null))).isFalse();
+
+    assertThat(cache.asMap().remove(10, null)).isFalse();
+    assertThat(cache.asMap().remove(99, null)).isFalse();
+    assertThat(cache.asMap().remove(null, 20)).isFalse();
+    assertThat(cache.asMap().remove(null, null)).isFalse();
+
+    assertThat(listener.getCount()).isEqualTo(0);
+    assertThat(cache.asMap()).containsExactly(10, 20);
+  }
+
   @J2ktIncompatible
   @GwtIncompatible // CacheTesting
   public void testNullCache() {
@@ -440,7 +471,7 @@ public class CacheBuilderTest extends TestCase {
   @J2ktIncompatible
   @GwtIncompatible // QueuingRemovalListener
 
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+  @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
   public void testRemovalNotification_clear_basher() throws InterruptedException {
     // If a clear() happens close to the end of computation, one of two things should happen:
     // - computation ends first: the removal listener is called, and the cache does not contain the
@@ -522,6 +553,7 @@ public class CacheBuilderTest extends TestCase {
    * Calls get() repeatedly from many different threads, and tests that all of the removed entries
    * (removed because of size limits or expiration) trigger appropriate removal notifications.
    */
+  @AndroidIncompatible // ~40s; doable but probably not worth it. We could try reducing nTasks, etc.
   @J2ktIncompatible
   @GwtIncompatible // QueuingRemovalListener
 
@@ -605,7 +637,7 @@ public class CacheBuilderTest extends TestCase {
 
   @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
-  public void testNullParameters() throws Exception {
+  public void testNullParameters() {
     NullPointerTester tester = new NullPointerTester();
     CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder();
     tester.testAllPublicInstanceMethods(builder);
@@ -639,5 +671,9 @@ public class CacheBuilderTest extends TestCase {
       }
       return key;
     }
+  }
+
+  private static boolean isAndroid() {
+    return requireNonNull(System.getProperty("java.runtime.name", "")).contains("Android");
   }
 }

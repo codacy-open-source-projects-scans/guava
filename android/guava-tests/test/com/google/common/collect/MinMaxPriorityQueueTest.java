@@ -515,7 +515,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
     assertEquals(0, (int) mmHeap.peekLast());
   }
 
-  private <T extends Comparable<T>> void runIterator(List<T> values, int steps) throws Exception {
+  private <T extends Comparable<T>> void runIterator(List<T> values, int steps) {
     IteratorTester<T> tester =
         new IteratorTester<T>(
             steps,
@@ -539,7 +539,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
     tester.test();
   }
 
-  public void testIteratorTester() throws Exception {
+  public void testIteratorTester() {
     Random random = new Random(0);
     List<Integer> list = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
@@ -548,7 +548,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
     runIterator(list, 6);
   }
 
-  public void testIteratorTesterLarger() throws Exception {
+  public void testIteratorTesterLarger() {
     runIterator(newArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 5);
   }
 
@@ -723,7 +723,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
     while (!q.isEmpty()) {
       assertThat(q).containsExactlyElementsIn(contents);
       Integer next = q.pollFirst();
-      contents.remove(next);
+      contents.remove(/* element */ next);
       assertThat(q).containsExactlyElementsIn(contents);
       for (int i = 0; i <= size; i++) {
         q.add(i);
@@ -736,7 +736,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
         assertTrue(contents.remove(Integer.valueOf(i)));
         assertThat(q).containsExactlyElementsIn(contents);
         assertEquals(next, q.poll());
-        contents.remove(next);
+        contents.remove(/* element */ next);
         assertThat(q).containsExactlyElementsIn(contents);
       }
       elements.add(next);
@@ -845,7 +845,7 @@ public class MinMaxPriorityQueueTest extends TestCase {
       ArrayList<Integer> elements, MinMaxPriorityQueue<Integer> q, Random random) {
     while (!elements.isEmpty()) {
       int selectedIndex = random.nextInt(elements.size());
-      q.offer(elements.remove(selectedIndex));
+      q.offer(elements.remove(/* index */ selectedIndex));
     }
   }
 

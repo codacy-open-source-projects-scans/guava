@@ -26,7 +26,6 @@ import static com.google.common.collect.Lists.equalsImpl;
 import static com.google.common.collect.Lists.indexOfImpl;
 import static com.google.common.collect.Lists.lastIndexOfImpl;
 import static com.google.common.collect.ObjectArrays.checkElementsNotNull;
-import static com.google.common.collect.RegularImmutableList.EMPTY;
 import static java.lang.System.arraycopy;
 
 import com.google.common.annotations.GwtCompatible;
@@ -61,7 +60,10 @@ import org.jspecify.annotations.Nullable;
  * @since 2.0
  */
 @GwtCompatible
-@SuppressWarnings("serial") // we're overriding default serialization
+@SuppressWarnings({
+  "serial", // we're overriding default serialization
+  "TooManyParameters",
+})
 public abstract class ImmutableList<E> extends ImmutableCollection<E>
     implements List<E>, RandomAccess {
 
@@ -86,7 +88,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   // Casting to any type is safe because the list will never hold any elements.
   @SuppressWarnings("unchecked")
   public static <E> ImmutableList<E> of() {
-    return (ImmutableList<E>) EMPTY;
+    return (ImmutableList<E>) RegularImmutableList.EMPTY;
   }
 
   /**
@@ -297,8 +299,8 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
 
   /**
    * Returns an immutable list containing the given elements, sorted according to their natural
-   * order. The sorting algorithm used is stable, so elements that compare as equal will stay in the
-   * order in which they appear in the input.
+   * order. The sorting algorithm used is <i>stable</i>, so elements that compare as equal will stay
+   * in the order in which they appear in the input.
    *
    * <p>If your data has no duplicates, or you wish to deduplicate elements, use {@code
    * ImmutableSortedSet.copyOf(elements)}; if you want a {@code List} you can use its {@code
@@ -320,8 +322,8 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
 
   /**
    * Returns an immutable list containing the given elements, in sorted order relative to the
-   * specified comparator. The sorting algorithm used is stable, so elements that compare as equal
-   * will stay in the order in which they appear in the input.
+   * specified comparator. The sorting algorithm used is <i>stable</i>, so elements that compare as
+   * equal will stay in the order in which they appear in the input.
    *
    * <p>If your data has no duplicates, or you wish to deduplicate elements, use {@code
    * ImmutableSortedSet.copyOf(comparator, elements)}; if you want a {@code List} you can use its
@@ -375,28 +377,21 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   }
 
   @Override
-  public UnmodifiableListIterator<E> listIterator() {
+  public final UnmodifiableListIterator<E> listIterator() {
     return listIterator(0);
   }
 
+  // Casting to any type is safe because the iterator will never hold any elements.
   @SuppressWarnings("unchecked")
   @Override
   public UnmodifiableListIterator<E> listIterator(int index) {
     checkPositionIndex(index, size());
-    if (isEmpty()) {
-      return (UnmodifiableListIterator<E>) EMPTY_ITR;
-    } else {
-      return new Itr<E>(this, index);
-    }
+    return isEmpty()
+        ? (UnmodifiableListIterator<E>) RegularImmutableList.EMPTY_ITR
+        : new Itr<>(this, index);
   }
 
-  /** A singleton implementation of iterator() for the empty ImmutableList. */
-  // TODO(b/345814817): Move this to RegularImmutableList?
-  @SuppressWarnings("ClassInitializationDeadlock")
-  private static final UnmodifiableListIterator<Object> EMPTY_ITR =
-      new Itr<Object>(RegularImmutableList.EMPTY, 0);
-
-  private static final class Itr<E> extends AbstractIndexedListIterator<E> {
+  static final class Itr<E> extends AbstractIndexedListIterator<E> {
     private final ImmutableList<E> list;
 
     Itr(ImmutableList<E> list, int index) {
@@ -424,8 +419,6 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   public boolean contains(@Nullable Object object) {
     return indexOf(object) >= 0;
   }
-
-  // constrain the return type to ImmutableList<E>
 
   /**
    * Returns an immutable list of the elements between the specified {@code fromIndex}, inclusive,
@@ -674,12 +667,12 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public final boolean equals(@Nullable Object obj) {
     return equalsImpl(this, obj);
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     int hashCode = 1;
     int n = size();
     for (int i = 0; i < n; i++) {
@@ -707,7 +700,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
       return copyOf(elements);
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @GwtIncompatible private static final long serialVersionUID = 0;
   }
 
   @J2ktIncompatible // serialization

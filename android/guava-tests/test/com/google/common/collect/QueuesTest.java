@@ -78,12 +78,12 @@ public class QueuesTest extends TestCase {
   private ExecutorService threadPool;
 
   @Override
-  public void setUp() {
+  protected void setUp() {
     threadPool = newCachedThreadPool();
   }
 
   @Override
-  public void tearDown() throws InterruptedException {
+  protected void tearDown() throws InterruptedException {
     threadPool.shutdown();
     assertTrue("Some worker didn't finish in time", threadPool.awaitTermination(10, SECONDS));
   }
@@ -182,7 +182,7 @@ public class QueuesTest extends TestCase {
     }
   }
 
-  public void testEmpty() throws Exception {
+  public void testEmpty() {
     for (BlockingQueue<Object> q : blockingQueues()) {
       checkEmpty(q);
     }
@@ -211,7 +211,7 @@ public class QueuesTest extends TestCase {
     q.take();
   }
 
-  public void testDrain_throws() throws Exception {
+  public void testDrain_throws() {
     for (BlockingQueue<Object> q : blockingQueues()) {
       checkDrainThrows(q);
     }
@@ -225,7 +225,7 @@ public class QueuesTest extends TestCase {
         () -> drain(q, ImmutableList.of(), 100, MAX_VALUE, NANOSECONDS));
   }
 
-  public void testDrainUninterruptibly_doesNotThrow() throws Exception {
+  public void testDrainUninterruptibly_doesNotThrow() {
     for (BlockingQueue<Object> q : blockingQueues()) {
       testDrainUninterruptiblyDoesNotThrow(q);
     }
@@ -253,12 +253,14 @@ public class QueuesTest extends TestCase {
     assertEquals(100, buf.size());
   }
 
+  @SuppressWarnings("UseCollectionConstructor") // We need to test our factory method.
   public void testNewLinkedBlockingDequeCapacity() {
     assertThrows(IllegalArgumentException.class, () -> newLinkedBlockingDeque(0));
     assertEquals(1, newLinkedBlockingDeque(1).remainingCapacity());
     assertEquals(11, newLinkedBlockingDeque(11).remainingCapacity());
   }
 
+  @SuppressWarnings("UseCollectionConstructor") // We need to test our factory method.
   public void testNewLinkedBlockingQueueCapacity() {
     assertThrows(IllegalArgumentException.class, () -> newLinkedBlockingQueue(0));
     assertEquals(1, newLinkedBlockingQueue(1).remainingCapacity());
@@ -289,7 +291,7 @@ public class QueuesTest extends TestCase {
   }
 
   // same as above; uninterruptible version
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+  @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
   private void assertUninterruptibleDrained(BlockingQueue<Object> q) {
     assertEquals(0, drainUninterruptibly(q, ImmutableList.of(), 0, 10, MILLISECONDS));
 

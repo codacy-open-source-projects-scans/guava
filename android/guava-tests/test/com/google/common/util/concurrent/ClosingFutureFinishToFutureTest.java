@@ -20,12 +20,16 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
+import static java.util.logging.Level.FINER;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
+import com.google.common.testing.TestLogHandler;
 import java.io.Closeable;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jspecify.annotations.NullUnmarked;
 
 /** Tests for {@link ClosingFuture} that exercise {@link ClosingFuture#finishToFuture()}. */
@@ -33,32 +37,97 @@ import org.jspecify.annotations.NullUnmarked;
 @GwtIncompatible
 @J2ktIncompatible
 public class ClosingFutureFinishToFutureTest extends AbstractClosingFutureTest {
-  public void testFinishToFuture_throwsIfCalledTwice() throws Exception {
+  public void testFinishToFuture_throwsIfCalledTwice() {
     ClosingFuture<Closeable> closingFuture =
         ClosingFuture.submit(closer -> closer.eventuallyClose(mockCloseable, executor), executor);
     FluentFuture<Closeable> unused = closingFuture.finishToFuture();
-    assertThrows(
-        IllegalStateException.class,
-        () -> {
-          FluentFuture<Closeable> unused2 = closingFuture.finishToFuture();
-        });
+    assertThrows(IllegalStateException.class, () -> closingFuture.finishToFuture());
   }
 
-  public void testFinishToFuture_throwsAfterCallingFinishToValueAndCloser() throws Exception {
+  public void testFinishToFuture_throwsAfterCallingFinishToValueAndCloser() {
     ClosingFuture<Closeable> closingFuture =
         ClosingFuture.submit(closer -> closer.eventuallyClose(mockCloseable, executor), executor);
     closingFuture.finishToValueAndCloser(new NoOpValueAndCloserConsumer<>(), directExecutor());
-    assertThrows(
-        IllegalStateException.class,
-        () -> {
-          FluentFuture<Closeable> unused = closingFuture.finishToFuture();
-        });
+    assertThrows(IllegalStateException.class, () -> closingFuture.finishToFuture());
   }
 
   public void testFinishToFuture_preventsFurtherDerivation() {
     ClosingFuture<String> closingFuture = ClosingFuture.from(immediateFuture("value1"));
     FluentFuture<String> unused = closingFuture.finishToFuture();
     assertDerivingThrowsIllegalStateException(closingFuture);
+  }
+
+  public void testFinishToFuture_doesNotCallToStringOnFutureWhenLoggingDisabled() throws Exception {
+    ListenableFuture<String> future =
+        new AbstractFuture<String>() {
+          {
+            set("foo");
+          }
+
+          @Override
+          public String toString() {
+            throw new AssertionError("toString called");
+          }
+        };
+    FluentFuture<String> finished = ClosingFuture.from(future).finishToFuture();
+    assertThat(getUninterruptibly(finished)).isEqualTo("foo");
+  }
+
+  public void testCancel_doesNotCallToStringOnFutureWhenLoggingDisabled() {
+    ListenableFuture<String> future =
+        new AbstractFuture<String>() {
+          @Override
+          public String toString() {
+            throw new AssertionError("toString called");
+          }
+        };
+    ClosingFuture.from(future).cancel(true);
+  }
+
+  public void testFinishToFuture_logsWhenLoggingEnabled() {
+    TestLogHandler logHandler = new TestLogHandler();
+    Logger logger = Logger.getLogger(ClosingFuture.class.getName());
+    logger.addHandler(logHandler);
+    Level oldLevel = logger.getLevel();
+    logger.setLevel(FINER);
+    try {
+      ListenableFuture<String> future =
+          new AbstractFuture<String>() {
+            @Override
+            public String toString() {
+              return "mocked future toString";
+            }
+          };
+      FluentFuture<String> unused = ClosingFuture.from(future).finishToFuture();
+      assertThat(logHandler.getStoredLogRecords().get(0).getParameters()[0].toString())
+          .contains("mocked future toString");
+    } finally {
+      logger.removeHandler(logHandler);
+      logger.setLevel(oldLevel);
+    }
+  }
+
+  public void testCancel_logsWhenLoggingEnabled() {
+    TestLogHandler logHandler = new TestLogHandler();
+    Logger logger = Logger.getLogger(ClosingFuture.class.getName());
+    logger.addHandler(logHandler);
+    Level oldLevel = logger.getLevel();
+    logger.setLevel(FINER);
+    try {
+      ListenableFuture<String> future =
+          new AbstractFuture<String>() {
+            @Override
+            public String toString() {
+              return "mocked future toString";
+            }
+          };
+      ClosingFuture.from(future).cancel(true);
+      assertThat(logHandler.getStoredLogRecords().get(0).getParameters()[0].toString())
+          .contains("mocked future toString");
+    } finally {
+      logger.removeHandler(logHandler);
+      logger.setLevel(oldLevel);
+    }
   }
 
   @Override
@@ -72,7 +141,7 @@ public class ClosingFutureFinishToFutureTest extends AbstractClosingFutureTest {
   }
 
   @Override
-  void assertBecomesCanceled(ClosingFuture<?> closingFuture) throws ExecutionException {
+  void assertBecomesCanceled(ClosingFuture<?> closingFuture) {
     assertThatFutureBecomesCancelled(closingFuture.finishToFuture());
   }
 

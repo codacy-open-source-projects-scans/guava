@@ -44,17 +44,17 @@ abstract class ImmutableAsList<E> extends ImmutableList<E> {
   }
 
   @Override
-  public int size() {
+  public final int size() {
     return delegateCollection().size();
   }
 
   @Override
-  public boolean isEmpty() {
+  public final boolean isEmpty() {
     return delegateCollection().isEmpty();
   }
 
   @Override
-  boolean isPartialView() {
+  final boolean isPartialView() {
     return delegateCollection().isPartialView();
   }
 
@@ -72,7 +72,7 @@ abstract class ImmutableAsList<E> extends ImmutableList<E> {
       return collection.asList();
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    private static final long serialVersionUID = 0;
   }
 
   @GwtIncompatible

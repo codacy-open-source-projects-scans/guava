@@ -15,6 +15,7 @@
 package com.google.common.cache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.cache.NullnessCasts.unsafeNull;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import com.google.common.annotations.GwtCompatible;
@@ -61,7 +62,7 @@ final class TestingCacheLoaders {
   }
 
   /** Returns a {@link CacheLoader} that returns the given {@code constant} for every request. */
-  static <K, V> ConstantLoader<K, V> constantLoader(@Nullable V constant) {
+  static <K, V> CacheLoader<K, V> constantLoader(@Nullable V constant) {
     return new ConstantLoader<>(constant);
   }
 
@@ -101,7 +102,7 @@ final class TestingCacheLoaders {
    * Returns a {@code new Object()} for every request, and increments a counter for every request.
    * The count is accessible via {@link #getCount}.
    */
-  static class CountingLoader extends CacheLoader<Object, Object> {
+  static final class CountingLoader extends CacheLoader<Object, Object> {
     private final AtomicInteger count = new AtomicInteger();
 
     @Override
@@ -115,16 +116,18 @@ final class TestingCacheLoaders {
     }
   }
 
-  static final class ConstantLoader<K, V> extends CacheLoader<K, V> {
-    private final V constant;
+  private static final class ConstantLoader<K, V> extends CacheLoader<K, V> {
+    private final @Nullable V constant;
 
-    ConstantLoader(V constant) {
+    ConstantLoader(@Nullable V constant) {
       this.constant = constant;
     }
 
     @Override
+    @SuppressWarnings("nullness") // used to test what happens if a loader wrongly returns null
     public V load(K key) {
-      return constant;
+      // slightly convoluted but makes J2KT happy:
+      return constant == null ? unsafeNull() : constant;
     }
   }
 
@@ -134,7 +137,7 @@ final class TestingCacheLoaders {
    * old value on {@code reload} requests. The load counts are accessible via {@link #getLoadCount}
    * and {@link #getReloadCount}.
    */
-  static class IncrementingLoader extends CacheLoader<Integer, Integer> {
+  static final class IncrementingLoader extends CacheLoader<Integer, Integer> {
     private final AtomicInteger countLoad = new AtomicInteger();
     private final AtomicInteger countReload = new AtomicInteger();
 

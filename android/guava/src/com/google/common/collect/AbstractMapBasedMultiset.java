@@ -218,7 +218,7 @@ abstract class AbstractMapBasedMultiset<E extends @Nullable Object> extends Abst
   }
 
   @Override
-  final Iterator<Entry<E>> entryIterator() {
+  final Iterator<Entry<E>> internalEntryIterator() {
     return new Itr<Entry<E>>() {
       @Override
       Entry<E> result(int entryIndex) {
@@ -228,7 +228,7 @@ abstract class AbstractMapBasedMultiset<E extends @Nullable Object> extends Abst
   }
 
   /** Allocation-free implementation of {@code target.addAll(this)}. */
-  void addTo(Multiset<? super E> target) {
+  final void addTo(Multiset<? super E> target) {
     checkNotNull(target);
     for (int i = backingMap.firstIndex(); i >= 0; i = backingMap.nextIndex(i)) {
       target.add(backingMap.getKey(i), backingMap.getValue(i));
@@ -236,7 +236,7 @@ abstract class AbstractMapBasedMultiset<E extends @Nullable Object> extends Abst
   }
 
   @Override
-  final int distinctElements() {
+  final int internalDistinctElements() {
     return backingMap.size();
   }
 

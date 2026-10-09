@@ -17,7 +17,6 @@ package com.google.common.util.concurrent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
-import static com.google.common.collect.Queues.newLinkedBlockingQueue;
 import static com.google.common.util.concurrent.Callables.threadRenaming;
 import static com.google.common.util.concurrent.Internal.toNanosSaturated;
 import static com.google.common.util.concurrent.SneakyThrows.sneakyThrow;
@@ -48,6 +47,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -288,6 +288,8 @@ public final class MoreExecutors {
     void addShutdownHook(Thread hook) {
       Runtime.getRuntime().addShutdownHook(hook);
     }
+
+    Application() {}
   }
 
   @J2ktIncompatible
@@ -526,7 +528,7 @@ public final class MoreExecutors {
     }
 
     /*
-     * TODO: https://github.com/google/guava/issues/2143 - In addition to overriding `execute`, also
+     * TODO(user): In addition to overriding `execute`, also
      * override the `Future`-returning methods of `ExecutorService` to propagate cancellation from
      * our `TrustedListenableFutureTask` to a `Future` returned by the delegate executor?
      */
@@ -625,7 +627,6 @@ public final class MoreExecutors {
       }
     }
 
-    @GwtIncompatible // TODO
     private static final class NeverSuccessfulListenableFutureTask
         extends AbstractFuture.TrustedFuture<@Nullable Void> implements Runnable {
       private final Runnable delegate;
@@ -720,7 +721,7 @@ public final class MoreExecutors {
     int ntasks = tasks.size();
     checkArgument(ntasks > 0);
     List<Future<T>> futures = newArrayListWithCapacity(ntasks);
-    BlockingQueue<Future<T>> futureQueue = newLinkedBlockingQueue();
+    BlockingQueue<Future<T>> futureQueue = new LinkedBlockingQueue<>();
     long timeoutNanos = unit.toNanos(timeout);
 
     // For efficiency, especially in executors with limited
@@ -1062,7 +1063,7 @@ public final class MoreExecutors {
       try {
         delegate.execute(command);
       } catch (RejectedExecutionException e) {
-        future.setException(e);
+        future.setExceptionInternal(e);
       }
     };
   }

@@ -17,6 +17,7 @@
 package com.google.common.collect;
 
 import static com.google.common.util.concurrent.Uninterruptibles.awaitUninterruptibly;
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.annotations.GwtCompatible;
@@ -39,7 +40,7 @@ import org.jspecify.annotations.NullUnmarked;
 @NullUnmarked
 public class MapMakerTest extends TestCase {
   @GwtIncompatible // NullPointerTester
-  public void testNullParameters() throws Exception {
+  public void testNullParameters() {
     NullPointerTester tester = new NullPointerTester();
     tester.testAllPublicInstanceMethods(new MapMaker());
   }
@@ -80,5 +81,9 @@ public class MapMakerTest extends TestCase {
   public void testReturnsPlainConcurrentHashMapWhenPossible() {
     Map<?, ?> map = new MapMaker().initialCapacity(5).makeMap();
     assertTrue(map instanceof ConcurrentHashMap);
+  }
+
+  private static boolean isAndroid() {
+    return requireNonNull(System.getProperty("java.runtime.name", "")).contains("Android");
   }
 }

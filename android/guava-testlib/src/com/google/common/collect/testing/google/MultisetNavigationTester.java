@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.junit.Ignore;
 
 /**
  * Tester for navigation of SortedMultisets.
@@ -48,9 +47,6 @@ import org.junit.Ignore;
  * @author Louis Wasserman
  */
 @GwtCompatible
-@Ignore("test runners must not instantiate and run this directly, only via suites we build")
-// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-@SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
   private SortedMultiset<E> sortedMultiset;
   private List<E> entries;
@@ -231,7 +227,7 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
     assertEquals(ascending, descending);
   }
 
-  void expectAddFailure(SortedMultiset<E> multiset, Entry<E> entry) {
+  final void expectAddFailure(SortedMultiset<E> multiset, Entry<E> entry) {
     assertThrows(
         IllegalArgumentException.class, () -> multiset.add(entry.getElement(), entry.getCount()));
 
@@ -241,13 +237,13 @@ public class MultisetNavigationTester<E> extends AbstractMultisetTester<E> {
         IllegalArgumentException.class, () -> multiset.addAll(singletonList(entry.getElement())));
   }
 
-  void expectRemoveZero(SortedMultiset<E> multiset, Entry<E> entry) {
+  final void expectRemoveZero(SortedMultiset<E> multiset, Entry<E> entry) {
     assertEquals(0, multiset.remove(entry.getElement(), entry.getCount()));
     assertFalse(multiset.remove(entry.getElement()));
     assertFalse(multiset.elementSet().remove(entry.getElement()));
   }
 
-  void expectSetCountFailure(SortedMultiset<E> multiset, Entry<E> entry) {
+  final void expectSetCountFailure(SortedMultiset<E> multiset, Entry<E> entry) {
     try {
       multiset.setCount(entry.getElement(), multiset.count(entry.getElement()));
     } catch (IllegalArgumentException acceptable) {

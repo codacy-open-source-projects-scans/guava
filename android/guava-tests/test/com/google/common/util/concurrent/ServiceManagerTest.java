@@ -219,7 +219,7 @@ public class ServiceManagerTest extends TestCase {
     assertTrue(listener.failedServices.isEmpty());
   }
 
-  public void testFailStart() throws Exception {
+  public void testFailStart() {
     Service a = new NoOpService();
     Service b = new FailStartService();
     Service c = new NoOpService();
@@ -242,7 +242,7 @@ public class ServiceManagerTest extends TestCase {
     assertTrue(listener.stoppedCalled);
   }
 
-  public void testFailRun() throws Exception {
+  public void testFailRun() {
     Service a = new NoOpService();
     Service b = new FailRunService();
     ServiceManager manager = new ServiceManager(asList(a, b));
@@ -260,7 +260,7 @@ public class ServiceManagerTest extends TestCase {
     assertTrue(listener.stoppedCalled);
   }
 
-  public void testFailStop() throws Exception {
+  public void testFailStop() {
     Service a = new NoOpService();
     Service b = new FailStopService();
     Service c = new NoOpService();
@@ -279,7 +279,7 @@ public class ServiceManagerTest extends TestCase {
     assertState(manager, Service.State.TERMINATED, a, c);
   }
 
-  public void testToString() throws Exception {
+  public void testToString() {
     Service a = new NoOpService();
     Service b = new FailStartService();
     ServiceManager manager = new ServiceManager(asList(a, b));
@@ -358,7 +358,7 @@ public class ServiceManagerTest extends TestCase {
 
           @Override
           protected void doCancelStart() {
-            assertThat(state()).isEqualTo(Service.State.STOPPING);
+            assertThat(state()).isEqualTo(State.STOPPING);
             notifyStopped();
           }
 
@@ -566,54 +566,54 @@ public class ServiceManagerTest extends TestCase {
           final NoOpService delegate = new NoOpService();
 
           @Override
-          public final void addListener(Listener listener, Executor executor) {
+          public void addListener(Listener listener, Executor executor) {
             service1.startAsync();
             delegate.addListener(listener, executor);
           }
 
           // Delegates from here on down
           @Override
-          public final Service startAsync() {
+          public Service startAsync() {
             return delegate.startAsync();
           }
 
           @Override
-          public final Service stopAsync() {
+          public Service stopAsync() {
             return delegate.stopAsync();
           }
 
           @Override
-          public final void awaitRunning() {
+          public void awaitRunning() {
             delegate.awaitRunning();
           }
 
           @Override
-          public final void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+          public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
             delegate.awaitRunning(timeout, unit);
           }
 
           @Override
-          public final void awaitTerminated() {
+          public void awaitTerminated() {
             delegate.awaitTerminated();
           }
 
           @Override
-          public final void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+          public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
             delegate.awaitTerminated(timeout, unit);
           }
 
           @Override
-          public final boolean isRunning() {
+          public boolean isRunning() {
             return delegate.isRunning();
           }
 
           @Override
-          public final State state() {
+          public State state() {
             return delegate.state();
           }
 
           @Override
-          public final Throwable failureCause() {
+          public Throwable failureCause() {
             return delegate.failureCause();
           }
         };

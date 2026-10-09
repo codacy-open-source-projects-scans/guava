@@ -21,6 +21,7 @@ import static com.google.common.cache.TestingCacheLoaders.exceptionLoader;
 import static com.google.common.cache.TestingCacheLoaders.identityLoader;
 import static com.google.common.cache.TestingRemovalListeners.countingRemovalListener;
 import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
+import static com.google.common.testing.GcFinalization.awaitClear;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
@@ -30,6 +31,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertThrows;
 
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import com.google.common.cache.TestingCacheLoaders.CountingLoader;
 import com.google.common.cache.TestingCacheLoaders.IdentityLoader;
@@ -56,25 +59,28 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.LogRecord;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Tests relating to cache loading: concurrent loading, exceptions during loading, etc.
  *
  * @author mike nonemacher
  */
+@GwtIncompatible
+@J2ktIncompatible
 @NullUnmarked
 public class CacheLoadingTest extends TestCase {
   TestLogHandler logHandler;
 
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
     logHandler = new TestLogHandler();
     LocalCache.logger.addHandler(logHandler);
   }
 
   @Override
-  public void tearDown() throws Exception {
+  protected void tearDown() throws Exception {
     super.tearDown();
     /*
      * TODO(cpovirk): Run tests in another thread instead of messing with main thread's interrupted
@@ -163,7 +169,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(2);
   }
 
-  public void testReload() throws ExecutionException {
+  public void testReload() {
     Object one = new Object();
     Object two = new Object();
     CacheLoader<Object, Object> loader =
@@ -429,12 +435,12 @@ public class CacheLoadingTest extends TestCase {
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
           @Override
-          public Object load(Object key) throws Exception {
+          public Object load(Object key) {
             return new Object();
           }
 
           @Override
-          public Map<Object, Object> loadAll(Iterable<?> keys) throws Exception {
+          public Map<Object, Object> loadAll(Iterable<?> keys) {
             Map<Object, Object> result = new HashMap<>();
             for (Object key : keys) {
               Object value = new Object();
@@ -466,12 +472,12 @@ public class CacheLoadingTest extends TestCase {
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
           @Override
-          public Object load(Object key) throws Exception {
+          public Object load(Object key) {
             throw new AssertionError();
           }
 
           @Override
-          public Map<Object, Object> loadAll(Iterable<?> keys) throws Exception {
+          public Map<Object, Object> loadAll(Iterable<?> keys) {
             Map<Object, Object> result = new HashMap<>();
             for (Object key : keys) {
               Object value = new Object();
@@ -498,18 +504,18 @@ public class CacheLoadingTest extends TestCase {
     assertThat(cache.asMap().get(extraKey)).isSameInstanceAs(extraValue);
   }
 
-  public void testBulkLoad_clobberNullValue() throws ExecutionException {
+  public void testBulkLoad_clobberNullValue() {
     Object extraKey = new Object();
     Object extraValue = new Object();
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
           @Override
-          public Object load(Object key) throws Exception {
+          public Object load(Object key) {
             throw new AssertionError();
           }
 
           @Override
-          public Map<Object, Object> loadAll(Iterable<?> keys) throws Exception {
+          public Map<Object, Object> loadAll(Iterable<?> keys) {
             Map<Object, Object> result = new HashMap<>();
             for (Object key : keys) {
               Object value = new Object();
@@ -534,18 +540,18 @@ public class CacheLoadingTest extends TestCase {
     assertThat(cache.asMap().containsKey(extraValue)).isFalse();
   }
 
-  public void testBulkLoad_clobberNullKey() throws ExecutionException {
+  public void testBulkLoad_clobberNullKey() {
     Object extraKey = new Object();
     Object extraValue = new Object();
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
           @Override
-          public Object load(Object key) throws Exception {
+          public Object load(Object key) {
             throw new AssertionError();
           }
 
           @Override
-          public Map<Object, Object> loadAll(Iterable<?> keys) throws Exception {
+          public Map<Object, Object> loadAll(Iterable<?> keys) {
             Map<Object, Object> result = new HashMap<>();
             for (Object key : keys) {
               Object value = new Object();
@@ -570,18 +576,18 @@ public class CacheLoadingTest extends TestCase {
     assertThat(cache.asMap().containsValue(extraKey)).isFalse();
   }
 
-  public void testBulkLoad_partial() throws ExecutionException {
+  public void testBulkLoad_partial() {
     Object extraKey = new Object();
     Object extraValue = new Object();
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
           @Override
-          public Object load(Object key) throws Exception {
+          public Object load(Object key) {
             throw new AssertionError();
           }
 
           @Override
-          public Map<Object, Object> loadAll(Iterable<?> keys) throws Exception {
+          public Map<Object, Object> loadAll(Iterable<?> keys) {
             Map<Object, Object> result = new HashMap<>();
             // ignore request keys
             result.put(extraKey, extraValue);
@@ -595,7 +601,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(cache.asMap().get(extraKey)).isSameInstanceAs(extraValue);
   }
 
-  public void testLoadNull() throws ExecutionException {
+  public void testLoadNull() {
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder().recordStats().build(constantLoader(null));
     CacheStats stats = cache.stats();
@@ -642,7 +648,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testReloadNull() throws ExecutionException {
+  public void testReloadNull() {
     Object one = new Object();
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
@@ -653,7 +659,7 @@ public class CacheLoadingTest extends TestCase {
 
           @SuppressWarnings("CacheLoaderNull") // test of broken user implementation
           @Override
-          public ListenableFuture<Object> reload(Object key, Object oldValue) {
+          public @Nullable ListenableFuture<Object> reload(Object key, Object oldValue) {
             return null;
           }
         };
@@ -689,7 +695,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(1);
   }
 
-  public void testReloadNullFuture() throws ExecutionException {
+  public void testReloadNullFuture() {
     Object one = new Object();
     CacheLoader<Object, Object> loader =
         new CacheLoader<Object, Object>() {
@@ -797,7 +803,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(3);
   }
 
-  public void testBulkLoadNull() throws ExecutionException {
+  public void testBulkLoadNull() {
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder().recordStats().build(bulkLoader(constantLoader(null)));
     CacheStats stats = cache.stats();
@@ -814,7 +820,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testBulkLoadNullMap() throws ExecutionException {
+  public void testBulkLoadNullMap() {
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder()
             .recordStats()
@@ -827,7 +833,7 @@ public class CacheLoadingTest extends TestCase {
 
                   @SuppressWarnings("CacheLoaderNull") // test of broken user implementation
                   @Override
-                  public Map<Object, Object> loadAll(Iterable<?> keys) {
+                  public @Nullable Map<Object, Object> loadAll(Iterable<?> keys) {
                     return null;
                   }
                 });
@@ -846,7 +852,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testLoadError() throws ExecutionException {
+  public void testLoadError() {
     Error e = new Error();
     CacheLoader<Object, Object> loader = errorLoader(e);
     LoadingCache<Object, Object> cache = CacheBuilder.newBuilder().recordStats().build(loader);
@@ -906,7 +912,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testReloadError() throws ExecutionException {
+  public void testReloadError() {
     Object one = new Object();
     Error e = new Error();
     CacheLoader<Object, Object> loader =
@@ -953,7 +959,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(1);
   }
 
-  public void testReloadFutureError() throws ExecutionException {
+  public void testReloadFutureError() {
     Object one = new Object();
     Error e = new Error();
     CacheLoader<Object, Object> loader =
@@ -1063,7 +1069,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(3);
   }
 
-  public void testBulkLoadError() throws ExecutionException {
+  public void testBulkLoadError() {
     Error e = new Error();
     CacheLoader<Object, Object> loader = errorLoader(e);
     LoadingCache<Object, Object> cache =
@@ -1402,7 +1408,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testLoadUncheckedException() throws ExecutionException {
+  public void testLoadUncheckedException() {
     Exception e = new RuntimeException();
     CacheLoader<Object, Object> loader = exceptionLoader(e);
     LoadingCache<Object, Object> cache = CacheBuilder.newBuilder().recordStats().build(loader);
@@ -1460,7 +1466,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testReloadUncheckedException() throws ExecutionException {
+  public void testReloadUncheckedException() {
     Object one = new Object();
     Exception e = new RuntimeException();
     CacheLoader<Object, Object> loader =
@@ -1507,7 +1513,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(1);
   }
 
-  public void testReloadFutureUncheckedException() throws ExecutionException {
+  public void testReloadFutureUncheckedException() {
     Object one = new Object();
     Exception e = new RuntimeException();
     CacheLoader<Object, Object> loader =
@@ -1617,7 +1623,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(3);
   }
 
-  public void testBulkLoadUncheckedException() throws ExecutionException {
+  public void testBulkLoadUncheckedException() {
     Exception e = new RuntimeException();
     CacheLoader<Object, Object> loader = exceptionLoader(e);
     LoadingCache<Object, Object> cache =
@@ -1638,7 +1644,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(stats.hitCount()).isEqualTo(0);
   }
 
-  public void testReloadAfterFailure() throws ExecutionException {
+  public void testReloadAfterFailure() {
     AtomicInteger count = new AtomicInteger();
     Exception e = new IllegalStateException("exception to trigger failure on first load()");
     CacheLoader<Integer, String> failOnceFunction =
@@ -1672,46 +1678,40 @@ public class CacheLoadingTest extends TestCase {
   }
 
 
-  @AndroidIncompatible // Depends on GC behavior
-  public void testReloadAfterValueReclamation() throws InterruptedException, ExecutionException {
+  public void testReloadAfterValueReclamation() {
     CountingLoader countingLoader = new CountingLoader();
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder().weakValues().build(countingLoader);
     ConcurrentMap<Object, Object> map = cache.asMap();
 
     int iterations = 10;
-    WeakReference<Object> ref = new WeakReference<>(null);
-    int expectedComputations = 0;
     for (int i = 0; i < iterations; i++) {
       // The entry should get garbage collected and recomputed.
-      Object oldValue = ref.get();
-      if (oldValue == null) {
-        expectedComputations++;
-      }
-      ref = new WeakReference<>(cache.getUnchecked(1));
-      oldValue = null;
-      Thread.sleep(i);
-      System.gc();
+      WeakReference<Object> ref = getUncheckedAsWeakReference(cache, 1);
+      awaitClear(ref);
     }
-    assertThat(countingLoader.getCount()).isEqualTo(expectedComputations);
+    assertThat(countingLoader.getCount()).isEqualTo(iterations);
 
     for (int i = 0; i < iterations; i++) {
       // The entry should get garbage collected and recomputed.
-      Object oldValue = ref.get();
-      if (oldValue == null) {
-        expectedComputations++;
-      }
       cache.refresh(1);
       checkNothingLogged();
-      ref = new WeakReference<>(map.get(1));
-      oldValue = null;
-      Thread.sleep(i);
-      System.gc();
+      WeakReference<Object> ref = getAsWeakReference(map, 1);
+      awaitClear(ref);
     }
-    assertThat(countingLoader.getCount()).isEqualTo(expectedComputations);
+    assertThat(countingLoader.getCount()).isEqualTo(iterations * 2);
   }
 
-  public void testReloadAfterSimulatedValueReclamation() throws ExecutionException {
+  private static WeakReference<Object> getUncheckedAsWeakReference(
+      LoadingCache<Object, Object> cache, Object key) {
+    return new WeakReference<>(cache.getUnchecked(key));
+  }
+
+  private static WeakReference<Object> getAsWeakReference(Map<Object, Object> map, Object key) {
+    return new WeakReference<>(map.get(key));
+  }
+
+  public void testReloadAfterSimulatedValueReclamation() {
     CountingLoader countingLoader = new CountingLoader();
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder().concurrencyLevel(1).weakValues().build(countingLoader);
@@ -1733,7 +1733,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(countingLoader.getCount()).isEqualTo(3);
   }
 
-  public void testReloadAfterSimulatedKeyReclamation() throws ExecutionException {
+  public void testReloadAfterSimulatedKeyReclamation() {
     CountingLoader countingLoader = new CountingLoader();
     LoadingCache<Object, Object> cache =
         CacheBuilder.newBuilder().concurrencyLevel(1).weakKeys().build(countingLoader);
@@ -1821,7 +1821,6 @@ public class CacheLoadingTest extends TestCase {
     assertThat(caughtEe).hasCauseThat().isEqualTo(ee);
   }
 
-  @AndroidIncompatible // Bug? expected:<1> but was:<2>
   public void testConcurrentLoading() throws InterruptedException {
     testConcurrentLoading(CacheBuilder.newBuilder());
   }
@@ -1834,7 +1833,6 @@ public class CacheLoadingTest extends TestCase {
     testConcurrentLoadingCheckedException(builder);
   }
 
-  @AndroidIncompatible // Bug? expected:<1> but was:<2>
   public void testConcurrentExpirationLoading() throws InterruptedException {
     testConcurrentLoading(CacheBuilder.newBuilder().expireAfterWrite(10, SECONDS));
   }
@@ -1889,7 +1887,7 @@ public class CacheLoadingTest extends TestCase {
             new CacheLoader<String, String>() {
               @Override
               @SuppressWarnings("CacheLoaderNull") // test of broken user implementation
-              public String load(String key) throws InterruptedException {
+              public @Nullable String load(String key) throws InterruptedException {
                 callCount.incrementAndGet();
                 startSignal.await();
                 return null;
@@ -2003,7 +2001,7 @@ public class CacheLoadingTest extends TestCase {
    * {@code getUnchecked}, and threads with an odd index will call {@code get}. If the cache throws
    * exceptions, this difference may be visible in the returned List.
    */
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+  @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
   private static <K> List<Object> doConcurrentGet(
       LoadingCache<K, ?> cache, K key, int nThreads, CountDownLatch gettersStartedSignal)
       throws InterruptedException {
@@ -2050,7 +2048,7 @@ public class CacheLoadingTest extends TestCase {
     return resultList;
   }
 
-  public void testAsMapDuringLoading() throws InterruptedException, ExecutionException {
+  public void testAsMapDuringLoading() throws InterruptedException {
     CountDownLatch getStartedSignal = new CountDownLatch(2);
     CountDownLatch letGetFinishSignal = new CountDownLatch(1);
     CountDownLatch getFinishedSignal = new CountDownLatch(2);
@@ -2108,7 +2106,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(map.get(refreshKey)).isEqualTo(refreshKey + suffix);
   }
 
-  public void testInvalidateDuringLoading() throws InterruptedException, ExecutionException {
+  public void testInvalidateDuringLoading() throws InterruptedException {
     // computation starts; invalidate() is called on the key being computed, computation finishes
     CountDownLatch computationStarted = new CountDownLatch(2);
     CountDownLatch letGetFinishSignal = new CountDownLatch(1);
@@ -2164,8 +2162,7 @@ public class CacheLoadingTest extends TestCase {
     assertThat(cache.size()).isEqualTo(2);
   }
 
-  public void testInvalidateAndReloadDuringLoading()
-      throws InterruptedException, ExecutionException {
+  public void testInvalidateAndReloadDuringLoading() throws InterruptedException {
     // computation starts; clear() is called, computation finishes
     CountDownLatch computationStarted = new CountDownLatch(2);
     CountDownLatch letGetFinishSignal = new CountDownLatch(1);
@@ -2329,7 +2326,7 @@ public class CacheLoadingTest extends TestCase {
   @SuppressWarnings("ThreadPriorityCheck") // doing our best to test for races
   public void
       ignoreTestExpandDuringRefresh()
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException {
     AtomicInteger callCount = new AtomicInteger();
     // tells the computing thread when to start computing
     CountDownLatch computeSignal = new CountDownLatch(1);

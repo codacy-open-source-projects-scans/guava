@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.Iterables.find;
-import static com.google.common.collect.Iterables.removeFirstMatching;
 import static com.google.common.collect.Iterators.addAll;
 import static com.google.common.collect.Iterators.find;
 import static com.google.common.collect.Iterators.removeAll;
@@ -29,7 +28,6 @@ import static com.google.common.collect.Iterators.unmodifiableIterator;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.capacity;
 import static com.google.common.collect.Maps.indexMap;
-import static com.google.common.collect.Maps.newIdentityHashMap;
 import static com.google.common.math.IntMath.saturatedAdd;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -55,6 +53,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -235,7 +234,7 @@ public final class Sets {
   @SuppressWarnings("NonApiType") // acts as a direct substitute for a constructor call
   public static <E extends @Nullable Object> HashSet<E> newHashSet(Iterable<? extends E> elements) {
     return (elements instanceof Collection)
-        ? new HashSet<E>((Collection<? extends E>) elements)
+        ? new HashSet<>((Collection<? extends E>) elements)
         : newHashSet(elements.iterator());
   }
 
@@ -461,7 +460,7 @@ public final class Sets {
    * @since 8.0
    */
   public static <E extends @Nullable Object> Set<E> newIdentityHashSet() {
-    return Collections.newSetFromMap(newIdentityHashMap());
+    return Collections.newSetFromMap(new IdentityHashMap<>());
   }
 
   /**
@@ -571,7 +570,7 @@ public final class Sets {
    * in the following code fragment:
    *
    * {@snippet :
-   * Set<Object> identityHashSet = Sets.newSetFromMap(new IdentityHashMap<Object, Boolean>());
+   * Set<Object> identityHashSet = Sets.newSetFromMap(new IdentityHashMap<>());
    * }
    *
    * <p>The returned set is serializable if the backing map is.
@@ -729,7 +728,7 @@ public final class Sets {
 
     @Override
     @SuppressWarnings("EqualsHashCode") // same semantics
-    public boolean equals(@Nullable Object object) {
+    public final boolean equals(@Nullable Object object) {
       if (object == this) {
         return true;
       }
@@ -1066,7 +1065,7 @@ public final class Sets {
         Iterator<? extends E> itr2 = set2.iterator();
         return new AbstractIterator<E>() {
           @Override
-          public @Nullable E computeNext() {
+          protected @Nullable E computeNext() {
             while (itr1.hasNext()) {
               E elem1 = itr1.next();
               if (!set2.contains(elem1)) {
@@ -1248,12 +1247,12 @@ public final class Sets {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
+    public final boolean equals(@Nullable Object object) {
       return equalsImpl(this, object);
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
       return hashCodeImpl(this);
     }
   }
@@ -1266,29 +1265,30 @@ public final class Sets {
     }
 
     @Override
-    public @Nullable Comparator<? super E> comparator() {
+    public final @Nullable Comparator<? super E> comparator() {
       return ((SortedSet<E>) unfiltered).comparator();
     }
 
     @Override
-    public SortedSet<E> subSet(@ParametricNullness E fromElement, @ParametricNullness E toElement) {
+    public final SortedSet<E> subSet(
+        @ParametricNullness E fromElement, @ParametricNullness E toElement) {
       return new FilteredSortedSet<>(
           ((SortedSet<E>) unfiltered).subSet(fromElement, toElement), predicate);
     }
 
     @Override
-    public SortedSet<E> headSet(@ParametricNullness E toElement) {
+    public final SortedSet<E> headSet(@ParametricNullness E toElement) {
       return new FilteredSortedSet<>(((SortedSet<E>) unfiltered).headSet(toElement), predicate);
     }
 
     @Override
-    public SortedSet<E> tailSet(@ParametricNullness E fromElement) {
+    public final SortedSet<E> tailSet(@ParametricNullness E fromElement) {
       return new FilteredSortedSet<>(((SortedSet<E>) unfiltered).tailSet(fromElement), predicate);
     }
 
     @Override
     @ParametricNullness
-    public E first() {
+    public final E first() {
       return find(unfiltered.iterator(), predicate);
     }
 
@@ -1339,12 +1339,12 @@ public final class Sets {
 
     @Override
     public @Nullable E pollFirst() {
-      return removeFirstMatching(unfiltered(), predicate);
+      return pollFirstMatching(unfiltered(), predicate);
     }
 
     @Override
     public @Nullable E pollLast() {
-      return removeFirstMatching(unfiltered().descendingSet(), predicate);
+      return pollFirstMatching(unfiltered().descendingSet(), predicate);
     }
 
     @Override
@@ -1536,7 +1536,7 @@ public final class Sets {
               return super.writeReplace();
             }
           };
-      return new CartesianSet<E>(axes, new CartesianList<E>(listAxes));
+      return new CartesianSet<>(axes, new CartesianList<>(listAxes));
     }
 
     private CartesianSet(ImmutableList<ImmutableSet<E>> axes, CartesianList<E> delegate) {
@@ -1631,7 +1631,7 @@ public final class Sets {
    * @since 4.0
    */
   public static <E> Set<Set<E>> powerSet(Set<E> set) {
-    return new PowerSet<E>(set);
+    return new PowerSet<>(set);
   }
 
   private static final class SubSet<E> extends AbstractSet<E> {
@@ -1876,6 +1876,7 @@ public final class Sets {
   }
 
   /** An implementation for {@link Set#equals(Object)}. */
+  @SuppressWarnings("ReferenceEquality") // == fast path
   static boolean equalsImpl(Set<?> s, @Nullable Object object) {
     if (s == object) {
       return true;
@@ -2010,7 +2011,7 @@ public final class Sets {
    * {@code tailSet} views.
    *
    * {@snippet :
-   * NavigableSet<E> set = synchronizedNavigableSet(new TreeSet<E>());
+   * NavigableSet<E> set = synchronizedNavigableSet(new TreeSet<>());
    *  ...
    * synchronized (set) {
    *   // Must be in the synchronized block
@@ -2024,7 +2025,7 @@ public final class Sets {
    * <p>or:
    *
    * {@snippet :
-   * NavigableSet<E> set = synchronizedNavigableSet(new TreeSet<E>());
+   * NavigableSet<E> set = synchronizedNavigableSet(new TreeSet<>());
    * NavigableSet<E> set2 = set.descendingSet().headSet(foo);
    * ...
    * synchronized (set) { // Note: set, not set2!!!
@@ -2174,7 +2175,7 @@ public final class Sets {
     public Comparator<? super E> comparator() {
       Comparator<? super E> forwardComparator = forward.comparator();
       if (forwardComparator == null) {
-        return (Comparator) Ordering.natural().reverse();
+        return (Comparator<? super E>) Ordering.natural().reverse();
       } else {
         return reverse(forwardComparator);
       }
@@ -2258,5 +2259,19 @@ public final class Sets {
       return set.headSet(range.upperEndpoint(), range.upperBoundType() == BoundType.CLOSED);
     }
     return checkNotNull(set);
+  }
+
+  /** Removes and returns the first matching element, or returns {@code null} if there is none. */
+  private static <T extends @Nullable Object> @Nullable T pollFirstMatching(
+      Iterable<T> removeFrom, Predicate<? super T> predicate) {
+    checkNotNull(predicate);
+    for (Iterator<T> iterator = removeFrom.iterator(); iterator.hasNext(); ) {
+      T next = iterator.next();
+      if (predicate.apply(next)) {
+        iterator.remove();
+        return next;
+      }
+    }
+    return null;
   }
 }

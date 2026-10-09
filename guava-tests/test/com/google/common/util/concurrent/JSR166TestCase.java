@@ -15,14 +15,8 @@
 
 package com.google.common.util.concurrent;
 
-import static com.google.common.testing.SerializableTester.reserialize;
-import static com.google.common.truth.Truth.assertThat;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
@@ -36,13 +30,11 @@ import org.jspecify.annotations.NullUnmarked;
  *
  * <ol>
  *   <li>All assertions in code running in generated threads must use the forms {@link
- *       #threadUnexpectedException} or {@link #threadRecordFailure} (which is called by {@link
- *       CheckedRunnable} and {@link CheckedCallable}).
+ *       #threadUnexpectedException} or {@link #threadRecordFailure}.
  *   <li>If you override {@link #tearDown}, make sure to invoke {@code super.tearDown} within it.
  *       This method is used to clear and check for thread assertion failures.
  *   <li>All threads generated must be joined inside each test case method (or {@code fail} to do
- *       so) before returning from the method. The {@code joinPool} method can be used to do this
- *       when using Executors.
+ *       so) before returning from the method.
  * </ol>
  *
  * <p><b>Other notes</b>
@@ -138,42 +130,6 @@ abstract class JSR166TestCase extends TestCase {
     }
   }
 
-  /**
-   * Delays, via Thread.sleep, for the given millisecond delay, but if the sleep is shorter than
-   * specified, may re-sleep or yield until time elapses.
-   */
-  @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait?
-  static void delay(long millis) throws InterruptedException {
-    long startTime = System.nanoTime();
-    long ns = millis * 1000 * 1000;
-    for (; ; ) {
-      if (millis > 0L) {
-        Thread.sleep(millis);
-      } else {
-        // too short to sleep
-        Thread.yield();
-      }
-      long d = ns - (System.nanoTime() - startTime);
-      if (d > 0L) {
-        millis = d / (1000 * 1000);
-      } else {
-        break;
-      }
-    }
-  }
-
-  /** Waits out termination of a thread pool or fails doing so. */
-  final void joinPool(ExecutorService exec) throws InterruptedException {
-    try {
-      exec.shutdown();
-      assertTrue(
-          "ExecutorService did not terminate in a timely manner",
-          exec.awaitTermination(2 * LONG_DELAY_MS, MILLISECONDS));
-    } catch (SecurityException ok) {
-      // Allowed in case test doesn't have privs
-    }
-  }
-
   /** The number of elements to place in collections, arrays, etc. */
   static final int SIZE = 20;
 
@@ -210,43 +166,5 @@ abstract class JSR166TestCase extends TestCase {
    */
   final void awaitTermination(Thread t) {
     awaitTermination(t, LONG_DELAY_MS);
-  }
-
-  // Some convenient Runnable classes
-
-  // These classes don't merely allow checked exceptions but also store any exceptions that occur
-  // so that we can then report them during tearDown.
-
-  abstract class CheckedRunnable implements Runnable {
-    abstract void realRun() throws Throwable;
-
-    @Override
-    public final void run() {
-      try {
-        realRun();
-      } catch (Throwable t) {
-        threadUnexpectedException(t);
-      }
-    }
-  }
-
-  abstract class CheckedCallable<T> implements Callable<T> {
-    abstract T realCall() throws Throwable;
-
-    @Override
-    public final T call() {
-      try {
-        return realCall();
-      } catch (Throwable t) {
-        threadUnexpectedException(t);
-        return null;
-      }
-    }
-  }
-
-  <T> T serialClone(T o) {
-    T clone = reserialize(o);
-    assertThat(clone.getClass()).isEqualTo(o.getClass());
-    return clone;
   }
 }

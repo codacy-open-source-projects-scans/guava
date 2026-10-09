@@ -238,7 +238,7 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
    * <p>The default {@link AbstractFuture} implementation throws {@code InterruptedException} if the
    * current thread is interrupted during the call, even if the value is already available.
    *
-   * @throws CancellationException {@inheritDoc}
+   * @throws CancellationException if the computation was cancelled
    */
   @CanIgnoreReturnValue
   @Override
@@ -254,7 +254,7 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
    * <p>The default {@link AbstractFuture} implementation throws {@code InterruptedException} if the
    * current thread is interrupted during the call, even if the value is already available.
    *
-   * @throws CancellationException {@inheritDoc}
+   * @throws CancellationException if the computation was cancelled
    */
   @CanIgnoreReturnValue
   @Override
@@ -275,7 +275,7 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
   @ParametricNullness
   @SuppressWarnings("nullness") // TODO(b/147136275): Remove once our checker understands & and |.
   /*
-   * TODO: b/112550045 - Use this from Futures.getDone when applicable? Note the small difference in
+   * TODO(b/112550045): Use this from Futures.getDone when applicable? Note the small difference in
    * failure message between the two at present.
    */
   final V getFromAlreadyDoneTrustedFuture() throws ExecutionException {
@@ -450,6 +450,10 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
     return (localValue instanceof Cancellation) && ((Cancellation) localValue).wasInterrupted;
   }
 
+  final boolean wasInterruptedInternal() {
+    return wasInterrupted();
+  }
+
   /**
    * {@inheritDoc}
    *
@@ -511,6 +515,11 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
     return false;
   }
 
+  @CanIgnoreReturnValue
+  final boolean setInternal(@ParametricNullness V value) {
+    return set(value);
+  }
+
   /**
    * Sets the failed result of this {@code Future} unless this {@code Future} has already been
    * cancelled or set (including {@linkplain #setFuture set asynchronously}). When a call to this
@@ -534,6 +543,11 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
       return true;
     }
     return false;
+  }
+
+  @CanIgnoreReturnValue
+  final boolean setExceptionInternal(Throwable throwable) {
+    return setException(throwable);
   }
 
   /**
@@ -617,6 +631,11 @@ public abstract class AbstractFuture<V extends @Nullable Object> extends Abstrac
       future.cancel(((Cancellation) localValue).wasInterrupted);
     }
     return false;
+  }
+
+  @CanIgnoreReturnValue
+  final boolean setFutureInternal(ListenableFuture<? extends V> future) {
+    return setFuture(future);
   }
 
   /**

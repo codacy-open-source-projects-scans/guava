@@ -35,49 +35,56 @@ import org.jspecify.annotations.NullUnmarked;
  */
 @NullUnmarked
 @GwtIncompatible
-@J2ktIncompatible
 public class SettableFutureTest extends TestCase {
 
-  private SettableFuture<String> future;
-  private ListenableFutureTester tester;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    future = SettableFuture.create();
-    tester = new ListenableFutureTester(future);
-    tester.setUp();
-  }
-
-  public void testDefaultState() throws Exception {
+  @J2ktIncompatible
+  public void testDefaultState() {
+    SettableFuture<String> future = SettableFuture.create();
+    ListenableFutureTester tester = ListenableFutureTester.register(future);
     assertThrows(TimeoutException.class, () -> future.get(5, MILLISECONDS));
+    tester.tearDown();
   }
 
+  @J2ktIncompatible
   public void testSetValue() throws Exception {
+    SettableFuture<String> future = SettableFuture.create();
+    ListenableFutureTester tester = ListenableFutureTester.register(future);
     assertTrue(future.set("value"));
     tester.testCompletedFuture("value");
+    tester.tearDown();
   }
 
+  @J2ktIncompatible
   public void testSetFailure() throws Exception {
+    SettableFuture<String> future = SettableFuture.create();
+    ListenableFutureTester tester = ListenableFutureTester.register(future);
     assertTrue(future.setException(new Exception("failure")));
     tester.testFailedFuture("failure");
+    tester.tearDown();
   }
 
+  @J2ktIncompatible
   public void testSetFailureNull() throws Exception {
+    SettableFuture<String> future = SettableFuture.create();
+    ListenableFutureTester tester = ListenableFutureTester.register(future);
     assertThrows(NullPointerException.class, () -> future.setException(null));
     assertFalse(future.isDone());
     assertTrue(future.setException(new Exception("failure")));
     tester.testFailedFuture("failure");
+    tester.tearDown();
   }
 
+  @J2ktIncompatible
   public void testCancel() throws Exception {
+    SettableFuture<String> future = SettableFuture.create();
+    ListenableFutureTester tester = ListenableFutureTester.register(future);
     assertTrue(future.cancel(true));
     tester.testCancelledFuture();
+    tester.tearDown();
   }
 
   /** Tests the initial state of the future. */
-  public void testCreate() throws Exception {
+  public void testCreate() {
     SettableFuture<Integer> future = SettableFuture.create();
     assertFalse(future.isDone());
     assertFalse(future.isCancelled());
@@ -96,7 +103,7 @@ public class SettableFutureTest extends TestCase {
     assertEquals(42, (int) future.get());
   }
 
-  public void testSetException() throws Exception {
+  public void testSetException() {
     SettableFuture<Object> future = SettableFuture.create();
     Exception e = new Exception("foobarbaz");
     assertTrue(future.setException(e));
@@ -152,7 +159,7 @@ public class SettableFutureTest extends TestCase {
     assertThat(future.get()).isEqualTo(value);
   }
 
-  public void testCancel_innerCancelsAsync() throws Exception {
+  public void testCancel_innerCancelsAsync() {
     SettableFuture<Object> async = SettableFuture.create();
     SettableFuture<Object> inner = SettableFuture.create();
     async.setFuture(inner);
@@ -161,49 +168,49 @@ public class SettableFutureTest extends TestCase {
     assertThrows(CancellationException.class, async::get);
   }
 
-  public void testCancel_resultCancelsInner_interrupted() throws Exception {
+  public void testCancel_resultCancelsInner_interrupted() {
     SettableFuture<Object> async = SettableFuture.create();
     SettableFuture<Object> inner = SettableFuture.create();
     async.setFuture(inner);
     async.cancel(true);
     assertTrue(inner.isCancelled());
-    assertTrue(inner.wasInterrupted());
+    assertTrue(inner.wasInterruptedInternal());
     assertThrows(CancellationException.class, inner::get);
   }
 
-  public void testCancel_resultCancelsInner() throws Exception {
+  public void testCancel_resultCancelsInner() {
     SettableFuture<Object> async = SettableFuture.create();
     SettableFuture<Object> inner = SettableFuture.create();
     async.setFuture(inner);
     async.cancel(false);
     assertTrue(inner.isCancelled());
-    assertFalse(inner.wasInterrupted());
+    assertFalse(inner.wasInterruptedInternal());
     assertThrows(CancellationException.class, inner::get);
   }
 
-  public void testCancel_beforeSet() throws Exception {
+  public void testCancel_beforeSet() {
     SettableFuture<Object> async = SettableFuture.create();
     async.cancel(true);
     assertFalse(async.set(42));
   }
 
-  public void testCancel_multipleBeforeSetFuture_noInterruptFirst() throws Exception {
+  public void testCancel_multipleBeforeSetFuture_noInterruptFirst() {
     SettableFuture<Object> async = SettableFuture.create();
     async.cancel(false);
     async.cancel(true);
     SettableFuture<Object> inner = SettableFuture.create();
     assertFalse(async.setFuture(inner));
     assertTrue(inner.isCancelled());
-    assertFalse(inner.wasInterrupted());
+    assertFalse(inner.wasInterruptedInternal());
   }
 
-  public void testCancel_multipleBeforeSetFuture_interruptFirst() throws Exception {
+  public void testCancel_multipleBeforeSetFuture_interruptFirst() {
     SettableFuture<Object> async = SettableFuture.create();
     async.cancel(true);
     async.cancel(false);
     SettableFuture<Object> inner = SettableFuture.create();
     assertFalse(async.setFuture(inner));
     assertTrue(inner.isCancelled());
-    assertTrue(inner.wasInterrupted());
+    assertTrue(inner.wasInterruptedInternal());
   }
 }

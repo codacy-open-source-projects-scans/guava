@@ -116,6 +116,7 @@ public final class ClassSanityTester {
   private final ListMultimap<Class<?>, Object> distinctValues = ArrayListMultimap.create();
   private final NullPointerTester nullPointerTester = new NullPointerTester();
 
+  /** Constructs a new {@code ClassSanityTester}. */
   public ClassSanityTester() {
     // TODO(benyu): bake these into ArbitraryInstances.
     setDefault(byte.class, (byte) 1);
@@ -622,6 +623,7 @@ public final class ClassSanityTester {
    * Returns dummy factory arguments that are equal to {@code args} but may be different instances,
    * to be used to construct a second instance of the same equality group.
    */
+  @SuppressWarnings("ReferenceEquality") // checking for the case of equal but non-identical objects
   private List<Object> generateEqualFactoryArguments(
       Invokable<?, ?> factory, List<Parameter> params, List<Object> args)
       throws ParameterNotInstantiableException,

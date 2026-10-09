@@ -17,7 +17,9 @@ package com.google.common.reflect;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.reflect.Types.getArrayClass;
 import static com.google.common.reflect.Types.newArrayType;
+import static com.google.common.reflect.Types.newParameterizedTypeWithOwner;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
@@ -452,7 +454,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
   /**
    * Returns true if this type is a supertype of the given {@code type}. "Supertype" is defined
    * according to <a
-   * href="https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html#jls-4.5.1">the rules for
+   * href="https://docs.oracle.com/javase/specs/jls/se27/html/jls-4.html#jls-4.5.1">the rules for
    * type arguments</a> introduced with Java generics.
    *
    * @since 19.0
@@ -464,7 +466,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
   /**
    * Returns true if this type is a supertype of the given {@code type}. "Supertype" is defined
    * according to <a
-   * href="https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html#jls-4.5.1">the rules for
+   * href="https://docs.oracle.com/javase/specs/jls/se27/html/jls-4.html#jls-4.5.1">the rules for
    * type arguments</a> introduced with Java generics.
    *
    * @since 19.0
@@ -476,7 +478,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
   /**
    * Returns true if this type is a subtype of the given {@code type}. "Subtype" is defined
    * according to <a
-   * href="https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html#jls-4.5.1">the rules for
+   * href="https://docs.oracle.com/javase/specs/jls/se27/html/jls-4.html#jls-4.5.1">the rules for
    * type arguments</a> introduced with Java generics.
    *
    * @since 19.0
@@ -488,7 +490,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
   /**
    * Returns true if this type is a subtype of the given {@code type}. "Subtype" is defined
    * according to <a
-   * href="https://docs.oracle.com/javase/specs/jls/se26/html/jls-4.html#jls-4.5.1">the rules for
+   * href="https://docs.oracle.com/javase/specs/jls/se27/html/jls-4.html#jls-4.5.1">the rules for
    * type arguments</a> introduced with Java generics.
    *
    * @since 19.0
@@ -693,19 +695,19 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
 
     @Override
     protected Set<TypeToken<? super T>> delegate() {
-      ImmutableSet<TypeToken<? super T>> filteredTypes = types;
-      if (filteredTypes == null) {
+      ImmutableSet<TypeToken<? super T>> result = types;
+      if (result == null) {
         // Java has no way to express ? super T when we parameterize TypeToken vs. Class.
         @SuppressWarnings({"unchecked", "rawtypes"})
         ImmutableList<TypeToken<? super T>> collectedTypes =
             (ImmutableList) TypeCollector.FOR_GENERIC_TYPE.collectTypes(TypeToken.this);
-        return (types =
-            FluentIterable.from(collectedTypes)
-                .filter(TypeFilter.IGNORE_TYPE_VARIABLE_OR_WILDCARD)
-                .toSet());
-      } else {
-        return filteredTypes;
+        result =
+            types =
+                FluentIterable.from(collectedTypes)
+                    .filter(TypeFilter.IGNORE_TYPE_VARIABLE_OR_WILDCARD)
+                    .toSet();
       }
+      return result;
     }
 
     /** Returns the raw types of the types in this set, in the same order. */
@@ -733,11 +735,10 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
     protected Set<TypeToken<? super T>> delegate() {
       ImmutableSet<TypeToken<? super T>> result = interfaces;
       if (result == null) {
-        return (interfaces =
-            FluentIterable.from(allTypes).filter(TypeFilter.INTERFACE_ONLY).toSet());
-      } else {
-        return result;
+        result =
+            interfaces = FluentIterable.from(allTypes).filter(TypeFilter.INTERFACE_ONLY).toSet();
       }
+      return result;
     }
 
     @Override
@@ -778,13 +779,13 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
         ImmutableList<TypeToken<? super T>> collectedTypes =
             (ImmutableList)
                 TypeCollector.FOR_GENERIC_TYPE.classesOnly().collectTypes(TypeToken.this);
-        return (classes =
-            FluentIterable.from(collectedTypes)
-                .filter(TypeFilter.IGNORE_TYPE_VARIABLE_OR_WILDCARD)
-                .toSet());
-      } else {
-        return result;
+        result =
+            classes =
+                FluentIterable.from(collectedTypes)
+                    .filter(TypeFilter.IGNORE_TYPE_VARIABLE_OR_WILDCARD)
+                    .toSet();
       }
+      return result;
     }
 
     @Override
@@ -834,6 +835,9 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
    */
   @Override
   public boolean equals(@Nullable Object o) {
+    if (o == this) {
+      return true;
+    }
     if (o instanceof TypeToken) {
       TypeToken<?> that = (TypeToken<?>) o;
       return runtimeType.equals(that.runtimeType);
@@ -1057,7 +1061,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
     for (int i = 0; i < typeArgs.length; i++) {
       typeArgs[i] = canonicalizeTypeArg(typeVars[i], typeArgs[i]);
     }
-    return Types.newParameterizedTypeWithOwner(type.getOwnerType(), rawType, typeArgs);
+    return newParameterizedTypeWithOwner(type.getOwnerType(), rawType, typeArgs);
   }
 
   private static Bounds every(Type[] bounds) {
@@ -1124,7 +1128,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
 
       @Override
       void visitGenericArrayType(GenericArrayType t) {
-        builder.add(Types.getArrayClass(of(t.getGenericComponentType()).getRawType()));
+        builder.add(getArrayClass(of(t.getGenericComponentType()).getRawType()));
       }
     }.visit(runtimeType);
     // Cast from ImmutableSet<Class<?>> to ImmutableSet<Class<? super T>>
@@ -1184,8 +1188,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
     if ((typeParams.length > 0) || ((ownerType != null) && ownerType != cls.getEnclosingClass())) {
       @SuppressWarnings("unchecked") // Like, it's Iterable<T> for Iterable.class
       TypeToken<? extends T> type =
-          (TypeToken<? extends T>)
-              of(Types.newParameterizedTypeWithOwner(ownerType, cls, typeParams));
+          (TypeToken<? extends T>) of(newParameterizedTypeWithOwner(ownerType, cls, typeParams));
       return type;
     } else {
       return of(cls);
@@ -1193,19 +1196,19 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
   }
 
   private TypeResolver getCovariantTypeResolver() {
-    TypeResolver resolver = covariantTypeResolver;
-    if (resolver == null) {
-      resolver = (covariantTypeResolver = TypeResolver.covariantly(runtimeType));
+    TypeResolver result = covariantTypeResolver;
+    if (result == null) {
+      result = covariantTypeResolver = TypeResolver.covariantly(runtimeType);
     }
-    return resolver;
+    return result;
   }
 
   private TypeResolver getInvariantTypeResolver() {
-    TypeResolver resolver = invariantTypeResolver;
-    if (resolver == null) {
-      resolver = (invariantTypeResolver = TypeResolver.invariantly(runtimeType));
+    TypeResolver result = invariantTypeResolver;
+    if (result == null) {
+      result = invariantTypeResolver = TypeResolver.invariantly(runtimeType);
     }
-    return resolver;
+    return result;
   }
 
   private TypeToken<? super T> getSupertypeFromUpperBounds(
@@ -1450,7 +1453,7 @@ public abstract class TypeToken<T> extends TypeCapture<T> implements Serializabl
       }
 
       @Override
-      Class<?> getRawType(K type) {
+      final Class<?> getRawType(K type) {
         return delegate.getRawType(type);
       }
 

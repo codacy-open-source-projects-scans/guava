@@ -270,12 +270,12 @@ public final class ClassPath {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
       return resourceName.hashCode();
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public final boolean equals(@Nullable Object obj) {
       if (obj instanceof ResourceInfo) {
         ResourceInfo that = (ResourceInfo) obj;
         return resourceName.equals(that.resourceName) && loader == that.loader;
@@ -414,7 +414,7 @@ public final class ClassPath {
     }
 
     /** Returns the file this location is from. */
-    public final File file() {
+    public File file() {
       return home;
     }
 
@@ -570,7 +570,7 @@ public final class ClassPath {
   /**
    * Returns the class path URIs specified by the {@code Class-Path} manifest attribute, according
    * to <a
-   * href="https://docs.oracle.com/en/java/javase/26/docs/specs/jar/jar.html#main-attributes">JAR
+   * href="https://docs.oracle.com/en/java/javase/27/docs/specs/jar/jar.html#main-attributes">JAR
    * File Specification</a>. If {@code manifest} is null, it means the jar file has no manifest, and
    * an empty set will be returned.
    */
@@ -652,7 +652,7 @@ public final class ClassPath {
 
   /**
    * Returns the absolute uri of the Class-Path entry value as specified in <a
-   * href="https://docs.oracle.com/en/java/javase/26/docs/specs/jar/jar.html#main-attributes">JAR
+   * href="https://docs.oracle.com/en/java/javase/27/docs/specs/jar/jar.html#main-attributes">JAR
    * File Specification</a>. Even though the specification only talks about relative urls, absolute
    * urls are actually supported too (for example, in Maven surefire plugin).
    */

@@ -38,6 +38,8 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Ticker;
 import com.google.common.cache.LocalCache.EntryFactory;
@@ -92,6 +94,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * @author Charles Fry
  */
+@GwtIncompatible
+@J2ktIncompatible
 @SuppressWarnings("GuardedBy") // TODO(b/35466881): Fix or suppress.
 @NullUnmarked
 public class LocalCacheTest extends TestCase {
@@ -234,14 +238,14 @@ public class LocalCacheTest extends TestCase {
   TestLogHandler logHandler;
 
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
     logHandler = new TestLogHandler();
     LocalCache.logger.addHandler(logHandler);
   }
 
   @Override
-  public void tearDown() throws Exception {
+  protected void tearDown() throws Exception {
     super.tearDown();
     LocalCache.logger.removeHandler(logHandler);
   }
@@ -563,7 +567,7 @@ public class LocalCacheTest extends TestCase {
             }
 
             @Override
-            @SuppressWarnings("ThreadPriorityCheck") // TODO: b/175898629 - Consider onSpinWait.
+            @SuppressWarnings("ThreadPriorityCheck") // TODO(b/175898629): Consider onSpinWait.
             public ListenableFuture<String> reload(String key, String oldValue) {
               return refreshExecutor.submit(
                   () -> {
@@ -718,7 +722,7 @@ public class LocalCacheTest extends TestCase {
     DummyValueReference<Object, Object> valueRef = DummyValueReference.create(value);
     entry.setValueReference(valueRef);
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
 
     assertThat(map.get(key, loader)).isSameInstanceAs(value);
     assertThat(loader.getCount()).isEqualTo(0);
@@ -747,7 +751,7 @@ public class LocalCacheTest extends TestCase {
     DummyValueReference<Object, Object> valueRef = DummyValueReference.create(value);
     entry.setValueReference(valueRef);
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
 
     assertThat(map.get(key, loader)).isSameInstanceAs(value);
     assertThat(loader.getCount()).isEqualTo(0);
@@ -759,7 +763,6 @@ public class LocalCacheTest extends TestCase {
     assertThat(segment.count).isEqualTo(1);
   }
 
-  @AndroidIncompatible // Perhaps emulator clock does not update between the two get() calls?
   public void testComputeExpiredEntry() throws ExecutionException {
     CacheBuilder<Object, Object> builder = createCacheBuilder().expireAfterWrite(1, NANOSECONDS);
     CountingLoader loader = new CountingLoader();
@@ -940,7 +943,7 @@ public class LocalCacheTest extends TestCase {
     assertThat(listener.isEmpty()).isTrue();
   }
 
-  public void testSegmentRefresh_duplicate() throws ExecutionException {
+  public void testSegmentRefresh_duplicate() {
     LocalCache<Object, Object> map = makeLocalCache(createCacheBuilder().concurrencyLevel(1));
     Segment<Object, Object> segment = map.segments[0];
 
@@ -1225,7 +1228,7 @@ public class LocalCacheTest extends TestCase {
     assertThat(segment.containsValue(value)).isFalse();
 
     // count == 1
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.get(key, hash)).isSameInstanceAs(value);
     assertThat(segment.containsKey(key, hash)).isTrue();
     assertThat(segment.containsValue(value)).isTrue();
@@ -1298,7 +1301,7 @@ public class LocalCacheTest extends TestCase {
 
     // same value
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     assertThat(segment.replace(key, hash, oldValue, newValue)).isTrue();
@@ -1342,7 +1345,7 @@ public class LocalCacheTest extends TestCase {
 
     // same key
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     assertThat(segment.replace(key, hash, newValue)).isSameInstanceAs(oldValue);
@@ -1558,7 +1561,7 @@ public class LocalCacheTest extends TestCase {
 
     // same key
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     assertThat(segment.remove(key, hash)).isSameInstanceAs(oldValue);
@@ -1567,7 +1570,7 @@ public class LocalCacheTest extends TestCase {
 
     // cleared
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     oldValueRef.clear();
@@ -1598,7 +1601,7 @@ public class LocalCacheTest extends TestCase {
 
     // same value
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     assertThat(segment.remove(key, hash, oldValue)).isTrue();
@@ -1607,7 +1610,7 @@ public class LocalCacheTest extends TestCase {
 
     // different value
     table.set(index, entry);
-    segment.count++;
+    incrementCount(segment);
     assertThat(segment.count).isEqualTo(1);
     assertThat(segment.get(key, hash)).isSameInstanceAs(oldValue);
     assertThat(segment.remove(key, hash, newValue)).isFalse();
@@ -2600,7 +2603,7 @@ public class LocalCacheTest extends TestCase {
     }
   }
 
-  public void testNullParameters() throws Exception {
+  public void testNullParameters() {
     NullPointerTester tester = new NullPointerTester();
     tester.testAllPublicInstanceMethods(makeLocalCache(createCacheBuilder()));
     CacheLoader<Object, Object> loader = identityLoader();
@@ -2719,7 +2722,16 @@ public class LocalCacheTest extends TestCase {
     assertThat(localCacheThree.ticker).isEqualTo(localCacheTwo.ticker);
   }
 
-  public void testLoadDifferentKeyInLoader() throws ExecutionException, InterruptedException {
+  public void testDeserializeWithHugeConcurrencyLevel() {
+    LocalManualCache<?, ?> cache =
+        (LocalManualCache<?, ?>)
+            CacheBuilder.newBuilder().concurrencyLevel(Integer.MAX_VALUE).build();
+    assertThat(cache.localCache.segments).hasLength(65536);
+    LocalManualCache<?, ?> deserialized = reserialize(cache);
+    assertThat(deserialized.localCache.segments).hasLength(1024);
+  }
+
+  public void testLoadDifferentKeyInLoader() throws ExecutionException {
     LocalCache<String, String> cache = makeLocalCache(createCacheBuilder());
     String key1 = "key1";
     String key2 = "key2";
@@ -2855,23 +2867,23 @@ public class LocalCacheTest extends TestCase {
     return entry;
   }
 
-  static class DummyEntry<K, V> implements ReferenceEntry<K, V> {
+  private static final class DummyEntry<K, V> implements ReferenceEntry<K, V> {
     private @Nullable K key;
     private final int hash;
-    private final ReferenceEntry<K, V> next;
+    private final @Nullable ReferenceEntry<K, V> next;
 
-    public DummyEntry(K key, int hash, ReferenceEntry<K, V> next) {
+    DummyEntry(@Nullable K key, int hash, @Nullable ReferenceEntry<K, V> next) {
       this.key = key;
       this.hash = hash;
       this.next = next;
     }
 
-    public static <K, V> DummyEntry<K, V> create(
-        K key, int hash, @Nullable ReferenceEntry<K, V> next) {
+    static <K, V> DummyEntry<K, V> create(
+        @Nullable K key, int hash, @Nullable ReferenceEntry<K, V> next) {
       return new DummyEntry<>(key, hash, next);
     }
 
-    public void clearKey() {
+    void clearKey() {
       this.key = null;
     }
 
@@ -2888,7 +2900,7 @@ public class LocalCacheTest extends TestCase {
     }
 
     @Override
-    public ReferenceEntry<K, V> getNext() {
+    public @Nullable ReferenceEntry<K, V> getNext() {
       return next;
     }
 
@@ -2898,7 +2910,7 @@ public class LocalCacheTest extends TestCase {
     }
 
     @Override
-    public K getKey() {
+    public @Nullable K getKey() {
       return key;
     }
 
@@ -2975,28 +2987,24 @@ public class LocalCacheTest extends TestCase {
     }
   }
 
-  static class DummyValueReference<K, V> implements ValueReference<K, V> {
+  private static final class DummyValueReference<K, V> implements ValueReference<K, V> {
     private @Nullable V value;
     boolean loading = false;
 
-    public DummyValueReference() {
+    DummyValueReference() {
       this.loading = true;
     }
 
-    public DummyValueReference(V value) {
+    DummyValueReference(@Nullable V value) {
       this.value = value;
     }
 
-    public static <K, V> DummyValueReference<K, V> create(V value) {
+    static <K, V> DummyValueReference<K, V> create(@Nullable V value) {
       return new DummyValueReference<>(value);
     }
 
-    public static <K, V> DummyValueReference<K, V> createLoading() {
-      return new DummyValueReference<>();
-    }
-
     @Override
-    public V get() {
+    public @Nullable V get() {
       return value;
     }
 
@@ -3012,7 +3020,7 @@ public class LocalCacheTest extends TestCase {
 
     @Override
     public ValueReference<K, V> copyFor(
-        ReferenceQueue<V> queue, V value, ReferenceEntry<K, V> entry) {
+        @Nullable ReferenceQueue<V> queue, @Nullable V value, ReferenceEntry<K, V> entry) {
       return this;
     }
 
@@ -3038,12 +3046,12 @@ public class LocalCacheTest extends TestCase {
     @Override
     public void notifyNewValue(V newValue) {}
 
-    public void clear() {
+    void clear() {
       value = null;
     }
   }
 
-  private static class SerializableCacheLoader extends CacheLoader<Object, Object>
+  private static final class SerializableCacheLoader extends CacheLoader<Object, Object>
       implements Serializable {
     @Override
     public Object load(Object key) {
@@ -3061,7 +3069,7 @@ public class LocalCacheTest extends TestCase {
     }
   }
 
-  private static class SerializableRemovalListener<K, V>
+  private static final class SerializableRemovalListener<K, V>
       implements RemovalListener<K, V>, Serializable {
     @Override
     public void onRemoval(RemovalNotification<K, V> notification) {}
@@ -3077,7 +3085,7 @@ public class LocalCacheTest extends TestCase {
     }
   }
 
-  private static class SerializableTicker extends Ticker implements Serializable {
+  private static final class SerializableTicker extends Ticker implements Serializable {
     @Override
     public long read() {
       return 42;
@@ -3094,7 +3102,7 @@ public class LocalCacheTest extends TestCase {
     }
   }
 
-  private static class SerializableWeigher<K, V> implements Weigher<K, V>, Serializable {
+  private static final class SerializableWeigher<K, V> implements Weigher<K, V>, Serializable {
     @Override
     public int weigh(K key, V value) {
       return 42;
@@ -3109,5 +3117,11 @@ public class LocalCacheTest extends TestCase {
     public boolean equals(@Nullable Object o) {
       return o instanceof SerializableWeigher;
     }
+  }
+
+  // Our tests are generally (always?) updating the count from only one thread.
+  @SuppressWarnings("NonAtomicVolatileUpdate")
+  private static void incrementCount(Segment<?, ?> segment) {
+    segment.count++;
   }
 }

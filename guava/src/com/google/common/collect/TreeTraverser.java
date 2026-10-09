@@ -79,7 +79,7 @@ import org.jspecify.annotations.Nullable;
 public
 abstract class TreeTraverser<T> {
   /** Constructor for use by subclasses. */
-  public TreeTraverser() {}
+  protected TreeTraverser() {}
 
   /**
    * Returns a tree traverser that uses the given function to navigate from a node to its children.
@@ -139,7 +139,7 @@ abstract class TreeTraverser<T> {
     };
   }
 
-  UnmodifiableIterator<T> preOrderIterator(T root) {
+  final UnmodifiableIterator<T> preOrderIterator(T root) {
     return new PreOrderIterator(root);
   }
 
@@ -204,7 +204,7 @@ abstract class TreeTraverser<T> {
     };
   }
 
-  UnmodifiableIterator<T> postOrderIterator(T root) {
+  final UnmodifiableIterator<T> postOrderIterator(T root) {
     return new PostOrderIterator(root);
   }
 

@@ -66,13 +66,11 @@ public class ClassPathTest extends TestCase {
         .testEquals();
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_emptyURLClassLoader_noParent() {
     assertThat(ClassPath.getClassPathEntries(new URLClassLoader(new URL[0], null)).keySet())
         .isEmpty();
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_urlClassLoader_noParent() throws Exception {
     URL url1 = new URL("file:/a");
     URL url2 = new URL("file:/b");
@@ -81,7 +79,6 @@ public class ClassPathTest extends TestCase {
         .containsExactly(new File("/a"), classloader, new File("/b"), classloader);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_urlClassLoader_withParent() throws Exception {
     URL url1 = new URL("file:/a");
     URL url2 = new URL("file:/b");
@@ -92,7 +89,6 @@ public class ClassPathTest extends TestCase {
         .inOrder();
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_duplicateUri_parentWins() throws Exception {
     URL url = new URL("file:/a");
     URLClassLoader parent = new URLClassLoader(new URL[] {url}, null);
@@ -100,12 +96,10 @@ public class ClassPathTest extends TestCase {
     assertThat(ClassPath.getClassPathEntries(child)).containsExactly(new File("/a"), parent);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_notURLClassLoader_noParent() {
     assertThat(ClassPath.getClassPathEntries(new ClassLoader(null) {})).isEmpty();
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_notURLClassLoader_withParent() throws Exception {
     URL url = new URL("file:/a");
     URLClassLoader parent = new URLClassLoader(new URL[] {url}, null);
@@ -113,7 +107,6 @@ public class ClassPathTest extends TestCase {
         .containsExactly(new File("/a"), parent);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_notURLClassLoader_withParentAndGrandParent() throws Exception {
     URL url1 = new URL("file:/a");
     URL url2 = new URL("file:/b");
@@ -123,7 +116,6 @@ public class ClassPathTest extends TestCase {
         .containsExactly(new File("/a"), grandParent, new File("/b"), parent);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   public void testClassPathEntries_notURLClassLoader_withGrandParent() throws Exception {
     URL url = new URL("file:/a");
     URLClassLoader grandParent = new URLClassLoader(new URL[] {url}, null);
@@ -132,7 +124,6 @@ public class ClassPathTest extends TestCase {
         .containsExactly(new File("/a"), grandParent);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   // https://github.com/google/guava/issues/2152
   public void testClassPathEntries_urlClassLoader_pathWithSpace() throws Exception {
     URL url = new URL("file:///c:/Documents and Settings/");
@@ -141,7 +132,6 @@ public class ClassPathTest extends TestCase {
         .containsExactly(new File("/c:/Documents and Settings/"), classloader);
   }
 
-  @AndroidIncompatible // Android forbids null parent ClassLoader
   // https://github.com/google/guava/issues/2152
   public void testClassPathEntries_urlClassLoader_pathWithEscapedSpace() throws Exception {
     URL url = new URL("file:///c:/Documents%20and%20Settings/");
@@ -159,7 +149,6 @@ public class ClassPathTest extends TestCase {
   }
 
   // https://github.com/google/guava/issues/2152
-  @AndroidIncompatible // works in newer Android versions but fails at the version we test with
   public void testToFile_androidIncompatible() throws Exception {
     assertThat(ClassPath.toFile(new URL("file:///c:\\Documents ~ Settings, or not\\11-12 12:05")))
         .isEqualTo(new File("/c:\\Documents ~ Settings, or not\\11-12 12:05"));
@@ -202,7 +191,6 @@ public class ClassPathTest extends TestCase {
         .isEmpty();
   }
 
-  @AndroidIncompatible // ClassPath is documented as not supporting Android
 
   public void testScanFromFile_notJarFile() throws IOException {
     ClassLoader classLoader = ClassPathTest.class.getClassLoader();
@@ -216,7 +204,7 @@ public class ClassPathTest extends TestCase {
 
   public void testGetClassPathEntry() throws MalformedURLException, URISyntaxException {
     if (isWindows()) {
-      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+      return; // TODO(b/136041958): We need to account for drive letters in the path.
     }
     assertEquals(
         new File("/usr/test/dep.jar").toURI(),
@@ -288,7 +276,7 @@ public class ClassPathTest extends TestCase {
 
   public void testGetClassPathFromManifest_absoluteDirectory() throws IOException {
     if (isWindows()) {
-      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+      return; // TODO(b/136041958): We need to account for drive letters in the path.
     }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute/dir");
@@ -298,7 +286,7 @@ public class ClassPathTest extends TestCase {
 
   public void testGetClassPathFromManifest_absoluteJar() throws IOException {
     if (isWindows()) {
-      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+      return; // TODO(b/136041958): We need to account for drive letters in the path.
     }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute.jar");
@@ -308,7 +296,7 @@ public class ClassPathTest extends TestCase {
 
   public void testGetClassPathFromManifest_multiplePaths() throws IOException {
     if (isWindows()) {
-      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+      return; // TODO(b/136041958): We need to account for drive letters in the path.
     }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute.jar relative.jar  relative/dir");
@@ -371,7 +359,7 @@ public class ClassPathTest extends TestCase {
   @AndroidIncompatible
   public void testGetClassPathUrls() throws Exception {
     if (isWindows()) {
-      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+      return; // TODO(b/136041958): We need to account for drive letters in the path.
     }
     String oldPathSeparator = PATH_SEPARATOR.value();
     String oldClassPath = JAVA_CLASS_PATH.value();
@@ -518,7 +506,7 @@ public class ClassPathTest extends TestCase {
 
   private static URL makeJarUrlWithName(String name) throws IOException {
     /*
-     * TODO: cpovirk - Use java.nio.file.Files.createTempDirectory instead of
+     * TODO(cpovirk): Use java.nio.file.Files.createTempDirectory instead of
      * c.g.c.io.Files.createTempDir?
      */
     File fullPath = new File(Files.createTempDir(), name);
@@ -527,7 +515,7 @@ public class ClassPathTest extends TestCase {
     return fullPath.toURI().toURL();
   }
 
-  private static File pickAnyJarFile() throws IOException {
+  private static File pickAnyJarFile() {
     for (ClassPath.LocationInfo location :
         ClassPath.locationsFrom(ClassPathTest.class.getClassLoader())) {
       if (!location.file().isDirectory() && location.file().exists()) {

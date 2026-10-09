@@ -38,7 +38,6 @@ import java.lang.reflect.Method;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
-import org.junit.Ignore;
 
 /**
  * Common superclass for {@link MultisetSetCountUnconditionallyTester} and {@link
@@ -49,16 +48,12 @@ import org.junit.Ignore;
  * @author Chris Povirk
  */
 @GwtCompatible
-@Ignore("test runners must not instantiate and run this directly, only via suites we build")
-// @Ignore affects the Android test runner, which respects JUnit 4 annotations on JUnit 3 tests.
-@SuppressWarnings("JUnit4ClassUsedInJUnit3")
 public abstract class AbstractMultisetSetCountTester<E> extends AbstractMultisetTester<E> {
   /*
-   * TODO: consider adding MultisetFeatures.SUPPORTS_SET_COUNT. Currently we
-   * assume that using setCount() to increase the count is permitted iff add()
-   * is permitted and similarly for decrease/remove(). We assume that a
-   * setCount() no-op is permitted if either add() or remove() is permitted,
-   * though we also allow it to "succeed" if neither is permitted.
+   * TODO: consider adding MultisetFeatures.SUPPORTS_SET_COUNT. Currently we assume that using
+   * setCount() to increase the count is permitted if and only if add() is permitted and similarly
+   * for decrease/remove(). We assume that a setCount() no-op is permitted if either add() or
+   * remove() is permitted, though we also allow it to "succeed" if neither is permitted.
    */
 
   private void assertSetCount(E element, int count) {

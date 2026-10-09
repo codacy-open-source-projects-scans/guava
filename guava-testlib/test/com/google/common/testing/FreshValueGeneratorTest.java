@@ -16,7 +16,6 @@
 
 package com.google.common.testing;
 
-import static com.google.common.collect.Maps.newConcurrentMap;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.CharMatcher;
@@ -107,6 +106,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.MatchResult;
@@ -122,7 +122,6 @@ import org.jspecify.annotations.NullUnmarked;
 @NullUnmarked
 public class FreshValueGeneratorTest extends TestCase {
 
-  @AndroidIncompatible // problem with equality of Type objects?
   public void testFreshInstance() {
     assertFreshInstances(
         String.class,
@@ -364,7 +363,8 @@ public class FreshValueGeneratorTest extends TestCase {
 
   public void testConcurrentMap() {
     assertFreshInstance(new TypeToken<ConcurrentMap<String, ?>>() {});
-    assertCanGenerateOnly(new TypeToken<ConcurrentMap<EmptyEnum, String>>() {}, newConcurrentMap());
+    assertCanGenerateOnly(
+        new TypeToken<ConcurrentMap<EmptyEnum, String>>() {}, new ConcurrentHashMap<>());
   }
 
   public void testMultimap() {
@@ -432,7 +432,6 @@ public class FreshValueGeneratorTest extends TestCase {
     assertFreshInstance(new TypeToken<List<TwoConstantEnum>>() {}, 2);
   }
 
-  @AndroidIncompatible // problem with equality of Type objects?
   public void testGoogleOptional() {
     FreshValueGenerator generator = new FreshValueGenerator();
     assertEquals(

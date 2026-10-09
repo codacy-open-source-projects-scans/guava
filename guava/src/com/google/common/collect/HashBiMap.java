@@ -611,7 +611,10 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
   @Override
   public BiMap<V, K> inverse() {
     BiMap<V, K> result = inverse;
-    return (result == null) ? inverse = new Inverse<>(this) : result;
+    if (result == null) {
+      result = inverse = new Inverse<>(this);
+    }
+    return result;
   }
 
   private static final class Inverse<K extends @Nullable Object, V extends @Nullable Object>
@@ -823,6 +826,8 @@ public final class HashBiMap<K extends @Nullable Object, V extends @Nullable Obj
     Object readResolve() {
       return bimap.inverse();
     }
+
+    @GwtIncompatible @J2ktIncompatible     private static final long serialVersionUID = 2881074110665323944L;
   }
 
   /**

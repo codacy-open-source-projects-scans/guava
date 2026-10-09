@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -530,7 +531,7 @@ public class ByteStreamsTest extends IoTestCase {
     assertThat(ByteStreams.nullOutputStream()).isSameInstanceAs(ByteStreams.nullOutputStream());
   }
 
-  public void testNullOutputStream_exceptions() throws Exception {
+  public void testNullOutputStream_exceptions() {
     OutputStream nos = ByteStreams.nullOutputStream();
     assertThrows(NullPointerException.class, () -> nos.write(null));
     assertThrows(NullPointerException.class, () -> nos.write(null, 0, 1));
@@ -610,6 +611,23 @@ public class ByteStreamsTest extends IoTestCase {
     assertEquals(0, lin.available());
   }
 
+  public void testLimit_skipNegative() throws Exception {
+    byte[] big = newPreFilledByteArray(5);
+    File file = createTempFile();
+    Files.write(big, file);
+    // Unlike most streams, FileInputStream moves backward when asked to skip a negative count.
+    try (InputStream fin = new FileInputStream(file)) {
+      ByteStreams.skipFully(fin, 2);
+      InputStream lin = ByteStreams.limit(fin, 2);
+
+      assertEquals(0, lin.skip(-2));
+      assertEquals(2, lin.available());
+      assertEquals(big[2], lin.read());
+      assertEquals(big[3], lin.read());
+      assertEquals(-1, lin.read());
+    }
+  }
+
   public void testLimit_markNotSet() {
     byte[] big = newPreFilledByteArray(5);
     InputStream bin = new ByteArrayInputStream(big);
@@ -628,7 +646,7 @@ public class ByteStreamsTest extends IoTestCase {
 
   private static class UnmarkableInputStream extends InputStream {
     @Override
-    public int read() throws IOException {
+    public int read() {
       return 0;
     }
 

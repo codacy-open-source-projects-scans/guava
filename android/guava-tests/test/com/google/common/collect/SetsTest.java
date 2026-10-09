@@ -19,6 +19,7 @@ package com.google.common.collect;
 import static com.google.common.collect.Iterables.unmodifiableIterable;
 import static com.google.common.collect.Sets.cartesianProduct;
 import static com.google.common.collect.Sets.immutableEnumSet;
+import static com.google.common.collect.Sets.newCopyOnWriteArraySet;
 import static com.google.common.collect.Sets.newEnumSet;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.google.common.collect.Sets.newIdentityHashSet;
@@ -182,7 +183,7 @@ public class SetsTest extends TestCase {
     return SetTestSuiteBuilder.using(
             new TestStringSetGenerator() {
               @Override
-              public Set<String> create(String[] elements) {
+              protected Set<String> create(String[] elements) {
                 Set<String> unfiltered = new LinkedHashSet<>();
                 unfiltered.add("yyy");
                 Collections.addAll(unfiltered, elements);
@@ -209,7 +210,7 @@ public class SetsTest extends TestCase {
         SetTestSuiteBuilder.using(
                 new TestStringSetGenerator() {
                   @Override
-                  public Set<String> create(String[] elements) {
+                  protected Set<String> create(String[] elements) {
                     Set<String> unfiltered = new LinkedHashSet<>();
                     unfiltered.add("yyy");
                     unfiltered.addAll(ImmutableList.copyOf(elements));
@@ -229,7 +230,7 @@ public class SetsTest extends TestCase {
         NavigableSetTestSuiteBuilder.using(
                 new TestStringSetGenerator() {
                   @Override
-                  public NavigableSet<String> create(String[] elements) {
+                  protected NavigableSet<String> create(String[] elements) {
                     NavigableSet<String> unfiltered = newTreeSet();
                     unfiltered.add("yyy");
                     unfiltered.addAll(ImmutableList.copyOf(elements));
@@ -260,7 +261,7 @@ public class SetsTest extends TestCase {
     return SetTestSuiteBuilder.using(
             new TestStringSetGenerator() {
               @Override
-              public Set<String> create(String[] elements) {
+              protected Set<String> create(String[] elements) {
                 Set<String> unfiltered = new LinkedHashSet<>();
                 unfiltered.add("yyy");
                 unfiltered.addAll(ImmutableList.copyOf(elements));
@@ -321,7 +322,7 @@ public class SetsTest extends TestCase {
 
   @GwtIncompatible
   @J2ktIncompatible
-    public void testImmutableEnumSet_deserializationMakesDefensiveCopy() throws Exception {
+  public void testImmutableEnumSet_deserializationMakesDefensiveCopy() throws Exception {
     ImmutableSet<SomeEnum> original = immutableEnumSet(SomeEnum.A, SomeEnum.B);
     int handleOffset = 6;
     byte[] serializedForm = serializeWithBackReference(original, handleOffset);
@@ -337,7 +338,7 @@ public class SetsTest extends TestCase {
 
   @GwtIncompatible
   @J2ktIncompatible
-    private static byte[] serializeWithBackReference(Object original, int handleOffset)
+  private static byte[] serializeWithBackReference(Object original, int handleOffset)
       throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ObjectOutputStream out = new ObjectOutputStream(bos);
@@ -528,17 +529,18 @@ public class SetsTest extends TestCase {
     assertEquals(2, set.size());
   }
 
+  @SuppressWarnings("UseCollectionConstructor") // We need to test our factory method.
   @J2ktIncompatible
   @GwtIncompatible // CopyOnWriteArraySet
   public void testNewCOWASEmpty() {
-    CopyOnWriteArraySet<Integer> set = Sets.newCopyOnWriteArraySet();
+    CopyOnWriteArraySet<Integer> set = newCopyOnWriteArraySet();
     verifySetContents(set, EMPTY_COLLECTION);
   }
 
   @J2ktIncompatible
   @GwtIncompatible // CopyOnWriteArraySet
   public void testNewCOWASFromIterable() {
-    CopyOnWriteArraySet<Integer> set = Sets.newCopyOnWriteArraySet(SOME_ITERABLE);
+    CopyOnWriteArraySet<Integer> set = newCopyOnWriteArraySet(SOME_ITERABLE);
     verifySetContents(set, SOME_COLLECTION);
   }
 
@@ -727,10 +729,10 @@ public class SetsTest extends TestCase {
     Set<Integer> x = set(1, 2);
     Set<String> y = set("3", "4");
 
-    List<Object> exp1 = list((Object) 1, "3");
-    List<Object> exp2 = list((Object) 1, "4");
-    List<Object> exp3 = list((Object) 2, "3");
-    List<Object> exp4 = list((Object) 2, "4");
+    List<Object> exp1 = list(1, "3");
+    List<Object> exp2 = list(1, "4");
+    List<Object> exp3 = list(2, "3");
+    List<Object> exp4 = list(2, "4");
 
     assertThat(Sets.<Object>cartesianProduct(x, y))
         .containsExactly(exp1, exp2, exp3, exp4)
@@ -878,20 +880,15 @@ public class SetsTest extends TestCase {
   public void testPowerSetCreationErrors() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          Set<Set<Character>> unused =
-              powerSet(
-                  newHashSet(
-                      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-                      'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4',
-                      '5'));
-        });
+        () ->
+            powerSet(
+                newHashSet(
+                    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+                    'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5')));
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> {
-          Set<Set<Integer>> unused = powerSet(ContiguousSet.closed(0, Integer.MAX_VALUE / 2));
-        });
+        () -> powerSet(ContiguousSet.closed(0, Integer.MAX_VALUE / 2)));
 
     assertThrows(NullPointerException.class, () -> powerSet(singleton(null)));
   }

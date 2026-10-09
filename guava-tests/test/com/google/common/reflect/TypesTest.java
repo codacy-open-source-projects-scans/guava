@@ -50,10 +50,9 @@ import org.jspecify.annotations.NullUnmarked;
  *
  * @author Ben Yu
  */
-@AndroidIncompatible // lots of failures, possibly some related to bad equals() implementations?
 @NullUnmarked
 public class TypesTest extends TestCase {
-  public void testNewParameterizedType_ownerTypeImplied() throws Exception {
+  public void testNewParameterizedType_ownerTypeImplied() {
     ParameterizedType jvmType =
         (ParameterizedType) new TypeCapture<Entry<String, Integer>>() {}.capture();
     ParameterizedType ourType = newParameterizedType(Entry.class, String.class, Integer.class);
@@ -61,6 +60,7 @@ public class TypesTest extends TestCase {
     assertEquals(Map.class, ourType.getOwnerType());
   }
 
+  @AndroidIncompatible // TODO(cpovirk): hashCode mismatch for parameterized type
   public void testNewParameterizedType() {
     ParameterizedType jvmType =
         (ParameterizedType) new TypeCapture<HashMap<String, int[][]>>() {}.capture();
@@ -98,6 +98,7 @@ public class TypesTest extends TestCase {
     assertEquals(jvmType, ourType);
   }
 
+  @AndroidIncompatible // TODO(cpovirk): hashCode mismatch for parameterized type
   public void testNewParameterizedTypeWithOwner() {
     ParameterizedType jvmType =
         (ParameterizedType) new TypeCapture<Entry<String, int[][]>>() {}.capture();
@@ -146,6 +147,7 @@ public class TypesTest extends TestCase {
         () -> Types.newParameterizedTypeWithOwner(Map.class, Entry.class, int.class, int.class));
   }
 
+  @AndroidIncompatible // TODO(cpovirk): hashCode mismatch for parameterized type
   public void testNewArrayType() {
     Type jvmType1 = new TypeCapture<List<String>[]>() {}.capture();
     GenericArrayType ourType1 =
@@ -213,6 +215,7 @@ public class TypesTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // TODO(cpovirk): hashCode mismatch for wildcard
   public void testNewWildcardType() throws Exception {
     WildcardType noBoundJvmType = WithWildcardType.getWildcardType("withoutBound");
     WildcardType objectBoundJvmType = WithWildcardType.getWildcardType("withObjectBound");
@@ -242,6 +245,19 @@ public class TypesTest extends TestCase {
     reserializeAndAssert(supertypeOf(String.class));
     reserializeAndAssert(subtypeOf(String.class));
     reserializeAndAssert(subtypeOf(Object.class));
+  }
+
+  interface SomeInterface {}
+
+  public void testNewWildcardType_multipleUpperBounds() {
+    WildcardType wildcard =
+        new Types.WildcardTypeImpl(new Type[0], new Type[] {Object.class, SomeInterface.class});
+    String expected =
+        "? extends "
+            + Types.JavaVersion.CURRENT.typeName(Object.class)
+            + " & "
+            + Types.JavaVersion.CURRENT.typeName(SomeInterface.class);
+    assertThat(wildcard.toString()).isEqualTo(expected);
   }
 
   private static void assertEqualWildcardType(WildcardType expected, WildcardType actual) {
@@ -286,6 +302,7 @@ public class TypesTest extends TestCase {
     }
   }
 
+  @AndroidIncompatible // TODO(cpovirk): hashCode mismatch for type variable
   public void testNewTypeVariable() throws Exception {
     TypeVariable<?> noBoundJvmType = WithTypeVariable.getTypeVariable("withoutBound");
     TypeVariable<?> objectBoundJvmType = WithTypeVariable.getTypeVariable("withObjectBound");
@@ -312,7 +329,7 @@ public class TypesTest extends TestCase {
         () -> newArtificialTypeVariable(List.class, "E", int.class));
   }
 
-  public void testNewTypeVariable_serializable() throws Exception {
+  public void testNewTypeVariable_serializable() {
     assertThrows(
         RuntimeException.class, () -> reserialize(newArtificialTypeVariable(List.class, "E")));
   }

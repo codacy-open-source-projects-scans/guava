@@ -62,7 +62,7 @@ import org.jspecify.annotations.Nullable;
  * shared state without additional synchronization necessary for visibility to later executions of
  * the life cycle methods.
  *
- * <h3>Usage Example</h3>
+ * <h2>Usage Example</h2>
  *
  * <p>Here is a sketch of a service which crawls a website and uses the scheduling capabilities to
  * rate limit itself.
@@ -255,7 +255,7 @@ public abstract class AbstractScheduledService implements Service {
     private final Runnable task = new Task();
 
     @Override
-    protected final void doStart() {
+    protected void doStart() {
       executorService = renamingDecorator(executor(), () -> serviceName() + " " + state());
       executorService.execute(
           () -> {
@@ -283,7 +283,7 @@ public abstract class AbstractScheduledService implements Service {
     }
 
     @Override
-    protected final void doStop() {
+    protected void doStop() {
       // Both requireNonNull calls are safe because doStop can run only after a successful doStart.
       requireNonNull(runningTask);
       requireNonNull(executorService);
@@ -531,7 +531,7 @@ public abstract class AbstractScheduledService implements Service {
    */
   public abstract static class CustomScheduler extends Scheduler {
     /** Constructor for use by subclasses. */
-    public CustomScheduler() {}
+    protected CustomScheduler() {}
 
     /** A callable class that can reschedule itself using a {@link CustomScheduler}. */
     private final class ReschedulableCallable implements Callable<@Nullable Void> {
@@ -588,7 +588,7 @@ public abstract class AbstractScheduledService implements Service {
       }
 
       @Override
-      public @Nullable Void call() throws Exception {
+      public @Nullable Void call() {
         wrappedRunnable.run();
         reschedule();
         return null;
@@ -651,9 +651,8 @@ public abstract class AbstractScheduledService implements Service {
       @SuppressWarnings("GuardedBy")
       private Cancellable initializeOrUpdateCancellationDelegate(Schedule schedule) {
         if (cancellationDelegate == null) {
-          return cancellationDelegate = new SupplantableFuture(lock, submitToExecutor(schedule));
-        }
-        if (!cancellationDelegate.currentFuture.isCancelled()) {
+          cancellationDelegate = new SupplantableFuture(lock, submitToExecutor(schedule));
+        } else if (!cancellationDelegate.currentFuture.isCancelled()) {
           cancellationDelegate.currentFuture = submitToExecutor(schedule);
         }
         return cancellationDelegate;

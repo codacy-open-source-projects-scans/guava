@@ -474,7 +474,7 @@ public abstract class ByteSource {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
       return ByteSource.this.toString() + ".asCharSource(" + charset + ")";
     }
   }
@@ -578,7 +578,7 @@ public abstract class ByteSource {
     }
 
     @Override
-    public InputStream openStream() {
+    public final InputStream openStream() {
       return new ByteArrayInputStream(bytes, offset, length);
     }
 
@@ -622,7 +622,7 @@ public abstract class ByteSource {
     }
 
     @Override
-    public HashCode hash(HashFunction hashFunction) throws IOException {
+    public HashCode hash(HashFunction hashFunction) {
       return hashFunction.hashBytes(bytes, offset, length);
     }
 

@@ -112,6 +112,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   public static final class Builder<K extends Comparable<?>, V> {
     private final List<Entry<Range<K>, V>> entries;
 
+    /** Constructs a new builder. */
     public Builder() {
       this.entries = new ArrayList<>();
     }
@@ -180,7 +181,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public final @Nullable V get(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,
@@ -197,7 +198,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public @Nullable Entry<Range<K>, V> getEntry(K key) {
+  public final @Nullable Entry<Range<K>, V> getEntry(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,
@@ -214,7 +215,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public Range<K> span() {
+  public final Range<K> span() {
     if (ranges.isEmpty()) {
       throw new NoSuchElementException();
     }
@@ -289,7 +290,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public ImmutableMap<Range<K>, V> asMapOfRanges() {
+  public final ImmutableMap<Range<K>, V> asMapOfRanges() {
     if (ranges.isEmpty()) {
       return ImmutableMap.of();
     }
@@ -299,7 +300,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public ImmutableMap<Range<K>, V> asDescendingMapOfRanges() {
+  public final ImmutableMap<Range<K>, V> asDescendingMapOfRanges() {
     if (ranges.isEmpty()) {
       return ImmutableMap.of();
     }
@@ -386,12 +387,12 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return asMapOfRanges().hashCode();
   }
 
   @Override
-  public boolean equals(@Nullable Object o) {
+  public final boolean equals(@Nullable Object o) {
     if (o instanceof RangeMap) {
       RangeMap<?, ?> rangeMap = (RangeMap<?, ?>) o;
       return asMapOfRanges().equals(rangeMap.asMapOfRanges());
@@ -400,7 +401,7 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return asMapOfRanges().toString();
   }
 

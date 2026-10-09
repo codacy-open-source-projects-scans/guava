@@ -45,8 +45,7 @@ import java.util.concurrent.TimeoutException;
  * @author Zach van Schouwen
  */
 @GwtIncompatible
-// TODO(cpovirk): Make this final (but that may break Mockito spy calls).
-class SameThreadScheduledExecutorService extends AbstractExecutorService
+final class SameThreadScheduledExecutorService extends AbstractExecutorService
     implements ListeningScheduledExecutorService {
 
   private final ListeningExecutorService delegate = newDirectExecutorService();
@@ -156,8 +155,7 @@ class SameThreadScheduledExecutorService extends AbstractExecutorService
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException {
       Preconditions.checkNotNull(unit, "unit must not be null!");
       return get();
     }

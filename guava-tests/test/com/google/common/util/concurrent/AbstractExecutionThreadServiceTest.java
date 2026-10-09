@@ -32,8 +32,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unit test for {@link AbstractExecutionThreadService}.
@@ -49,8 +51,8 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
   private final CountDownLatch enterRun = new CountDownLatch(1);
   private final CountDownLatch exitRun = new CountDownLatch(1);
 
-  private Thread executionThread;
-  private Throwable thrownByExecutionThread;
+  private @Nullable Thread executionThread;
+  private @Nullable Throwable thrownByExecutionThread;
   private final Executor exceptionCatchingExecutor =
       new Executor() {
         @Override
@@ -293,7 +295,7 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
     }
   }
 
-  public void testServiceTimeoutOnStartUp() throws Exception {
+  public void testServiceTimeoutOnStartUp() {
     TimeoutOnStartUp service = new TimeoutOnStartUp();
 
     TimeoutException e =
@@ -312,10 +314,10 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
     }
 
     @Override
-    protected void run() throws Exception {}
+    protected void run() {}
   }
 
-  public void testStopWhileStarting_runNotCalled() throws Exception {
+  public void testStopWhileStarting_runNotCalled() {
     CountDownLatch started = new CountDownLatch(1);
     FakeService service =
         new FakeService() {
@@ -330,18 +332,18 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
     started.countDown();
     service.awaitTerminated();
     assertThat(service.state()).isEqualTo(Service.State.TERMINATED);
-    assertEquals(1, service.startupCalled);
-    assertEquals(0, service.runCalled);
-    assertEquals(1, service.shutdownCalled);
+    assertEquals(1, service.startupCalled.get());
+    assertEquals(0, service.runCalled.get());
+    assertEquals(1, service.shutdownCalled.get());
   }
 
   public void testStop_noStart() {
     FakeService service = new FakeService();
     service.stopAsync().awaitTerminated();
     assertThat(service.state()).isEqualTo(Service.State.TERMINATED);
-    assertEquals(0, service.startupCalled);
-    assertEquals(0, service.runCalled);
-    assertEquals(0, service.shutdownCalled);
+    assertEquals(0, service.startupCalled.get());
+    assertEquals(0, service.runCalled.get());
+    assertEquals(0, service.shutdownCalled.get());
   }
 
   public void testDefaultService() throws InterruptedException {
@@ -356,7 +358,7 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
     Service service =
         new AbstractExecutionThreadService() {
           @Override
-          protected void run() throws Exception {}
+          protected void run() {}
 
           @Override
           protected ScheduledExecutorService executor() {
@@ -384,32 +386,32 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
       tearDownStack.addTearDown(this);
     }
 
-    volatile int startupCalled = 0;
-    volatile int shutdownCalled = 0;
-    volatile int runCalled = 0;
+    final AtomicInteger startupCalled = new AtomicInteger();
+    final AtomicInteger shutdownCalled = new AtomicInteger();
+    final AtomicInteger runCalled = new AtomicInteger();
 
     @Override
     protected void startUp() throws Exception {
-      assertEquals(0, startupCalled);
-      assertEquals(0, runCalled);
-      assertEquals(0, shutdownCalled);
-      startupCalled++;
+      assertEquals(0, startupCalled.get());
+      assertEquals(0, runCalled.get());
+      assertEquals(0, shutdownCalled.get());
+      startupCalled.incrementAndGet();
     }
 
     @Override
-    protected void run() throws Exception {
-      assertEquals(1, startupCalled);
-      assertEquals(0, runCalled);
-      assertEquals(0, shutdownCalled);
-      runCalled++;
+    protected void run() {
+      assertEquals(1, startupCalled.get());
+      assertEquals(0, runCalled.get());
+      assertEquals(0, shutdownCalled.get());
+      runCalled.incrementAndGet();
     }
 
     @Override
-    protected void shutDown() throws Exception {
-      assertEquals(1, startupCalled);
-      assertEquals(0, shutdownCalled);
-      assertThat(state()).isEqualTo(Service.State.STOPPING);
-      shutdownCalled++;
+    protected void shutDown() {
+      assertEquals(1, startupCalled.get());
+      assertEquals(0, shutdownCalled.get());
+      assertThat(state()).isEqualTo(State.STOPPING);
+      shutdownCalled.incrementAndGet();
     }
 
     @Override
@@ -418,7 +420,7 @@ public class AbstractExecutionThreadServiceTest extends TestCase {
     }
 
     @Override
-    public void tearDown() throws Exception {
+    public void tearDown() {
       executor.shutdown();
     }
   }

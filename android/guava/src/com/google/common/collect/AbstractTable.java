@@ -23,8 +23,6 @@ import static com.google.common.collect.Maps.safeRemove;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.errorprone.annotations.concurrent.LazyInit;
-import com.google.j2objc.annotations.WeakOuter;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -111,26 +109,18 @@ abstract class AbstractTable<
 
   @Override
   public void putAll(Table<? extends R, ? extends C, ? extends V> table) {
-    for (Table.Cell<? extends R, ? extends C, ? extends V> cell : table.cellSet()) {
+    for (Cell<? extends R, ? extends C, ? extends V> cell : table.cellSet()) {
       put(cell.getRowKey(), cell.getColumnKey(), cell.getValue());
     }
   }
 
-  @LazyInit private transient @Nullable Set<Cell<R, C, V>> cellSet;
-
   @Override
   public Set<Cell<R, C, V>> cellSet() {
-    Set<Cell<R, C, V>> result = cellSet;
-    return (result == null) ? cellSet = createCellSet() : result;
-  }
-
-  Set<Cell<R, C, V>> createCellSet() {
     return new CellSet();
   }
 
-  abstract Iterator<Table.Cell<R, C, V>> cellIterator();
+  abstract Iterator<Cell<R, C, V>> cellIterator();
 
-  @WeakOuter
   private final class CellSet extends AbstractSet<Cell<R, C, V>> {
     @Override
     public boolean contains(@Nullable Object o) {
@@ -170,15 +160,8 @@ abstract class AbstractTable<
     }
   }
 
-  @LazyInit private transient @Nullable Collection<V> values;
-
   @Override
   public Collection<V> values() {
-    Collection<V> result = values;
-    return (result == null) ? values = createValues() : result;
-  }
-
-  Collection<V> createValues() {
     return new Values();
   }
 
@@ -192,7 +175,6 @@ abstract class AbstractTable<
     };
   }
 
-  @WeakOuter
   private final class Values extends AbstractCollection<V> {
     @Override
     public Iterator<V> iterator() {
@@ -216,18 +198,18 @@ abstract class AbstractTable<
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public final boolean equals(@Nullable Object obj) {
     return Tables.equalsImpl(this, obj);
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return cellSet().hashCode();
   }
 
   /** Returns the string representation {@code rowMap().toString()}. */
   @Override
-  public String toString() {
+  public final String toString() {
     return rowMap().toString();
   }
 }

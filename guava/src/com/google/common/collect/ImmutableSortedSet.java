@@ -595,7 +595,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
     }
   }
 
-  int unsafeCompare(Object a, @Nullable Object b) {
+  final int unsafeCompare(Object a, @Nullable Object b) {
     return unsafeCompare(comparator, a, b);
   }
 
@@ -620,7 +620,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
    * SortedSet#comparator()}, which returns {@code null} to indicate natural ordering.
    */
   @Override
-  public Comparator<? super E> comparator() {
+  public final Comparator<? super E> comparator() {
     return comparator;
   }
 
@@ -869,7 +869,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
       return new Builder<E>(comparator).add((E[]) elements).build();
     }
 
-    @GwtIncompatible @J2ktIncompatible private static final long serialVersionUID = 0;
+    @GwtIncompatible private static final long serialVersionUID = 0;
   }
 
   @J2ktIncompatible // serialization
@@ -990,7 +990,7 @@ public abstract class ImmutableSortedSet<E> extends ImmutableSet.CachingAsList<E
    *
    * @throws UnsupportedOperationException always
    * @deprecated <b>Pass the parameters of type {@code Comparable} to use {@link
-   *     ImmutableSortedSet#of( Comparable, Comparable, Comparable, Comparable, Comparable)}. </b>
+   *     ImmutableSortedSet#of(Comparable, Comparable, Comparable, Comparable, Comparable)}. </b>
    */
   @DoNotCall("Pass parameters of type Comparable")
   @Deprecated

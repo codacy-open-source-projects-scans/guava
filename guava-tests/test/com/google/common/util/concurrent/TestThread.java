@@ -71,7 +71,7 @@ public final class TestThread<L> extends Thread implements TearDown {
   }
 
   /*
-   * TODO: b/318391980 - Once we test only under Java 20 and higher, avoid calling Thread.stop. As
+   * TODO(b/318391980): Once we test only under Java 20 and higher, avoid calling Thread.stop. As
    * of Java 20, it always throws an exception, and as of Java 26, the method does not even exist.
    * For now, we continue using it to clean up under older JDKs.
    *
@@ -227,7 +227,7 @@ public final class TestThread<L> extends Thread implements TearDown {
     return getMethod(methodName, arguments).invoke(lockLikeObject, arguments);
   }
 
-  private Method getMethod(String methodName, Object... arguments) throws Exception {
+  private Method getMethod(String methodName, Object... arguments) {
     METHODS:
     for (Method method : lockLikeObject.getClass().getMethods()) {
       Class<?>[] parameterTypes = method.getParameterTypes();
@@ -278,7 +278,7 @@ public final class TestThread<L> extends Thread implements TearDown {
     return t.getClass().getName().equals("java.lang.ThreadDeath");
   }
 
-  private static class Request {
+  private static final class Request {
     final String methodName;
     final Object[] arguments;
 
@@ -288,10 +288,10 @@ public final class TestThread<L> extends Thread implements TearDown {
     }
   }
 
-  private static class Response {
+  private static final class Response {
     final String methodName;
-    final Object result;
-    final Throwable throwable;
+    final @Nullable Object result;
+    final @Nullable Throwable throwable;
 
     Response(String methodName, @Nullable Object result, @Nullable Throwable throwable) {
       this.methodName = methodName;
@@ -299,7 +299,7 @@ public final class TestThread<L> extends Thread implements TearDown {
       this.throwable = throwable;
     }
 
-    Object getResult() {
+    @Nullable Object getResult() {
       if (throwable != null) {
         throw new AssertionError(throwable);
       }
